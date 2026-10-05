@@ -60,7 +60,7 @@ function App() {
 
 function PageView({ page, notify, parsedHash, setParsedHash }: { page: Page; notify: (s: string) => void; parsedHash: string; setParsedHash: (s: string) => void }) {
   if (page === 'dashboard') return <Dashboard notify={notify} />
-  if (page === 'new-review') return <NewReview notify={notify} setParsedHash={setParsedHash} />
+  if (page === 'new-review') return <NewReviewV2 notify={notify} setParsedHash={setParsedHash} />
   if (page === 'plan-parse') return <PlanParse notify={notify} parsedHash={parsedHash} />
   if (page === 'risk') return <RiskWorkspace notify={notify} />
   if (page === 'approval') return <ApprovalGate notify={notify} />
@@ -79,6 +79,40 @@ function Dashboard({ notify }: { notify: (s: string) => void }) { return <><Page
 function Activity({ icon, color, text, time }: { icon: string; color: string; text: string; time: string }) { return <div className="activity-row"><span className={'activity-icon ' + color}>{icon}</span><div><strong>{text}</strong><small>{time}</small></div></div> }
 
 function NewReview({ notify, setParsedHash }: { notify: (s: string) => void; setParsedHash: (s: string) => void }) { const [title, setTitle] = useState('溶剂转移与蒸发 · Demo SOP'); const [sop, setSop] = useState(sampleSop); const [busy, setBusy] = useState(false); const parse = async () => { setBusy(true); try { const response = await fetch(`${API_BASE}/parse/sop`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, sop_text: sop, room: 'Demo Lab A' }) }); if (!response.ok) throw new Error('offline'); const result = await response.json(); setParsedHash(result.input_sha256 || '已生成'); notify(`解析完成：识别 ${result.steps?.length || 0} 个步骤和 ${result.substances?.length || 0} 个化学品`) } catch { setParsedHash('离线演示哈希 · 运行时生成'); notify('离线解析完成：已进入计划解析页') } finally { setBusy(false) } }; return <><PageHead eyebrow="REVIEW WORKFLOW / 01" title="新建实验安全审查" desc="导入 SOP 和试剂信息，生成可追溯的实验前安全闸门。" /><div className="stepper"><div className="step active"><b>01</b><span>导入材料</span></div><i /><div className="step"><b>02</b><span>解析证据</span></div><i /><div className="step"><b>03</b><span>核验风险</span></div><i /><div className="step"><b>04</b><span>人工放行</span></div></div><div className="form-grid"><div className="panel form-panel"><div className="section-head"><h2>实验基础信息</h2><span className="required">synthetic/demo</span></div><label>SOP 名称 <em>*</em><input value={title} onChange={event => setTitle(event.target.value)} /></label><label>实验域 <em>*</em><select defaultValue="有机溶剂实验"><option>有机溶剂实验</option><option>其他实验类型（规划中）</option></select></label><label>实验室与角色 <input defaultValue="Demo Lab A · 实验指导教师" /></label><label>SOP / 实验计划文本 <em>*</em><textarea value={sop} onChange={event => setSop(event.target.value)} rows={9} /></label><div className="form-note"><span>⌁</span><div><strong>上传内容只作为数据</strong><small>解析器和 Harness 不执行 SOP 内的代码、命令或路径。</small></div></div><button className="primary wide" onClick={parse} disabled={busy}>{busy ? '解析中…' : '保存并解析'} <span>→</span></button></div><div className="panel side-note"><div className="note-orb">✦</div><h3>可信安全审查</h3><p>AI 只负责从自然语言中提取实验步骤和实体；PPE、通风、废液、设备边界等硬约束由版本化规则引擎核验。</p><div className="mini-check"><span>✓</span>默认 fail-safe，证据不足即待复核</div><div className="mini-check"><span>✓</span>高风险由安全负责人人工放行</div><div className="mini-check"><span>✓</span>每条结论关联原文与规则版本</div></div></div></> }
+
+async function sha256Text(text: string): Promise<string> {
+  const bytes = new TextEncoder().encode(text)
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest)).map(value => value.toString(16).padStart(2, '0')).join('')
+}
+
+function NewReviewV2({ notify, setParsedHash }: { notify: (s: string) => void; setParsedHash: (s: string) => void }) {
+  const [title, setTitle] = useState('溶剂转移与蒸发 · Demo SOP')
+  const [sop, setSop] = useState(sampleSop)
+  const [reagents, setReagents] = useState('甲苯；乙酸乙酯')
+  const [setup, setSetup] = useState('Demo Lab A · 通风柜 · 旋转蒸发仪 · 实验指导教师')
+  const [busy, setBusy] = useState(false)
+  const importFile = async (file?: File) => {
+    if (!file) return
+    const text = await file.text()
+    setSop(text)
+    notify(`已导入 ${file.name}；当前支持 SOP 文本、Markdown 和已提取 PDF 文本`)
+  }
+  const parse = async () => {
+    setBusy(true)
+    const hash = await sha256Text(sop)
+    setParsedHash(hash)
+    try {
+      const response = await fetch(`${API_BASE}/parse/sop`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, sop_text: sop, room: 'Demo Lab A' }) })
+      if (!response.ok) throw new Error('offline')
+      const result = await response.json()
+      notify(`解析完成：识别 ${result.steps?.length || 0} 个步骤和 ${result.substances?.length || reagents.split(/[；,，]/).filter(Boolean).length} 个化学品`)
+    } catch {
+      notify('离线解析完成：规则引擎仍可继续核验')
+    } finally { setBusy(false) }
+  }
+  return <><PageHead eyebrow="REVIEW WORKFLOW / 01" title="新建实验安全审查" desc="导入 SOP、试剂清单和实验条件，生成可追溯的实验前安全闸门。" /><div className="stepper"><div className="step active"><b>01</b><span>导入材料</span></div><i /><div className="step"><b>02</b><span>解析证据</span></div><i /><div className="step"><b>03</b><span>核验风险</span></div><i /><div className="step"><b>04</b><span>人工放行</span></div></div><div className="form-grid"><div className="panel form-panel"><div className="section-head"><h2>实验基础信息</h2><span className="required">synthetic/demo</span></div><label>SOP 名称 <em>*</em><input value={title} onChange={event => setTitle(event.target.value)} /></label><label>导入材料（文本 / Markdown / 已提取 PDF 文本）<input type="file" accept=".txt,.md,.csv,.text" onChange={event => importFile(event.target.files?.[0])} /></label><label>SOP / 实验计划文本 <em>*</em><textarea value={sop} onChange={event => setSop(event.target.value)} rows={8} /></label><label>试剂清单 <em>*</em><input value={reagents} onChange={event => setReagents(event.target.value)} placeholder="例如：甲苯；乙酸乙酯；正己烷" /></label><label>实验室、设备与角色 <input value={setup} onChange={event => setSetup(event.target.value)} /></label><div className="form-note"><span>⌁</span><div><strong>输入 SHA-256 会在保存时实时计算</strong><small>解析器和 Harness 不执行 SOP 内的代码、命令或路径；API Key 不进入证据包。</small></div></div><button className="primary wide" onClick={parse} disabled={busy}>{busy ? '解析中…' : '保存并解析'} <span>→</span></button></div><div className="panel side-note"><div className="note-orb">✦</div><h3>可信安全审查</h3><p>AI 只负责从自然语言中提取实验步骤和实体；PPE、通风、废液、设备边界等硬约束由版本化规则引擎核验。</p><div className="mini-check"><span>✓</span>默认 fail-safe，证据不足即待复核</div><div className="mini-check"><span>✓</span>高风险由安全负责人人工放行</div><div className="mini-check"><span>✓</span>每条结论关联原文与规则版本</div></div></div></>
+}
 
 function PlanParse({ notify, parsedHash }: { notify: (s: string) => void; parsedHash: string }) { return <><PageHead eyebrow="REVIEW WORKFLOW / 02" title="计划解析" desc="把非结构化 SOP 转成可核验的步骤、化学品、设备与证据引用。" action="重新解析" onAction={() => notify('已使用当前 SOP 重新解析')} /><div className="parse-meta"><Status kind="success">离线解析器可用</Status><span>输入 SHA-256：<code>{parsedHash}</code></span><span>来源：SOP 文本 · synthetic/demo</span></div><div className="parse-layout"><div className="panel"><div className="section-head"><h2>实验步骤时间线</h2><Status kind="warning">2 项待复核</Status></div><div className="timeline"><TimelineStep n="01" title="确认容器标签与通风柜" text="乙酸乙酯、甲苯 · 通风柜" risk="高" evidence="SOP §1" /><TimelineStep n="02" title="转移至旋转蒸发仪" text="易燃溶剂 · 点火源 · 设备边界" risk="严重" evidence="SOP §2" /><TimelineStep n="03" title="分流并标识有机废液" text="废液容器 · 标签 · 暂存" risk="高" evidence="SOP §3" /></div></div><div className="panel parse-result"><div className="section-head"><h2>结构化实体</h2><Status kind="success">证据已绑定</Status></div><Entity name="甲苯" type="化学品 · 易燃/有害" detail="CAS 108-88-3 · SDS 待复核" risk="高" /><Entity name="乙酸乙酯" type="化学品 · 易燃" detail="CAS 141-78-6 · SDS 待复核" risk="高" /><Entity name="通风柜" type="工程控制" detail="局部排风 · 证据 SOP §1" risk="低" /><Entity name="旋转蒸发仪" type="设备边界" detail="温控上限未在 SOP 中出现" risk="严重" /><div className="parse-footer"><span>Skill Registry：parse_sop · normalize_substances · extract_controls</span><button className="primary" onClick={() => notify('已确认解析结果，进入风险工作台')}>确认并核验 →</button></div></div></div></> }
 function TimelineStep({ n, title, text, risk, evidence }: { n: string; title: string; text: string; risk: Severity; evidence: string }) { return <div className="timeline-step"><b>{n}</b><div><h3>{title}<span className={'risk-level ' + risk}>{risk}</span></h3><p>{text}</p><small>⌁ {evidence} · evidence_ref</small></div></div> }
