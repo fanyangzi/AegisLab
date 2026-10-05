@@ -12,7 +12,7 @@ from .parser import parse_sop
 from .skills import SafeHarness
 from .models import (
     DecisionRequest, Evidence, GateDecisionRequest, HealthResponse, IncidentDrill, IncidentDrillCreate,
-    IncidentRunRequest, OverrideRequest, Review, ReviewCreate, ReviewStatus, SOPParseRequest, SkillExecutionRequest,
+    IncidentRunRequest, LabStep, OverrideRequest, Review, ReviewCreate, ReviewStatus, SOPParseRequest, SkillExecutionRequest, Substance,
 )
 from .service import AegisService
 
@@ -73,6 +73,30 @@ def parse_sop_endpoint(payload: SOPParseRequest) -> Dict[str, Any]:
 @app.post("/reviews/from-sop", response_model=Review, status_code=201, tags=["parser"])
 def create_review_from_sop(payload: SOPParseRequest) -> Review:
     parsed = parse_sop(payload.sop_text)
+    llm_fields = service.llm.extract_sop(payload.sop_text)
+    # The model can enrich ambiguous language, but deterministic evidence and
+    # the hard-rule engine remain authoritative for safety decisions.
+    if llm_fields:
+        try:
+            llm_steps = [LabStep(**item) for item in llm_fields.get("steps", []) if isinstance(item, dict) and item.get("instruction")]
+            for index, step in enumerate(llm_steps):
+                if not step.evidence_refs and index < len(parsed["steps"]):
+                    step.evidence_refs = parsed["steps"][index].evidence_refs
+            if llm_steps:
+                parsed["steps"] = llm_steps
+            llm_substances = [Substance(**item) for item in llm_fields.get("substances", []) if isinstance(item, dict) and item.get("name")]
+            if llm_substances:
+                parsed["substances"] = llm_substances
+            for key in ("ppe", "equipment", "waste_streams"):
+                values = llm_fields.get(key)
+                if isinstance(values, list) and values:
+                    parsed[key] = sorted({str(value).strip() for value in values if str(value).strip()})
+            if isinstance(llm_fields.get("ventilation"), str) and llm_fields["ventilation"].strip():
+                parsed["ventilation"] = llm_fields["ventilation"].strip()
+        except (TypeError, ValueError):
+            # Keep the deterministic parse when the model returns an invalid
+            # or incomplete structure.
+            llm_fields = {}
     return service.create_review(ReviewCreate(
         title=payload.title,
         experiment_name=payload.title,
@@ -89,7 +113,7 @@ def create_review_from_sop(payload: SOPParseRequest) -> Review:
         ventilation=parsed["ventilation"],
         waste_streams=parsed["waste_streams"],
         evidence=[Evidence(**item) for item in parsed["evidence"]],
-        metadata={"synthetic": True, "input_sha256": parsed["input_sha256"], "parser": "deterministic-sop-v1"},
+        metadata={"synthetic": True, "input_sha256": parsed["input_sha256"], "parser": "llm-enriched-deterministic-v1" if llm_fields else "deterministic-sop-v1", "llm_extraction_used": bool(llm_fields)},
     ))
 
 
