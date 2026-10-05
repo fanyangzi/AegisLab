@@ -1,0 +1,24 @@
+version: organic-solvent-v1.0
+description: Transparent synthetic/demo rules for the AegisLab organic-solvent review pack.
+rules:
+  - id: PPE-001
+    severity: high
+    recommended_control: goggles, lab coat, compatible gloves
+  - id: VENT-001
+    severity: high
+    recommended_control: fume hood or effective local exhaust
+  - id: WASTE-001
+    severity: high
+    recommended_control: labeled compatible organic-waste stream
+  - id: INCOMP-001
+    severity: critical
+    recommended_control: compatibility confirmation and separation
+  - id: EQUIP-002
+    severity: critical
+    recommended_control: interlock, temperature boundary and stop condition
+  - id: FIRE-001
+    severity: high
+    recommended_control: remove or isolate ignition source
+  - id: EVID-001
+    severity: medium
+    recommended_control: attach source evidence or request human review

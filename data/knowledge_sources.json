@@ -1,0 +1,44 @@
+[
+  {
+    "name": "PubChem PUG REST",
+    "source_url": "https://pubchem.ncbi.nlm.nih.gov/docs/pug-rest-tutorial",
+    "scope": "chemical identity and CAS normalization",
+    "retrieved_at": "2026-10-05",
+    "document_version": "public API documentation",
+    "license_or_terms": "NCBI PubChem public access terms",
+    "page_or_section": "PUG REST tutorial",
+    "content_hash": "sha256:fcc07ee4255fd351c98890c32157f17bef7e8b89ca8b08d86d57289ec86d85a7"
+  },
+  {
+    "name": "NIOSH Pocket Guide",
+    "source_url": "https://www.cdc.gov/niosh/npg/",
+    "scope": "occupational exposure and control reference",
+    "retrieved_at": "2026-10-05",
+    "document_version": "public web edition",
+    "license_or_terms": "CDC/NIOSH public information terms",
+    "page_or_section": "Pocket Guide index",
+    "content_hash": null,
+    "content_hash_status": "unavailable:HTTPError"
+  },
+  {
+    "name": "OSHA Laboratory Safety",
+    "source_url": "https://www.osha.gov/laboratories",
+    "scope": "laboratory safety baseline",
+    "retrieved_at": "2026-10-05",
+    "document_version": "public web edition",
+    "license_or_terms": "OSHA public information terms",
+    "page_or_section": "Laboratories topic page",
+    "content_hash": null,
+    "content_hash_status": "unavailable:HTTPError"
+  },
+  {
+    "name": "NOAA CAMEO Chemicals",
+    "source_url": "https://cameochemicals.noaa.gov/",
+    "scope": "compatibility and emergency reference",
+    "retrieved_at": "2026-10-05",
+    "document_version": "public web edition",
+    "license_or_terms": "NOAA CAMEO public information terms",
+    "page_or_section": "CAMEO Chemicals home",
+    "content_hash": "sha256:b923c66ff4d4ed536de6b6a9f922348c9a9fba62097dd97fdb78910ad22d8488"
+  }
+]

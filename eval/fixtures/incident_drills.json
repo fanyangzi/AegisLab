@@ -1,0 +1,29 @@
+[
+  {
+    "fixture_id": "DRILL-001",
+    "name": "有机溶剂泄漏",
+    "synthetic": true,
+    "steps": [
+      {"name": "初始响应", "options": ["继续操作", "暂停并通知负责人", "直接擦拭"], "correct_option": 1},
+      {"name": "区域控制", "options": ["隔离区域并确认通风", "关闭所有通风", "让无关人员进入"], "correct_option": 0}
+    ]
+  },
+  {
+    "fixture_id": "DRILL-002",
+    "name": "通风设备故障",
+    "synthetic": true,
+    "steps": [
+      {"name": "停止暴露", "options": ["继续操作", "暂停并撤离暴露区域", "提高加热功率"], "correct_option": 1},
+      {"name": "升级报告", "options": ["口头告诉同伴", "通知负责人并记录", "删除运行记录"], "correct_option": 1}
+    ]
+  },
+  {
+    "fixture_id": "DRILL-003",
+    "name": "点火源异常",
+    "synthetic": true,
+    "steps": [
+      {"name": "点火源控制", "options": ["停止并隔离点火源", "继续转移", "覆盖热源"], "correct_option": 0},
+      {"name": "恢复确认", "options": ["操作者自行恢复", "安全负责人确认", "跳过审批"], "correct_option": 1}
+    ]
+  }
+]

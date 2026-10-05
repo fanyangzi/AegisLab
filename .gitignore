@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+.env
+artifacts/
+screenshots/
+videos/
+research/
+docs/competition/
+.DS_Store
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

@@ -1,0 +1,37 @@
+id,scenario,synthetic,expected_findings,predicted_findings,expected_action,predicted_action,expected_severity,predicted_severity,expected_controls,predicted_controls,evidence_hash_verified,elapsed_ms,correct_action,correct_severity
+CHEM-001,液液萃取,True,[],[],READY,READY,none,none,[],[],True,0.244,True,True
+CHEM-002,液液萃取,True,[],[],READY,READY,none,none,[],[],True,0.009,True,True
+CHEM-003,液液萃取,True,[],[],READY,READY,none,none,[],[],True,0.008,True,True
+CHEM-004,色谱与有机废液,True,[],[],READY,READY,none,none,[],[],True,0.007,True,True
+CHEM-005,溶剂转移与蒸发,True,[],[],READY,READY,none,none,[],[],True,0.006,True,True
+CHEM-006,色谱与有机废液,True,[],[],READY,READY,none,none,[],[],True,0.006,True,True
+CHEM-007,液液萃取,True,['PPE-001'],['PPE-001'],BLOCKED,BLOCKED,high,high,['护目镜、实验服和适配手套'],['护目镜、实验服和适配手套'],True,0.008,True,True
+CHEM-008,液液萃取,True,['PPE-001'],['PPE-001'],BLOCKED,BLOCKED,high,high,['护目镜、实验服和适配手套'],['护目镜、实验服和适配手套'],True,0.008,True,True
+CHEM-009,溶剂转移与蒸发,True,"['PPE-001', 'EQUIP-002']","['PPE-001', 'EQUIP-002']",BLOCKED,BLOCKED,critical,critical,"['护目镜、实验服和适配手套', '设备联锁、温控边界和停止条件']","['护目镜、实验服和适配手套', '设备联锁、温控边界和停止条件']",True,0.007,True,True
+CHEM-010,色谱与有机废液,True,['PPE-001'],['PPE-001'],BLOCKED,BLOCKED,high,high,['护目镜、实验服和适配手套'],['护目镜、实验服和适配手套'],True,0.007,True,True
+CHEM-011,溶剂转移与蒸发,True,['EQUIP-002'],['EQUIP-002'],BLOCKED,BLOCKED,critical,critical,['设备联锁、温控边界和停止条件'],['设备联锁、温控边界和停止条件'],True,0.007,True,True
+CHEM-012,液液萃取,True,['VENT-001'],['VENT-001'],BLOCKED,BLOCKED,high,high,['通风柜或有效局部排风'],['通风柜或有效局部排风'],True,0.007,True,True
+CHEM-013,色谱与有机废液,True,['VENT-001'],['VENT-001'],BLOCKED,BLOCKED,high,high,['通风柜或有效局部排风'],['通风柜或有效局部排风'],True,0.006,True,True
+CHEM-014,溶剂转移与蒸发,True,"['VENT-001', 'EVID-001']","['VENT-001', 'EVID-001']",BLOCKED,BLOCKED,high,high,"['通风柜或有效局部排风', '补充可追溯原文或进入人工复核']","['通风柜或有效局部排风', '补充可追溯原文或进入人工复核']",True,0.007,True,True
+CHEM-015,液液萃取,True,['VENT-001'],['VENT-001'],BLOCKED,BLOCKED,high,high,['通风柜或有效局部排风'],['通风柜或有效局部排风'],True,0.007,True,True
+CHEM-016,液液萃取,True,['WASTE-001'],['WASTE-001'],BLOCKED,BLOCKED,high,high,['有机废液分流、容器标签和暂存责任人'],['有机废液分流、容器标签和暂存责任人'],True,0.007,True,True
+CHEM-017,色谱与有机废液,True,['WASTE-001'],['WASTE-001'],BLOCKED,BLOCKED,high,high,['有机废液分流、容器标签和暂存责任人'],['有机废液分流、容器标签和暂存责任人'],True,0.007,True,True
+CHEM-018,色谱与有机废液,True,['WASTE-001'],['WASTE-001'],BLOCKED,BLOCKED,high,high,['有机废液分流、容器标签和暂存责任人'],['有机废液分流、容器标签和暂存责任人'],True,0.007,True,True
+CHEM-019,溶剂转移与蒸发,True,"['WASTE-001', 'EQUIP-002']","['WASTE-001', 'EQUIP-002']",BLOCKED,BLOCKED,critical,critical,"['有机废液分流、容器标签和暂存责任人', '设备联锁、温控边界和停止条件']","['有机废液分流、容器标签和暂存责任人', '设备联锁、温控边界和停止条件']",True,0.006,True,True
+CHEM-020,液液萃取,True,['WASTE-001'],['WASTE-001'],BLOCKED,BLOCKED,high,high,['有机废液分流、容器标签和暂存责任人'],['有机废液分流、容器标签和暂存责任人'],True,0.007,True,True
+CHEM-021,不相容物质,True,['INCOMP-001'],['INCOMP-001'],BLOCKED,BLOCKED,critical,critical,['相容性确认、分区存放和人工复核'],['相容性确认、分区存放和人工复核'],True,0.007,True,True
+CHEM-022,不相容物质,True,['INCOMP-001'],['INCOMP-001'],BLOCKED,BLOCKED,critical,critical,['相容性确认、分区存放和人工复核'],['相容性确认、分区存放和人工复核'],True,0.008,True,True
+CHEM-023,不相容物质,True,['INCOMP-001'],['INCOMP-001'],BLOCKED,BLOCKED,critical,critical,['相容性确认、分区存放和人工复核'],['相容性确认、分区存放和人工复核'],True,0.007,True,True
+CHEM-024,不相容物质,True,"['INCOMP-001', 'EVID-001']","['INCOMP-001', 'EVID-001']",BLOCKED,BLOCKED,critical,critical,"['相容性确认、分区存放和人工复核', '补充可追溯原文或进入人工复核']","['相容性确认、分区存放和人工复核', '补充可追溯原文或进入人工复核']",True,0.007,True,True
+CHEM-025,不相容物质,True,[],[],READY,READY,none,none,[],[],True,0.006,True,True
+CHEM-026,设备与应急,True,['EQUIP-002'],['EQUIP-002'],BLOCKED,BLOCKED,critical,critical,['设备联锁、温控边界和停止条件'],['设备联锁、温控边界和停止条件'],True,0.007,True,True
+CHEM-027,设备与应急,True,"['EQUIP-002', 'EVID-001']","['EQUIP-002', 'EVID-001']",BLOCKED,BLOCKED,critical,critical,"['设备联锁、温控边界和停止条件', '补充可追溯原文或进入人工复核']","['设备联锁、温控边界和停止条件', '补充可追溯原文或进入人工复核']",True,0.007,True,True
+CHEM-028,设备与应急,True,[],[],READY,READY,none,none,[],[],True,0.006,True,True
+CHEM-029,点火源异常,True,['FIRE-001'],['FIRE-001'],BLOCKED,BLOCKED,high,high,['移除或隔离点火源并由负责人确认'],['移除或隔离点火源并由负责人确认'],True,0.006,True,True
+CHEM-030,点火源异常,True,"['FIRE-001', 'EVID-001']","['FIRE-001', 'EVID-001']",BLOCKED,BLOCKED,high,high,"['移除或隔离点火源并由负责人确认', '补充可追溯原文或进入人工复核']","['移除或隔离点火源并由负责人确认', '补充可追溯原文或进入人工复核']",True,0.007,True,True
+CHEM-031,输入不完整,True,"['PPE-001', 'VENT-001', 'WASTE-001', 'EVID-001']","['PPE-001', 'VENT-001', 'WASTE-001', 'EVID-001']",BLOCKED,BLOCKED,high,high,"['护目镜、实验服和适配手套', '通风柜或有效局部排风', '有机废液分流、容器标签和暂存责任人', '补充可追溯原文或进入人工复核']","['护目镜、实验服和适配手套', '通风柜或有效局部排风', '有机废液分流、容器标签和暂存责任人', '补充可追溯原文或进入人工复核']",True,0.007,True,True
+CHEM-032,语义歧义,True,"['PPE-001', 'VENT-001', 'EVID-001']","['PPE-001', 'VENT-001', 'EVID-001']",BLOCKED,BLOCKED,high,high,"['护目镜、实验服和适配手套', '通风柜或有效局部排风', '补充可追溯原文或进入人工复核']","['护目镜、实验服和适配手套', '通风柜或有效局部排风', '补充可追溯原文或进入人工复核']",True,0.006,True,True
+CHEM-033,语义歧义,True,"['PPE-001', 'VENT-001', 'WASTE-001', 'EVID-001']","['PPE-001', 'VENT-001', 'WASTE-001', 'EVID-001']",BLOCKED,BLOCKED,high,high,"['护目镜、实验服和适配手套', '通风柜或有效局部排风', '有机废液分流、容器标签和暂存责任人', '补充可追溯原文或进入人工复核']","['护目镜、实验服和适配手套', '通风柜或有效局部排风', '有机废液分流、容器标签和暂存责任人', '补充可追溯原文或进入人工复核']",True,0.007,True,True
+CHEM-034,语义歧义,True,['EVID-001'],['EVID-001'],NEEDS_REVIEW,NEEDS_REVIEW,medium,medium,['补充可追溯原文或进入人工复核'],['补充可追溯原文或进入人工复核'],True,0.007,True,True
+CHEM-035,综合风险,True,"['VENT-001', 'WASTE-001', 'EQUIP-002', 'FIRE-001']","['VENT-001', 'WASTE-001', 'EQUIP-002', 'FIRE-001']",BLOCKED,BLOCKED,critical,critical,"['通风柜或有效局部排风', '有机废液分流、容器标签和暂存责任人', '设备联锁、温控边界和停止条件', '移除或隔离点火源并由负责人确认']","['通风柜或有效局部排风', '有机废液分流、容器标签和暂存责任人', '设备联锁、温控边界和停止条件', '移除或隔离点火源并由负责人确认']",True,0.008,True,True
+CHEM-036,综合安全流程,True,[],[],READY,READY,none,none,[],[],True,0.007,True,True

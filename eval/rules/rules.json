@@ -1,0 +1,13 @@
+{
+  "version": "organic-solvent-v1.0",
+  "description": "Transparent synthetic/demo rule catalog for organic-solvent pre-review.",
+  "rules": [
+    {"id":"PPE-001","title":"PPE evidence","severity":"high","recommended_control":"护目镜、实验服和适配手套"},
+    {"id":"VENT-001","title":"Ventilation evidence","severity":"high","recommended_control":"通风柜或有效局部排风"},
+    {"id":"WASTE-001","title":"Waste stream","severity":"high","recommended_control":"有机废液分流、容器标签和暂存责任人"},
+    {"id":"INCOMP-001","title":"Incompatibility separation","severity":"critical","recommended_control":"相容性确认、分区存放和人工复核"},
+    {"id":"EQUIP-002","title":"Equipment boundary","severity":"critical","recommended_control":"设备联锁、温控边界和停止条件"},
+    {"id":"FIRE-001","title":"Ignition source","severity":"high","recommended_control":"移除或隔离点火源并由负责人确认"},
+    {"id":"EVID-001","title":"Evidence sufficiency","severity":"medium","recommended_control":"补充可追溯原文或进入人工复核"}
+  ]
+}
