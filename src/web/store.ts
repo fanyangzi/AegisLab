@@ -17,7 +17,16 @@ export function useWorkspace() {
  const initial=useRef(readLocal()),[snapshot,setSnapshot]=useState<Snapshot>(()=>localSnapshot(initial.current.value)),[busy,setBusy]=useState(false),[booting,setBooting]=useState(true),[connection,setConnection]=useState('正在检查服务端 API'),[error,setError]=useState(initial.current.error)
  const current=useRef(snapshot);current.current=snapshot
  const inFlight=useRef(false)
- useEffect(()=>{let live=true;request<Snapshot>('/api/spatial').then(s=>{assertWorkspace(s.workspace);if(!live)return;setConnection('API 可连接');if(!initial.current.value.laboratories.length&&!initial.current.error){setSnapshot({...s,mode:'server'});setConnection('服务端 API 已连接')}}).catch(()=>{if(live)setConnection('浏览器草稿 · API 未连接')}).finally(()=>{if(live)setBooting(false)});return()=>{live=false}},[])
+ useEffect(()=>{let live=true;request<Snapshot>('/api/spatial').then(s=>{assertWorkspace(s.workspace);if(!live)return;setConnection('API 可连接');
+   // A previous build may have left a small example snapshot in localStorage.
+   // Example data is explicitly replaceable; user-authored workspaces are not.
+   const local=initial.current.value
+   const localIsExample=local.provenance==='example'
+   const serverIsRicher=s.workspace.equipment.length>local.equipment.length||s.workspace.plans.length>local.plans.length||s.workspace.revision>local.revision
+   if(!initial.current.error&&(!local.laboratories.length||(localIsExample&&serverIsRicher))){
+     setSnapshot({...s,mode:'server'});setConnection('服务端 API 已连接')
+   }
+ }).catch(()=>{if(live)setConnection('浏览器草稿 · API 未连接')}).finally(()=>{if(live)setBooting(false)});return()=>{live=false}},[])
  useEffect(()=>{const changed=(event:StorageEvent)=>{if(event.key===KEY&&current.current.mode==='local'){const data=readLocal();if(data.error)setError(data.error);else {setSnapshot(localSnapshot(data.value));setConnection('已同步其他标签页的浏览器存档')}}};window.addEventListener('storage',changed);return()=>window.removeEventListener('storage',changed)},[])
  const mutate=useCallback(async(op:Operation)=>{
   if(inFlight.current)throw new Error('上一项操作尚未完成，请稍后。')
