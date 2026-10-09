@@ -179,7 +179,11 @@ export default function LabScene(props:Props) {
     if(previousSelection!==selectionKey){previousSelection=selectionKey;const selected=live.current.selection;const selectedEquipment=live.current.equipment.find(e=>selected?.type==='equipment'&&e.id===selected.id);if(selectedEquipment)focusTarget=new THREE.Vector3(selectedEquipment.x,.8,selectedEquipment.z);else if(selected?.type==='plan'){const plan=live.current.plans.find(p=>p.id===selected.id),items=live.current.equipment.filter(e=>plan?.reservations.some(r=>r.equipmentId===e.id));if(items.length)focusTarget=new THREE.Vector3(items.reduce((sum,e)=>sum+e.x,0)/items.length,.7,items.reduce((sum,e)=>sum+e.z,0)/items.length)}else focusTarget=null}
     if(focusTarget){const before=controls.target.clone();controls.target.lerp(focusTarget,p.reduced?1:.10);camera.position.add(controls.target.clone().sub(before));if(controls.target.distanceTo(focusTarget)<.015)focusTarget=null}
     controls.update();points.clear()
-    const currentPlan=p.plans.find(q=>q.id===p.planId),planEq=new Set(currentPlan?.reservations.map(r=>r.equipmentId)||[])
+    const currentPlan=p.plans.find(q=>q.id===p.planId),focusedPlan=p.planId?currentPlan:p.selection?.type==='plan'?p.plans.find(q=>q.id===p.selection?.id):p.plans.find(q=>q.reservations.some(r=>r.equipmentId=== (p.selection?.type==='equipment'?p.selection.id:''))),planEq=new Set(focusedPlan?.reservations.map(r=>r.equipmentId)||[])
+    const priorityIds=new Set<string>([...planEq]);
+    p.checks.filter(c=>c.state!=='pass'&&c.equipmentId).forEach(c=>priorityIds.add(c.equipmentId!));
+    if(p.selection?.type==='equipment')priorityIds.add(p.selection.id);
+    let shownLabels=0
     // Reserve the AI anchor's label footprint before placing equipment labels.
     // This prevents a selected instrument card from sitting directly on top of
     // the semantic center when the camera is zoomed or the viewport is narrow.
@@ -217,7 +221,11 @@ export default function LabScene(props:Props) {
       if(!rect&&selected){const x=Math.max(10,Math.min(width-lw-10,v.x-lw/2)),y=Math.max(lh+10,Math.min(height-10,v.y-8));rect={x,y:y-lh,w:lw,h:lh}}
       const eligible=!p.planId||planEq.has(e.id)
       const show=Boolean(rect)&&(selected||eligible)
-      b.hidden=!show||v.x<75||v.x>width-80||v.y<45||v.y>height-50
+      const priority=priorityIds.has(e.id)||bad||unknown
+      const sparseFallback=!p.selection&&shownLabels<6
+      const visible=priority||sparseFallback
+      b.hidden=!show||!visible||v.x<75||v.x>width-80||v.y<45||v.y>height-50
+      if(!b.hidden)shownLabels+=1
       if(!b.hidden&&rect){boxes.push(rect);const labelX=rect.x+rect.w/2,labelY=rect.y+rect.h;b.style.transform=`translate(${labelX}px,${labelY}px) translate(-50%,-100%)`}
       b.className=`al-scene-label ${selected?'selected':''} ${bad?'red':unknown?'amber':'blue'}`
       b.querySelector('small')!.textContent=bad?'预约约束冲突':unknown?'有待核验事项':`${p.plans.filter(q=>q.reservations.some(r=>r.equipmentId===e.id)).length} 项关联计划`
