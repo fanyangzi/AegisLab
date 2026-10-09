@@ -10,7 +10,11 @@ type Definition = Partial<Omit<EquipmentOperationalProfile, 'family'>> & { famil
 
 const SOURCE_REFS = [
   'docs/equipment-taxonomy-research.md',
-  '清华大学实验室化学安全管理实施办法',
+  'https://www.lab.pku.edu.cn/info/3151/45321.htm',
+  'http://ac.tsinghua.edu.cn/yqsb1.htm',
+  'https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm',
+  'https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/',
+  'https://lab.env.tsinghua.edu.cn/info/1567/2795.htm',
 ]
 
 const definition = (family: EquipmentFamily, subtype: string, extra: Partial<Definition> = {}): Definition => ({
