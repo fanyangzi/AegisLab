@@ -30,12 +30,18 @@ ROOT = Path(__file__).resolve().parents[2]
 # approval basis.  These are placement hints, not a claim about certified
 # equipment dimensions.
 EQUIPMENT_FOOTPRINTS: dict[str, tuple[float, float]] = {
-    "hood": (3.0, 1.5),
-    "bench": (2.4, 1.4),
-    "storage": (1.8, 1.2),
-    "analyzer": (2.2, 1.8),
-    "sink": (1.8, 1.3),
-    "waste": (1.4, 1.2),
+    "hood": (3.0, 1.5), "bench": (2.4, 1.4), "storage": (1.8, 1.2),
+    "analyzer": (2.2, 1.8), "sink": (1.8, 1.3), "waste": (1.4, 1.2),
+    "clean_bench": (2.4, 1.5), "biosafety_cabinet": (2.4, 1.6), "balance": (1.6, 1.1),
+    "centrifuge": (1.8, 1.5), "pcr": (1.6, 1.3), "gc": (2.4, 1.7), "hplc": (2.5, 1.7),
+    "uv_vis": (1.8, 1.3), "mass_spec": (3.0, 2.0), "elemental_analyzer": (2.6, 1.8),
+    "evaporator": (1.8, 1.4), "vacuum_pump": (1.4, 1.1), "nitrogen_blowdown": (1.8, 1.2),
+    "water_purification": (1.8, 1.1), "refrigerator": (1.5, 1.2), "freezer": (1.7, 1.3),
+    "drying_oven": (1.8, 1.4), "furnace": (1.6, 1.4), "gas_cabinet": (1.7, 1.3),
+    "flammable_cabinet": (1.8, 1.2), "acid_base_cabinet": (1.8, 1.2), "solvent_waste": (1.4, 1.1),
+    "solid_waste": (1.4, 1.1), "eyewash": (1.0, .9), "safety_shower": (1.2, 1.0),
+    "gas_detector": (.8, .8), "environment_monitor": (.8, .8), "access_control": (1.0, .6),
+    "chromatography": (2.5, 1.7), "ion_chromatography": (2.5, 1.7),
 }
 PLACEMENT_GAP = 0.35
 
@@ -78,7 +84,14 @@ class Equipment(StrictModel):
     labId: str
     code: str = Field(min_length=1, max_length=60)
     name: str = Field(min_length=1, max_length=180)
-    kind: Literal["hood", "bench", "storage", "analyzer", "sink", "waste"]
+    kind: Literal[
+        "hood", "bench", "storage", "analyzer", "sink", "waste", "clean_bench", "biosafety_cabinet",
+        "balance", "centrifuge", "pcr", "gc", "hplc", "uv_vis", "mass_spec", "elemental_analyzer",
+        "evaporator", "vacuum_pump", "nitrogen_blowdown", "water_purification", "refrigerator", "freezer",
+        "drying_oven", "furnace", "gas_cabinet", "flammable_cabinet", "acid_base_cabinet", "solvent_waste",
+        "solid_waste", "eyewash", "safety_shower", "gas_detector", "environment_monitor", "access_control",
+        "chromatography", "ion_chromatography"
+    ]
     x: float = Field(ge=-20, le=20)
     z: float = Field(ge=-20, le=20)
     rotation: float = Field(ge=-360, le=360)
@@ -386,6 +399,139 @@ def envelope(w: dict) -> dict:
     return dict(workspace=w, checks=checks, statuses={p["id"]: plan_status(w, p, checks) for p in w["plans"]}, mode="server", rulePack=RULE_PACK, scope="资源时段、台账可用性、检查证据适用性与原文确认；不构成全域化学安全评估或开工许可。")
 
 
+def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
+    """Build the reviewable, structured part of the AI copilot response.
+
+    The language model is only responsible for the prose summary.  This packet
+    is deterministic and keeps every suggestion tied to a parsed step, a rule
+    result, or a resource check so the UI can show *why* the assistant reached
+    a conclusion.  It deliberately never returns approval or executable
+    incident instructions.
+    """
+    plan_checks = [c for c in check_workspace(w) if c["planId"] == plan["id"]]
+    failed_rules = [r for r in evaluation.results if not r.passed]
+    steps = [step.model_dump(mode="json") if hasattr(step, "model_dump") else step for step in parsed.get("steps", [])]
+    substances = [substance.model_dump(mode="json") if hasattr(substance, "model_dump") else substance for substance in parsed.get("substances", [])]
+    for index, step in enumerate(steps):
+        if index < len(plan.get("steps", [])):
+            source_step = plan["steps"][index]
+            step.setdefault("line", source_step.get("line"))
+            step.setdefault("planEquipmentIds", source_step.get("equipmentIds", []))
+    hazards: list[dict] = []
+    for index, step in enumerate(steps, 1):
+        hazard = step.get("hazard")
+        if hazard or step.get("requires_ppe") or step.get("waste_stream") or step.get("ventilation"):
+            hazards.append({
+                "id": f"step-{step.get('order', index)}",
+                "step": step.get("order", index),
+                "line": step.get("line"),
+                "title": hazard or "需要控制措施的步骤",
+                "detail": step.get("instruction", ""),
+                "controls": step.get("controls", []),
+                "ppe": step.get("requires_ppe", []),
+                "evidence": step.get("evidence_refs", []),
+                "severity": "high" if hazard else "medium",
+            })
+    # If a plan uses generic wording rather than a known substance, retain a
+    # signal from the deterministic rule engine instead of pretending the
+    # parser identified a chemical that was not present in the source.
+    for result in failed_rules:
+        if result.rule_id in {"ventilation-required", "emergency-controls", "incompatibility-separation", "step-controls"}:
+            hazards.append({
+                "id": f"rule-{result.rule_id}", "step": None,
+                "title": result.message, "detail": result.recommended_control or result.message,
+                "controls": [], "ppe": [], "evidence": list(result.evidence_refs),
+                "severity": result.severity.value,
+            })
+    # Keep the graph compact and stable when a long SOP contains repeated
+    # mentions of the same control.
+    unique_hazards: list[dict] = []
+    seen_hazard: set[str] = set()
+    for item in hazards:
+        key = f"{item['title']}|{item['detail']}"
+        if key not in seen_hazard:
+            seen_hazard.add(key)
+            unique_hazards.append(item)
+
+    conflicts = []
+    evidence_gaps = []
+    for check in plan_checks:
+        if check["state"] == "blocked":
+            conflicts.append({
+                "id": check["id"], "code": check["code"], "title": check["title"],
+                "detail": check["detail"], "equipmentId": check.get("equipmentId"),
+                "relatedPlanIds": check.get("relatedPlanIds", []),
+                "line": check.get("line"), "severity": "critical",
+            })
+        elif check["state"] == "unknown":
+            evidence_gaps.append({
+                "id": check["id"], "code": check["code"], "title": check["title"],
+                "detail": check["detail"], "equipmentId": check.get("equipmentId"),
+                "line": check.get("line"), "documentIds": check.get("documentIds", []),
+                "priority": "high" if check["code"] in {"EVIDENCE", "SCHEDULE", "BINDING"} else "medium",
+            })
+
+    next_actions = []
+    for gap in evidence_gaps[:6]:
+        if gap["code"] == "EVIDENCE":
+            title = "补齐对应设备的有效检查证据"
+            detail = "需同时满足对象、规格版本、核验状态和完整使用时段。"
+        elif gap["code"] == "SOURCE":
+            title = "确认 SOP 步骤与原文行号"
+            detail = "确认后才会把机器提取结果纳入资源核验。"
+        elif gap["code"] == "SCHEDULE":
+            title = "补充资源使用时段"
+            detail = "没有时段无法判断维护窗口与共享容量。"
+        elif gap["code"] == "BINDING":
+            title = "把原文设备绑定到正式预约"
+            detail = "不能只替换画面中的关系线；需要修订计划。"
+        else:
+            title, detail = gap["title"], gap["detail"]
+        next_actions.append({"id": f"action-{gap['id']}", "title": title, "detail": detail, "sourceId": gap["id"], "owner": "实验负责人"})
+    for conflict in conflicts[:4]:
+        next_actions.append({"id": f"action-{conflict['id']}", "title": "打开方案推演，比较可行资源或时段", "detail": "候选方案先在隔离副本中核验，正式计划不会被自动覆盖。", "sourceId": conflict["id"], "owner": "计划负责人"})
+    if not next_actions:
+        next_actions.append({"id": "action-review", "title": "由安全负责人复核当前版本", "detail": "AI 解释和规则结果不能替代机构审批或现场确认。", "sourceId": plan["id"], "owner": "安全负责人"})
+
+    # Produce two deterministic candidates for the scenario comparison.  They
+    # are suggestions only; applying one still requires the existing branch
+    # workflow and creates a new plan revision.
+    baseline_counts = {"blocked": sum(c["state"] == "blocked" for c in plan_checks), "unknown": sum(c["state"] == "unknown" for c in plan_checks), "pass": sum(c["state"] == "pass" for c in plan_checks)}
+    scenarios = [{"id": "baseline", "name": "当前正式安排", "kind": "baseline", "status": "current", "summary": "以当前计划和已登记资源为基线。", "counts": baseline_counts, "changes": []}]
+    # Alternate resource candidate: use the first available same-kind resource
+    # for a conflicted/unknown reservation, if one exists.
+    candidate_reservations = [dict(r) for r in plan["reservations"]]
+    changes = []
+    for reservation in candidate_reservations:
+        current = next((e for e in w["equipment"] if e["id"] == reservation["equipmentId"]), None)
+        if current is None:
+            continue
+        current_bad = any(c.get("equipmentId") == current["id"] and c["state"] in {"blocked", "unknown"} for c in plan_checks)
+        if not current_bad:
+            continue
+        replacement = next((e for e in w["equipment"] if e["labId"] == plan["labId"] and e["id"] != current["id"] and e["kind"] == current["kind"] and e["status"] == "available" and not any(overlap(reservation, m) for m in e.get("maintenance", []))), None)
+        if replacement:
+            reservation["equipmentId"] = replacement["id"]
+            changes.append({"from": current["id"], "to": replacement["id"], "reason": "同类别、当前台账可用且不落在维护窗口"})
+    if changes:
+        candidate = copy.deepcopy(w)
+        candidate_plan = next(q for q in candidate["plans"] if q["id"] == plan["id"])
+        candidate_plan["reservations"] = candidate_reservations
+        candidate_checks = [c for c in check_workspace(candidate) if c["planId"] == plan["id"]]
+        scenarios.append({"id": "resource-alternative", "name": "AI 资源替代候选", "kind": "alternative", "status": "suggested", "summary": "用同类别且当前可用资源替代受约束对象，结果仍需人工确认。", "counts": {"blocked": sum(c["state"] == "blocked" for c in candidate_checks), "unknown": sum(c["state"] == "unknown" for c in candidate_checks), "pass": sum(c["state"] == "pass" for c in candidate_checks)}, "changes": changes})
+    scenarios.append({"id": "evidence-first", "name": "先补证再放行", "kind": "workflow", "status": "suggested", "summary": "不改变排程，优先处理证据缺口和原文确认。", "counts": baseline_counts, "changes": [{"action": "complete-evidence", "count": len(evidence_gaps)}]})
+
+    return {
+        "entities": {"steps": len(steps), "hazards": unique_hazards, "substances": substances, "ppe": parsed.get("ppe", []), "equipment": parsed.get("equipment", []), "wasteStreams": parsed.get("waste_streams", []), "ventilation": parsed.get("ventilation")},
+        "riskSignals": unique_hazards,
+        "conflicts": conflicts,
+        "evidenceGaps": evidence_gaps,
+        "nextActions": next_actions,
+        "scenarios": scenarios,
+        "ruleSummary": {"total": len(plan_checks), **baseline_counts, "failedTextRules": [r.rule_id for r in failed_rules]},
+    }
+
+
 def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
     next_w = copy.deepcopy(w)
     object_id = x.get("id", x.get("planId", "workspace"))
@@ -655,13 +801,39 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     """Reuse legacy parsing/rules and optional LLM explanation without approval."""
     from .parser import parse_sop
     from .llm import LLMAdapter
-    from .models import Review, Evidence
+    from .models import Review, Evidence, LabStep
     from .rules import ReviewRuleEngine
     w = store().read()
     p = next((p for p in w['plans'] if p['id'] == plan_id), None)
     if p is None:
         raise HTTPException(404, '计划不存在。')
     parsed = parse_sop(p['source'])
+    # Spatial plans already contain reviewer-visible, line-preserving steps.
+    # Many institutional SOPs are prose rather than numbered instructions, so
+    # the generic parser can legitimately return only its fallback first line.
+    # In that case use the plan's confirmed structure for the copilot and rule
+    # review instead of pretending the remaining steps do not exist.
+    if len(parsed.get('steps', [])) < len(p.get('steps', [])):
+        structured_steps = []
+        for index, source_step in enumerate(p['steps'], 1):
+            text = source_step['text']
+            hazard = '挥发性溶剂暴露、火灾与废液风险' if any(term in text for term in ('溶剂', '萃取', '分液', '蒸发', '废液', '色谱', '挥发')) else None
+            controls = []
+            if any(term in text for term in ('通风柜', '排风', '通风')):
+                controls.append('在通风柜或有效局部排风下操作')
+            if any(term in text for term in ('废液', '废弃物')):
+                controls.append('按相容性和类别分流并标识废液')
+            equipment_names = [e['name'] for e in w['equipment'] if e['id'] in source_step.get('equipmentIds', [])]
+            structured_steps.append(LabStep(order=index, instruction=text, hazard=hazard, controls=controls,
+                requires_ppe=['护目镜', '化学防护手套'] if hazard else [], equipment=equipment_names,
+                ventilation='通风柜' if '通风柜' in text else None,
+                waste_stream='有机废液' if '废液' in text else None,
+                evidence_refs=[f"plan-line-{source_step['line']}"]))
+        parsed['steps'] = structured_steps
+        parsed['ppe'] = sorted({ppe for step in structured_steps for ppe in step.requires_ppe})
+        parsed['equipment'] = sorted({item for step in structured_steps for item in step.equipment})
+        parsed['ventilation'] = '通风柜' if any(step.ventilation for step in structured_steps) else parsed.get('ventilation')
+        parsed['waste_streams'] = sorted({step.waste_stream for step in structured_steps if step.waste_stream})
     review = Review(id=p['id'], title=p['name'], objective='实验计划辅助文本预审', requester=p['owner'], room=p['labId'],
         sop=p['source'], created_at=now(), updated_at=now(), steps=parsed['steps'], substances=parsed['substances'],
         ppe=parsed['ppe'], equipment=parsed['equipment'], ventilation=parsed['ventilation'], waste_streams=parsed['waste_streams'],
@@ -669,7 +841,11 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     engine = ReviewRuleEngine()
     evaluation = engine.evaluate(review)
     result = LLMAdapter().summarize(review.model_dump(mode='json'), evaluation.model_dump(mode='json'))
-    return {'planId': p['id'], 'planRevision': p['revision'], 'inputHash': parsed['input_sha256'], 'ruleVersion': engine.version,
-        'parser': 'deterministic-sop-v1', 'provider': result.provider, 'degraded': result.provider == 'offline' or result.degraded or not result.available,
+    adapter = LLMAdapter()
+    copilot = _copilot_packet(w, p, parsed, evaluation)
+    return {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
+        'parser': 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
+        'degraded': result.provider == 'offline' or result.degraded or not result.available,
         'summary': result.text, 'results': [r.model_dump(mode='json') for r in evaluation.results],
-        'scope': '辅助文本检查和解释，不修改资源状态、证据或人工决策。'}
+        'copilot': copilot,
+        'scope': 'AI 负责结构化理解与解释；确定性规则和人工复核负责约束结论。不会自动批准、修改计划或生成事故处置指令。'}

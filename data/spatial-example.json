@@ -1,1 +1,2098 @@
-{"schemaVersion":1,"revision":0,"name":"实验安全协同工作区 · 2026-Q4 示例","provenance":"example","laboratories":[{"id":"lab-201","name":"有机分析与前处理实验室 · 201","description":"承担样品前处理、挥发性有机物分析、留样与废液分流；空间按前处理、分析、储存、清洗和废物管理划分。","width":18,"depth":12},{"id":"lab-301","name":"仪器分析与样品归档实验室 · 301","description":"承担色谱质谱序列、标准曲线复核、设备维护后验证和样品归档；与 201 共享部分样品流转记录。","width":16,"depth":11}],"equipment":[{"id":"F-01","labId":"lab-201","code":"F-01","name":"主通风柜","kind":"hood","x":-7.0,"z":-4.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"用于挥发性有机溶剂前处理；配置联锁、局部排风和台面清场记录。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"F-02","labId":"lab-201","code":"F-02","name":"备用通风柜","kind":"hood","x":-3.6,"z":-4.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"备用通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[{"id":"maint-F02-1","start":"2026-10-09T12:00:00+08:00","end":"2026-10-09T14:00:00+08:00","reason":"计划维护窗口（排风柜面板检查）"}]},{"id":"F-03","labId":"lab-201","code":"F-03","name":"酸碱操作通风柜","kind":"hood","x":-0.2,"z":-4.0,"rotation":0,"capacity":1,"status":"unknown","owner":"实验室管理员","description":"用于酸碱和衍生化前处理；现场状态待当班负责人确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"F-04","labId":"lab-201","code":"F-04","name":"小型称量通风柜","kind":"hood","x":3.2,"z":-4.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"小型称量通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"C-01","labId":"lab-201","code":"C-01","name":"易燃溶剂防火柜","kind":"storage","x":6.6,"z":-3.8,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"易燃溶剂防火柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"C-02","labId":"lab-201","code":"C-02","name":"样品留样冷藏柜","kind":"storage","x":6.7,"z":-1.8,"rotation":0,"capacity":1,"status":"unknown","owner":"实验室管理员","description":"样品留样冷藏柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"A-01","labId":"lab-201","code":"A-01","name":"气相色谱分析台","kind":"analyzer","x":5.8,"z":0.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"气相色谱分析台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"A-02","labId":"lab-201","code":"A-02","name":"液相色谱分析台","kind":"analyzer","x":2.8,"z":0.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"液相色谱分析台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"A-03","labId":"lab-201","code":"A-03","name":"紫外可见分光光度计","kind":"analyzer","x":-0.2,"z":0.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"紫外可见分光光度计的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"B-01","labId":"lab-201","code":"B-01","name":"样品前处理工作台","kind":"bench","x":-6.2,"z":0.8,"rotation":0,"capacity":2,"status":"available","owner":"实验室管理员","description":"样品前处理工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"B-02","labId":"lab-201","code":"B-02","name":"称量与稀释工作台","kind":"bench","x":-3.0,"z":0.8,"rotation":0,"capacity":2,"status":"available","owner":"实验室管理员","description":"称量与稀释工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"B-03","labId":"lab-201","code":"B-03","name":"原始记录工作台","kind":"bench","x":0.4,"z":0.8,"rotation":0,"capacity":2,"status":"available","owner":"实验室管理员","description":"原始记录工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"S-01","labId":"lab-201","code":"S-01","name":"器皿清洗工作站","kind":"sink","x":-6.2,"z":4.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"器皿清洗工作站的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"S-02","labId":"lab-201","code":"S-02","name":"去离子水清洗台","kind":"sink","x":-1.7,"z":4.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"去离子水清洗台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"W-01","labId":"lab-201","code":"W-01","name":"有机废液暂存柜","kind":"waste","x":6.4,"z":4.0,"rotation":0,"capacity":1,"status":"unknown","owner":"实验室管理员","description":"有机废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"W-02","labId":"lab-201","code":"W-02","name":"酸碱废液暂存柜","kind":"waste","x":6.5,"z":2.1,"rotation":0,"capacity":1,"status":"unavailable","owner":"实验室管理员","description":"酸碱废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[{"id":"maint-W02-1","start":"2026-10-10T09:00:00+08:00","end":"2026-10-10T12:00:00+08:00","reason":"废液柜年度密封性检查"}]},{"id":"F-05","labId":"lab-301","code":"F-05","name":"质谱前处理通风柜","kind":"hood","x":-6.0,"z":-3.7,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"质谱前处理通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"F-06","labId":"lab-301","code":"F-06","name":"衍生化操作通风柜","kind":"hood","x":-2.7,"z":-3.7,"rotation":0,"capacity":1,"status":"unknown","owner":"实验室管理员","description":"衍生化操作通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"C-03","labId":"lab-301","code":"C-03","name":"标准品低温储存柜","kind":"storage","x":4.7,"z":-3.6,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"标准品低温储存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"C-04","labId":"lab-301","code":"C-04","name":"归档样品储存柜","kind":"storage","x":6.5,"z":-1.4,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"归档样品储存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"A-04","labId":"lab-301","code":"A-04","name":"UHPLC 分析系统","kind":"analyzer","x":4.7,"z":0.7,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"UHPLC 分析系统的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"A-05","labId":"lab-301","code":"A-05","name":"三重四极杆质谱仪","kind":"analyzer","x":1.8,"z":0.7,"rotation":0,"capacity":1,"status":"unknown","owner":"实验室管理员","description":"三重四极杆质谱仪的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":2,"maintenance":[]},{"id":"A-06","labId":"lab-301","code":"A-06","name":"离子色谱分析系统","kind":"analyzer","x":-1.1,"z":0.7,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"离子色谱分析系统的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]},{"id":"B-04","labId":"lab-301","code":"B-04","name":"质谱样品制备台","kind":"bench","x":-5.7,"z":1.0,"rotation":0,"capacity":2,"status":"available","owner":"实验室管理员","description":"质谱样品制备台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"B-05","labId":"lab-301","code":"B-05","name":"标准曲线配制台","kind":"bench","x":-2.6,"z":1.0,"rotation":0,"capacity":2,"status":"available","owner":"实验室管理员","description":"标准曲线配制台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"B-06","labId":"lab-301","code":"B-06","name":"数据复核工作台","kind":"bench","x":0.2,"z":1.0,"rotation":0,"capacity":2,"status":"available","owner":"实验室管理员","description":"数据复核工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"S-03","labId":"lab-301","code":"S-03","name":"仪器清洗与冲洗台","kind":"sink","x":-5.7,"z":4.0,"rotation":0,"capacity":1,"status":"available","owner":"实验室管理员","description":"仪器清洗与冲洗台的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":false,"specVersion":1,"maintenance":[]},{"id":"W-03","labId":"lab-301","code":"W-03","name":"质谱废液暂存柜","kind":"waste","x":5.7,"z":4.0,"rotation":0,"capacity":1,"status":"unknown","owner":"实验室管理员","description":"质谱废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。","requiresEvidence":true,"specVersion":1,"maintenance":[]}],"plans":[{"id":"EXP-001","code":"EXP-001","labId":"lab-201","name":"挥发性有机物样品前处理与 GC 复核","owner":"陈同学","revision":1,"source":"确认实验计划、样品批次与当前 SOP 版本。\n在 C-01 核对易燃溶剂标签、批号与储存状态。\n在 B-01 完成样品接收、称量与编号。\n在 F-01 内完成第一次液液萃取前的装置检查。\n在 F-01 内进行分液操作，并记录相界面变化。\n在 S-01 完成玻璃器皿初步清洗与冲洗登记。\n在 B-02 配制待测样品的稀释系列。\n在 A-01 上机前核对方法文件、灯源状态与序列。\n在 A-01 完成样品序列采集并记录异常峰。\n在 A-02 对关键样品执行复测与积分复核。\n在 C-02 暂存已完成分析的留样与原始记录。\n在 W-01 分流收集有机废液并完成容器标签。\n在 F-02 完成台面清场、断电确认与照片留证。\n由负责人核对原始数据、检查证据和放行意见。","sourceName":"EXP-001-挥发性有机物样品前处理与 GC 复核.md","steps":[{"id":"EXP-001-s1","text":"确认实验计划、样品批次与当前 SOP 版本。","line":1,"equipmentIds":[],"confirmed":true},{"id":"EXP-001-s2","text":"在 C-01 核对易燃溶剂标签、批号与储存状态。","line":2,"equipmentIds":["C-01"],"confirmed":true},{"id":"EXP-001-s3","text":"在 B-01 完成样品接收、称量与编号。","line":3,"equipmentIds":["B-01"],"confirmed":true},{"id":"EXP-001-s4","text":"在 F-01 内完成第一次液液萃取前的装置检查。","line":4,"equipmentIds":["F-01"],"confirmed":true},{"id":"EXP-001-s5","text":"在 F-01 内进行分液操作，并记录相界面变化。","line":5,"equipmentIds":["F-01"],"confirmed":true},{"id":"EXP-001-s6","text":"在 S-01 完成玻璃器皿初步清洗与冲洗登记。","line":6,"equipmentIds":["S-01"],"confirmed":true},{"id":"EXP-001-s7","text":"在 B-02 配制待测样品的稀释系列。","line":7,"equipmentIds":["B-02"],"confirmed":true},{"id":"EXP-001-s8","text":"在 A-01 上机前核对方法文件、灯源状态与序列。","line":8,"equipmentIds":["A-01"],"confirmed":true},{"id":"EXP-001-s9","text":"在 A-01 完成样品序列采集并记录异常峰。","line":9,"equipmentIds":["A-01"],"confirmed":true},{"id":"EXP-001-s10","text":"在 A-02 对关键样品执行复测与积分复核。","line":10,"equipmentIds":["A-02"],"confirmed":true},{"id":"EXP-001-s11","text":"在 C-02 暂存已完成分析的留样与原始记录。","line":11,"equipmentIds":["C-02"],"confirmed":true},{"id":"EXP-001-s12","text":"在 W-01 分流收集有机废液并完成容器标签。","line":12,"equipmentIds":["W-01"],"confirmed":true},{"id":"EXP-001-s13","text":"在 F-02 完成台面清场、断电确认与照片留证。","line":13,"equipmentIds":["F-02"],"confirmed":true},{"id":"EXP-001-s14","text":"由负责人核对原始数据、检查证据和放行意见。","line":14,"equipmentIds":[],"confirmed":true}],"reservations":[{"id":"EXP-001-r0","equipmentId":"C-01","start":"2026-10-09T08:40:00+08:00","end":"2026-10-09T09:00:00+08:00"},{"id":"EXP-001-r1","equipmentId":"B-01","start":"2026-10-09T08:45:00+08:00","end":"2026-10-09T10:00:00+08:00"},{"id":"EXP-001-r2","equipmentId":"F-01","start":"2026-10-09T09:00:00+08:00","end":"2026-10-09T11:30:00+08:00"},{"id":"EXP-001-r3","equipmentId":"S-01","start":"2026-10-09T09:20:00+08:00","end":"2026-10-09T10:10:00+08:00"},{"id":"EXP-001-r4","equipmentId":"B-02","start":"2026-10-09T10:00:00+08:00","end":"2026-10-09T11:00:00+08:00"},{"id":"EXP-001-r5","equipmentId":"A-01","start":"2026-10-09T11:30:00+08:00","end":"2026-10-09T12:30:00+08:00"},{"id":"EXP-001-r6","equipmentId":"A-02","start":"2026-10-09T11:30:00+08:00","end":"2026-10-09T12:30:00+08:00"},{"id":"EXP-001-r7","equipmentId":"C-02","start":"2026-10-09T12:30:00+08:00","end":"2026-10-09T13:00:00+08:00"},{"id":"EXP-001-r8","equipmentId":"W-01","start":"2026-10-09T13:00:00+08:00","end":"2026-10-09T14:00:00+08:00"},{"id":"EXP-001-r9","equipmentId":"F-02","start":"2026-10-09T14:00:00+08:00","end":"2026-10-09T15:00:00+08:00"}],"archived":false},{"id":"EXP-002","code":"EXP-002","labId":"lab-201","name":"色谱分析准备与共享通风柜预约","owner":"林同学","revision":1,"source":"核对样品、设备与当前 SOP 版本。\n按已审核计划预约 F-01 与 B-02。\n确认本次使用时段的检查证据。\n在 A-03 完成标准曲线复核。","sourceName":"EXP-002-色谱分析准备与共享通风柜预约.md","steps":[{"id":"EXP-002-s1","text":"核对样品、设备与当前 SOP 版本。","line":1,"equipmentIds":[],"confirmed":true},{"id":"EXP-002-s2","text":"按已审核计划预约 F-01 与 B-02。","line":2,"equipmentIds":["F-01","B-02"],"confirmed":true},{"id":"EXP-002-s3","text":"确认本次使用时段的检查证据。","line":3,"equipmentIds":[],"confirmed":true},{"id":"EXP-002-s4","text":"在 A-03 完成标准曲线复核。","line":4,"equipmentIds":["A-03"],"confirmed":true}],"reservations":[{"id":"EXP-002-r0","equipmentId":"F-01","start":"2026-10-09T10:00:00+08:00","end":"2026-10-09T12:00:00+08:00"},{"id":"EXP-002-r1","equipmentId":"B-02","start":"2026-10-09T09:30:00+08:00","end":"2026-10-09T11:00:00+08:00"},{"id":"EXP-002-r2","equipmentId":"A-03","start":"2026-10-09T11:00:00+08:00","end":"2026-10-09T12:00:00+08:00"}],"archived":false},{"id":"EXP-003","code":"EXP-003","labId":"lab-201","name":"样品称量与登记","owner":"周同学","revision":1,"source":"核对 A-01 的检查记录。\n在 B-02 完成样品登记。\n检查原始记录并提交复核。","sourceName":"EXP-003-样品称量与登记.md","steps":[{"id":"EXP-003-s1","text":"核对 A-01 的检查记录。","line":1,"equipmentIds":["A-01"],"confirmed":true},{"id":"EXP-003-s2","text":"在 B-02 完成样品登记。","line":2,"equipmentIds":["B-02"],"confirmed":true},{"id":"EXP-003-s3","text":"检查原始记录并提交复核。","line":3,"equipmentIds":[],"confirmed":true}],"reservations":[{"id":"EXP-003-r0","equipmentId":"A-01","start":"2026-10-09T08:00:00+08:00","end":"2026-10-09T09:00:00+08:00"},{"id":"EXP-003-r1","equipmentId":"B-02","start":"2026-10-09T08:00:00+08:00","end":"2026-10-09T09:00:00+08:00"}],"archived":false},{"id":"EXP-004","code":"EXP-004","labId":"lab-201","name":"废液记录与设备清场","owner":"赵同学","revision":1,"source":"核对 W-01 对应的记录与适用范围。\n补充当前时段的有效检查材料。\n由负责人确认记录，不生成应急处置指令。","sourceName":"EXP-004-废液记录与设备清场.md","steps":[{"id":"EXP-004-s1","text":"核对 W-01 对应的记录与适用范围。","line":1,"equipmentIds":["W-01"],"confirmed":false},{"id":"EXP-004-s2","text":"补充当前时段的有效检查材料。","line":2,"equipmentIds":[],"confirmed":false},{"id":"EXP-004-s3","text":"由负责人确认记录，不生成应急处置指令。","line":3,"equipmentIds":[],"confirmed":false}],"reservations":[{"id":"EXP-004-r0","equipmentId":"W-01","start":"2026-10-09T15:00:00+08:00","end":"2026-10-09T16:00:00+08:00"}],"archived":false},{"id":"EXP-005","code":"EXP-005","labId":"lab-201","name":"低温浓缩与溶剂回收复核","owner":"何同学","revision":1,"source":"在 F-02 完成旋蒸前的冷却水和密封检查。\n在 A-02 采集回收溶剂的纯度复测数据。\n在 W-02 完成酸碱废液分流登记。\n提交回收批次的原始记录和设备照片。","sourceName":"EXP-005-低温浓缩与溶剂回收复核.md","steps":[{"id":"EXP-005-s1","text":"在 F-02 完成旋蒸前的冷却水和密封检查。","line":1,"equipmentIds":["F-02"],"confirmed":true},{"id":"EXP-005-s2","text":"在 A-02 采集回收溶剂的纯度复测数据。","line":2,"equipmentIds":["A-02"],"confirmed":true},{"id":"EXP-005-s3","text":"在 W-02 完成酸碱废液分流登记。","line":3,"equipmentIds":["W-02"],"confirmed":true},{"id":"EXP-005-s4","text":"提交回收批次的原始记录和设备照片。","line":4,"equipmentIds":[],"confirmed":true}],"reservations":[{"id":"EXP-005-r0","equipmentId":"F-02","start":"2026-10-10T08:30:00+08:00","end":"2026-10-10T09:30:00+08:00"},{"id":"EXP-005-r1","equipmentId":"A-02","start":"2026-10-10T10:00:00+08:00","end":"2026-10-10T11:00:00+08:00"},{"id":"EXP-005-r2","equipmentId":"W-02","start":"2026-10-10T09:30:00+08:00","end":"2026-10-10T10:30:00+08:00"}],"archived":false},{"id":"EXP-006","code":"EXP-006","labId":"lab-201","name":"酸碱衍生化样品复测","owner":"吴同学","revision":1,"source":"在 F-03 内确认衍生化反应器皿与局部排风状态。\n在 B-03 完成样品和批次关系登记。\n在 A-03 执行复测序列并核对空白样。\n在 S-02 完成器皿冲洗和去离子水记录。","sourceName":"EXP-006-酸碱衍生化样品复测.md","steps":[{"id":"EXP-006-s1","text":"在 F-03 内确认衍生化反应器皿与局部排风状态。","line":1,"equipmentIds":["F-03"],"confirmed":true},{"id":"EXP-006-s2","text":"在 B-03 完成样品和批次关系登记。","line":2,"equipmentIds":["B-03"],"confirmed":true},{"id":"EXP-006-s3","text":"在 A-03 执行复测序列并核对空白样。","line":3,"equipmentIds":["A-03"],"confirmed":true},{"id":"EXP-006-s4","text":"在 S-02 完成器皿冲洗和去离子水记录。","line":4,"equipmentIds":["S-02"],"confirmed":true}],"reservations":[{"id":"EXP-006-r0","equipmentId":"F-03","start":"2026-10-10T09:00:00+08:00","end":"2026-10-10T10:30:00+08:00"},{"id":"EXP-006-r1","equipmentId":"B-03","start":"2026-10-10T09:00:00+08:00","end":"2026-10-10T10:45:00+08:00"},{"id":"EXP-006-r2","equipmentId":"A-03","start":"2026-10-10T11:00:00+08:00","end":"2026-10-10T12:00:00+08:00"},{"id":"EXP-006-r3","equipmentId":"S-02","start":"2026-10-10T12:00:00+08:00","end":"2026-10-10T12:30:00+08:00"}],"archived":false},{"id":"EXP-007","code":"EXP-007","labId":"lab-301","name":"UHPLC 序列准备与标准曲线核查","owner":"孙同学","revision":1,"source":"在 C-03 核对标准品批号、有效期和低温储存记录。\n在 B-04 完成质谱样品前处理和编号。\n在 F-05 内完成流动相脱气与上机前检查。\n在 A-04 建立 UHPLC 序列并记录方法版本。\n在 B-05 复核标准曲线浓度梯度与稀释记录。","sourceName":"EXP-007-UHPLC 序列准备与标准曲线核查.md","steps":[{"id":"EXP-007-s1","text":"在 C-03 核对标准品批号、有效期和低温储存记录。","line":1,"equipmentIds":["C-03"],"confirmed":true},{"id":"EXP-007-s2","text":"在 B-04 完成质谱样品前处理和编号。","line":2,"equipmentIds":["B-04"],"confirmed":true},{"id":"EXP-007-s3","text":"在 F-05 内完成流动相脱气与上机前检查。","line":3,"equipmentIds":["F-05"],"confirmed":true},{"id":"EXP-007-s4","text":"在 A-04 建立 UHPLC 序列并记录方法版本。","line":4,"equipmentIds":["A-04"],"confirmed":true},{"id":"EXP-007-s5","text":"在 B-05 复核标准曲线浓度梯度与稀释记录。","line":5,"equipmentIds":["B-05"],"confirmed":true}],"reservations":[{"id":"EXP-007-r0","equipmentId":"C-03","start":"2026-10-09T08:30:00+08:00","end":"2026-10-09T09:00:00+08:00"},{"id":"EXP-007-r1","equipmentId":"B-04","start":"2026-10-09T08:45:00+08:00","end":"2026-10-09T10:00:00+08:00"},{"id":"EXP-007-r2","equipmentId":"F-05","start":"2026-10-09T09:00:00+08:00","end":"2026-10-09T10:00:00+08:00"},{"id":"EXP-007-r3","equipmentId":"A-04","start":"2026-10-09T10:00:00+08:00","end":"2026-10-09T12:00:00+08:00"},{"id":"EXP-007-r4","equipmentId":"B-05","start":"2026-10-09T09:30:00+08:00","end":"2026-10-09T10:30:00+08:00"}],"archived":false},{"id":"EXP-008","code":"EXP-008","labId":"lab-301","name":"LC-MS 维护后验证与离子抑制检查","owner":"高同学","revision":1,"source":"确认 A-05 维护记录、校准文件和当前仪器规格版本。\n在 F-06 内配制离子抑制检查样品。\n在 A-05 完成维护后空白、校准和样品序列。\n在 A-06 对关键离子进行交叉复核。\n在 S-03 完成流路冲洗和废液交接记录。","sourceName":"EXP-008-LC-MS 维护后验证与离子抑制检查.md","steps":[{"id":"EXP-008-s1","text":"确认 A-05 维护记录、校准文件和当前仪器规格版本。","line":1,"equipmentIds":["A-05"],"confirmed":true},{"id":"EXP-008-s2","text":"在 F-06 内配制离子抑制检查样品。","line":2,"equipmentIds":["F-06"],"confirmed":true},{"id":"EXP-008-s3","text":"在 A-05 完成维护后空白、校准和样品序列。","line":3,"equipmentIds":["A-05"],"confirmed":true},{"id":"EXP-008-s4","text":"在 A-06 对关键离子进行交叉复核。","line":4,"equipmentIds":["A-06"],"confirmed":true},{"id":"EXP-008-s5","text":"在 S-03 完成流路冲洗和废液交接记录。","line":5,"equipmentIds":["S-03"],"confirmed":true}],"reservations":[{"id":"EXP-008-r0","equipmentId":"A-05","start":"2026-10-10T08:00:00+08:00","end":"2026-10-10T09:30:00+08:00"},{"id":"EXP-008-r1","equipmentId":"F-06","start":"2026-10-10T08:30:00+08:00","end":"2026-10-10T09:30:00+08:00"},{"id":"EXP-008-r2","equipmentId":"A-05","start":"2026-10-10T09:30:00+08:00","end":"2026-10-10T11:00:00+08:00"},{"id":"EXP-008-r3","equipmentId":"A-06","start":"2026-10-10T11:00:00+08:00","end":"2026-10-10T12:00:00+08:00"},{"id":"EXP-008-r4","equipmentId":"S-03","start":"2026-10-10T12:00:00+08:00","end":"2026-10-10T12:30:00+08:00"}],"archived":false},{"id":"EXP-009","code":"EXP-009","labId":"lab-301","name":"样品留样与归档追踪","owner":"郑同学","revision":1,"source":"在 C-04 按批次核对留样容器、标签和归档位置。\n在 B-06 完成原始记录索引与交接登记。\n将已复核样品移入 C-04 并锁定归档状态。","sourceName":"EXP-009-样品留样与归档追踪.md","steps":[{"id":"EXP-009-s1","text":"在 C-04 按批次核对留样容器、标签和归档位置。","line":1,"equipmentIds":["C-04"],"confirmed":true},{"id":"EXP-009-s2","text":"在 B-06 完成原始记录索引与交接登记。","line":2,"equipmentIds":["B-06"],"confirmed":true},{"id":"EXP-009-s3","text":"将已复核样品移入 C-04 并锁定归档状态。","line":3,"equipmentIds":["C-04"],"confirmed":true}],"reservations":[{"id":"EXP-009-r0","equipmentId":"C-04","start":"2026-10-10T13:00:00+08:00","end":"2026-10-10T14:00:00+08:00"},{"id":"EXP-009-r1","equipmentId":"B-06","start":"2026-10-10T13:00:00+08:00","end":"2026-10-10T14:00:00+08:00"}],"archived":true},{"id":"EXP-010","code":"EXP-010","labId":"lab-301","name":"质谱废液交接与清场","owner":"韩同学","revision":1,"source":"在 W-03 核对废液容器标签、密封状态与交接单。\n在 B-06 完成废液批次和设备来源关联。\n在 C-04 暂存待转运样品并更新台账。\n由负责人复核交接记录与现场照片。","sourceName":"EXP-010-质谱废液交接与清场.md","steps":[{"id":"EXP-010-s1","text":"在 W-03 核对废液容器标签、密封状态与交接单。","line":1,"equipmentIds":["W-03"],"confirmed":true},{"id":"EXP-010-s2","text":"在 B-06 完成废液批次和设备来源关联。","line":2,"equipmentIds":["B-06"],"confirmed":true},{"id":"EXP-010-s3","text":"在 C-04 暂存待转运样品并更新台账。","line":3,"equipmentIds":["C-04"],"confirmed":true},{"id":"EXP-010-s4","text":"由负责人复核交接记录与现场照片。","line":4,"equipmentIds":[],"confirmed":true}],"reservations":[{"id":"EXP-010-r0","equipmentId":"W-03","start":"2026-10-10T15:00:00+08:00","end":"2026-10-10T16:00:00+08:00"},{"id":"EXP-010-r1","equipmentId":"B-06","start":"2026-10-10T15:00:00+08:00","end":"2026-10-10T16:00:00+08:00"},{"id":"EXP-010-r2","equipmentId":"C-04","start":"2026-10-10T14:00:00+08:00","end":"2026-10-10T15:00:00+08:00"}],"archived":false}],"documents":[{"id":"doc-F-01","name":"F-01 设备检查记录","kind":"inspection","equipmentId":"F-01","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"F-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-F-02","name":"F-02 设备检查记录","kind":"inspection","equipmentId":"F-02","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"F-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-C-01","name":"C-01 设备检查记录","kind":"inspection","equipmentId":"C-01","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"C-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-A-01","name":"A-01 设备检查记录","kind":"inspection","equipmentId":"A-01","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"A-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-A-02","name":"A-02 设备检查记录","kind":"inspection","equipmentId":"A-02","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"A-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-A-03","name":"A-03 设备检查记录","kind":"inspection","equipmentId":"A-03","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"A-03 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-F-04","name":"F-04 设备检查记录","kind":"inspection","equipmentId":"F-04","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"F-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-C-03","name":"C-03 设备检查记录","kind":"inspection","equipmentId":"C-03","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"C-03 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-A-04","name":"A-04 设备检查记录","kind":"inspection","equipmentId":"A-04","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"A-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-B-04","name":"B-04 设备检查记录","kind":"inspection","equipmentId":"B-04","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"B-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-C-04","name":"C-04 设备检查记录","kind":"inspection","equipmentId":"C-04","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"C-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-A-06","name":"A-06 设备检查记录","kind":"inspection","equipmentId":"A-06","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"A-06 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-S-01","name":"S-01 设备检查记录","kind":"inspection","equipmentId":"S-01","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"S-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-S-02","name":"S-02 设备检查记录","kind":"inspection","equipmentId":"S-02","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"S-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-B-01","name":"B-01 设备检查记录","kind":"inspection","equipmentId":"B-01","specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"B-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":"设施与安全组","reviewedAt":"2026-10-08T16:00:00+08:00"},{"id":"doc-W-01","name":"W-01 设备检查记录","kind":"inspection","equipmentId":"W-01","specVersion":1,"status":"pending","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"W-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n记录已上传，尚未完成独立核验；提交不等于适用。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":null,"reviewedAt":null},{"id":"doc-F-03","name":"F-03 设备检查记录","kind":"inspection","equipmentId":"F-03","specVersion":1,"status":"rejected","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"F-03 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n退回原因：现场状态与记录中的排风联锁描述不一致。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":null,"reviewedAt":null},{"id":"doc-C-02","name":"C-02 设备检查记录","kind":"inspection","equipmentId":"C-02","specVersion":1,"status":"pending","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"C-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n待补充温度曲线和留样柜校准记录。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":null,"reviewedAt":null},{"id":"doc-A-05-old","name":"A-05 设备检查记录","kind":"inspection","equipmentId":"A-05","specVersion":1,"status":"rejected","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-08T23:59:00+08:00","content":"A-05 历史设备检查记录。\n记录有效期已结束，且规格版本 v1 与当前台账 v2 不匹配。\n该记录不能覆盖维护后使用时段。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":null,"reviewedAt":null},{"id":"doc-A-05-current","name":"A-05 设备检查记录","kind":"inspection","equipmentId":"A-05","specVersion":2,"status":"pending","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"A-05 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n维护后检查记录待负责人确认；当前状态仍为待确认。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":null,"reviewedAt":null},{"id":"doc-W-02","name":"W-02 设备检查记录","kind":"inspection","equipmentId":"W-02","specVersion":1,"status":"rejected","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"W-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n退回原因：密封性检查未完成，设备登记为停用。","source":"设备维护台账 · 2026-Q4（示例）","reviewedBy":null,"reviewedAt":null},{"id":"sop-organic-prep","name":"有机样品前处理 SOP · v3.2","kind":"sop","equipmentId":null,"specVersion":3,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"规定样品接收、液液萃取、器皿清洗、废液分流与原始记录要求。","source":"实验室质量文件库 · SOP-ORG-032","reviewedBy":"质量负责人","reviewedAt":"2026-10-07T15:00:00+08:00"},{"id":"sop-gc-sequence","name":"GC 序列与进样检查 SOP · v2.4","kind":"sop","equipmentId":null,"specVersion":2,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"规定气相色谱序列建立、空白样、校准点、异常峰和复测记录要求。","source":"仪器平台文件库 · SOP-GC-024","reviewedBy":"质量负责人","reviewedAt":"2026-10-07T15:00:00+08:00"},{"id":"sop-lcms-maint","name":"LC-MS 维护后验证 SOP · v1.8","kind":"sop","equipmentId":null,"specVersion":2,"status":"pending","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"规定维护后空白、校准、离子抑制检查和流路冲洗的记录要求。","source":"仪器平台文件库 · SOP-LCMS-018","reviewedBy":null,"reviewedAt":null},{"id":"ref-waste-routing","name":"废液分流与交接记录模板","kind":"reference","equipmentId":null,"specVersion":1,"status":"verified","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"记录废液类别、容器标签、交接批次和负责人签字位置。","source":"实验室运行模板库 · TMP-WASTE-01","reviewedBy":"运行负责人","reviewedAt":"2026-10-06T10:00:00+08:00"},{"id":"ref-sample-chain","name":"样品流转与留样索引说明","kind":"reference","equipmentId":null,"specVersion":1,"status":"rejected","validFrom":"2026-10-01T08:00:00+08:00","validUntil":"2026-10-30T23:59:00+08:00","content":"退回：当前模板未覆盖跨实验室转移时的批次关联字段。","source":"质量文件库 · REF-SAMPLE-07","reviewedBy":"质量负责人","reviewedAt":"2026-10-06T10:00:00+08:00"}],"tasks":[{"id":"task-1","title":"补充 F-01 覆盖全部预约时段的检查记录","planId":"EXP-001","equipmentId":"F-01","owner":"陈同学","dueAt":"2026-10-09T08:30:00+08:00","status":"open","note":"上传不等于核验通过；需要独立确认适用范围。"},{"id":"task-2","title":"协调共享通风柜使用时段","planId":"EXP-002","equipmentId":"F-01","owner":"林同学","dueAt":"2026-10-09T09:00:00+08:00","status":"open","note":"与关联计划对照后提交变更方案。"},{"id":"task-3","title":"核对废液暂存记录的适用范围","planId":"EXP-004","equipmentId":"W-01","owner":"实验室管理员","dueAt":"2026-10-09T14:00:00+08:00","status":"submitted","note":"待负责人核验资料。"},{"id":"task-4","title":"处理 F-03 退回的联锁检查记录","planId":"EXP-006","equipmentId":"F-03","owner":"吴同学","dueAt":"2026-10-10T08:30:00+08:00","status":"open","note":"需要补充现场联锁测试记录后重新提交。"},{"id":"task-5","title":"确认 W-02 停用期间的废液替代路径","planId":"EXP-005","equipmentId":"W-02","owner":"何同学","dueAt":"2026-10-10T09:00:00+08:00","status":"open","note":"候选方案应独立保存，不能直接覆盖原计划。"},{"id":"task-6","title":"复核 A-04 方法版本和序列模板","planId":"EXP-007","equipmentId":"A-04","owner":"孙同学","dueAt":"2026-10-09T09:30:00+08:00","status":"done","note":"已提交方法版本、序列截图和原始记录索引。"},{"id":"task-7","title":"补交 A-05 维护后校准证据","planId":"EXP-008","equipmentId":"A-05","owner":"高同学","dueAt":"2026-10-10T10:30:00+08:00","status":"submitted","note":"记录已提交，仍需独立核验规格与有效时段。"},{"id":"task-8","title":"核对 C-03 标准品批号与温度曲线","planId":"EXP-007","equipmentId":"C-03","owner":"孙同学","dueAt":"2026-10-09T08:00:00+08:00","status":"done","note":"批号和储存曲线已关联到资料记录。"},{"id":"task-9","title":"更新跨实验室样品转移索引","planId":"EXP-009","equipmentId":"C-04","owner":"郑同学","dueAt":"2026-10-10T12:00:00+08:00","status":"done","note":"归档计划已停止新增预约，保留历史关系用于追踪。"},{"id":"task-10","title":"完成 W-03 废液交接单复核","planId":"EXP-010","equipmentId":"W-03","owner":"韩同学","dueAt":"2026-10-10T14:30:00+08:00","status":"open","note":"需补齐容器标签、交接批次与现场照片。"},{"id":"task-11","title":"整理无设备关联的 SOP 版本清单","planId":null,"equipmentId":null,"owner":"质量负责人","dueAt":"2026-10-11T12:00:00+08:00","status":"submitted","note":"用于后续计划导入时的原文与版本核对。"},{"id":"task-12","title":"确认 301 实验室冲洗台使用安排","planId":"EXP-008","equipmentId":"S-03","owner":"高同学","dueAt":"2026-10-10T11:30:00+08:00","status":"done","note":"已完成清洗站交接记录，但不改变仪器放行状态。"}],"decisions":[],"events":[],"branches":[]}
+{
+  "schemaVersion": 1,
+  "revision": 0,
+  "name": "实验安全协同工作区 · 2026-Q4 示例",
+  "provenance": "example",
+  "laboratories": [
+    {
+      "id": "lab-201",
+      "name": "有机分析与前处理实验室 · 201",
+      "description": "承担样品前处理、挥发性有机物分析、留样与废液分流；空间按前处理、分析、储存、清洗和废物管理划分。",
+      "width": 24,
+      "depth": 16
+    },
+    {
+      "id": "lab-301",
+      "name": "仪器分析与样品归档实验室 · 301",
+      "description": "承担色谱质谱序列、标准曲线复核、设备维护后验证和样品归档；与 201 共享部分样品流转记录。",
+      "width": 22,
+      "depth": 15
+    }
+  ],
+  "equipment": [
+    {
+      "id": "F-01",
+      "labId": "lab-201",
+      "code": "F-01",
+      "name": "主通风柜",
+      "kind": "hood",
+      "x": -7,
+      "z": -4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于挥发性有机溶剂前处理；配置联锁、局部排风和台面清场记录。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "F-02",
+      "labId": "lab-201",
+      "code": "F-02",
+      "name": "备用通风柜",
+      "kind": "hood",
+      "x": -3.6,
+      "z": -4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "备用通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [
+        {
+          "id": "maint-F02-1",
+          "start": "2026-10-09T12:00:00+08:00",
+          "end": "2026-10-09T14:00:00+08:00",
+          "reason": "计划维护窗口（排风柜面板检查）"
+        }
+      ]
+    },
+    {
+      "id": "F-03",
+      "labId": "lab-201",
+      "code": "F-03",
+      "name": "酸碱操作通风柜",
+      "kind": "hood",
+      "x": -0.2,
+      "z": -4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "实验室管理员",
+      "description": "用于酸碱和衍生化前处理；现场状态待当班负责人确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "F-04",
+      "labId": "lab-201",
+      "code": "F-04",
+      "name": "小型称量通风柜",
+      "kind": "balance",
+      "x": 3.2,
+      "z": -4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "小型称量通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "C-01",
+      "labId": "lab-201",
+      "code": "C-01",
+      "name": "易燃溶剂防火柜",
+      "kind": "flammable_cabinet",
+      "x": 6.6,
+      "z": -3.8,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "易燃溶剂防火柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "C-02",
+      "labId": "lab-201",
+      "code": "C-02",
+      "name": "样品留样冷藏柜",
+      "kind": "refrigerator",
+      "x": 6.7,
+      "z": -1.8,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "实验室管理员",
+      "description": "样品留样冷藏柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "A-01",
+      "labId": "lab-201",
+      "code": "A-01",
+      "name": "气相色谱分析台",
+      "kind": "gc",
+      "x": 5.8,
+      "z": 0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "气相色谱分析台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "A-02",
+      "labId": "lab-201",
+      "code": "A-02",
+      "name": "液相色谱分析台",
+      "kind": "hplc",
+      "x": 2.8,
+      "z": 0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "液相色谱分析台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "A-03",
+      "labId": "lab-201",
+      "code": "A-03",
+      "name": "紫外可见分光光度计",
+      "kind": "uv_vis",
+      "x": -0.2,
+      "z": 0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "紫外可见分光光度计的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "B-01",
+      "labId": "lab-201",
+      "code": "B-01",
+      "name": "样品前处理工作台",
+      "kind": "bench",
+      "x": -6.2,
+      "z": 0.8,
+      "rotation": 0,
+      "capacity": 2,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "样品前处理工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "B-02",
+      "labId": "lab-201",
+      "code": "B-02",
+      "name": "称量与稀释工作台",
+      "kind": "balance",
+      "x": -3,
+      "z": 0.8,
+      "rotation": 0,
+      "capacity": 2,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "称量与稀释工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "B-03",
+      "labId": "lab-201",
+      "code": "B-03",
+      "name": "原始记录工作台",
+      "kind": "bench",
+      "x": 0.4,
+      "z": 0.8,
+      "rotation": 0,
+      "capacity": 2,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "原始记录工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "S-01",
+      "labId": "lab-201",
+      "code": "S-01",
+      "name": "器皿清洗工作站",
+      "kind": "sink",
+      "x": -6.2,
+      "z": 4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "器皿清洗工作站的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "S-02",
+      "labId": "lab-201",
+      "code": "S-02",
+      "name": "去离子水清洗台",
+      "kind": "water_purification",
+      "x": -1.7,
+      "z": 4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "去离子水清洗台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "W-01",
+      "labId": "lab-201",
+      "code": "W-01",
+      "name": "有机废液暂存柜",
+      "kind": "solvent_waste",
+      "x": 6.4,
+      "z": 4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "实验室管理员",
+      "description": "有机废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "W-02",
+      "labId": "lab-201",
+      "code": "W-02",
+      "name": "酸碱废液暂存柜",
+      "kind": "acid_base_cabinet",
+      "x": 6.5,
+      "z": 2.1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unavailable",
+      "owner": "实验室管理员",
+      "description": "酸碱废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [
+        {
+          "id": "maint-W02-1",
+          "start": "2026-10-10T09:00:00+08:00",
+          "end": "2026-10-10T12:00:00+08:00",
+          "reason": "废液柜年度密封性检查"
+        }
+      ]
+    },
+    {
+      "id": "F-05",
+      "labId": "lab-301",
+      "code": "F-05",
+      "name": "质谱前处理通风柜",
+      "kind": "hood",
+      "x": -6,
+      "z": -3.7,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "质谱前处理通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "F-06",
+      "labId": "lab-301",
+      "code": "F-06",
+      "name": "衍生化操作通风柜",
+      "kind": "hood",
+      "x": -2.7,
+      "z": -3.7,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "实验室管理员",
+      "description": "衍生化操作通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "C-03",
+      "labId": "lab-301",
+      "code": "C-03",
+      "name": "标准品低温储存柜",
+      "kind": "freezer",
+      "x": 4.7,
+      "z": -3.6,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "标准品低温储存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "C-04",
+      "labId": "lab-301",
+      "code": "C-04",
+      "name": "归档样品储存柜",
+      "kind": "storage",
+      "x": 6.5,
+      "z": -1.4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "归档样品储存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "A-04",
+      "labId": "lab-301",
+      "code": "A-04",
+      "name": "UHPLC 分析系统",
+      "kind": "chromatography",
+      "x": 4.7,
+      "z": 0.7,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "UHPLC 分析系统的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "A-05",
+      "labId": "lab-301",
+      "code": "A-05",
+      "name": "三重四极杆质谱仪",
+      "kind": "mass_spec",
+      "x": 1.8,
+      "z": 0.7,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "实验室管理员",
+      "description": "三重四极杆质谱仪的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 2,
+      "maintenance": []
+    },
+    {
+      "id": "A-06",
+      "labId": "lab-301",
+      "code": "A-06",
+      "name": "离子色谱分析系统",
+      "kind": "ion_chromatography",
+      "x": -1.1,
+      "z": 0.7,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "离子色谱分析系统的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "B-04",
+      "labId": "lab-301",
+      "code": "B-04",
+      "name": "质谱样品制备台",
+      "kind": "clean_bench",
+      "x": -5.7,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 2,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "质谱样品制备台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "B-05",
+      "labId": "lab-301",
+      "code": "B-05",
+      "name": "标准曲线配制台",
+      "kind": "bench",
+      "x": -2.6,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 2,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "标准曲线配制台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "B-06",
+      "labId": "lab-301",
+      "code": "B-06",
+      "name": "数据复核工作台",
+      "kind": "bench",
+      "x": 0.2,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 2,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "数据复核工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "S-03",
+      "labId": "lab-301",
+      "code": "S-03",
+      "name": "仪器清洗与冲洗台",
+      "kind": "sink",
+      "x": -5.7,
+      "z": 4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "仪器清洗与冲洗台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "W-03",
+      "labId": "lab-301",
+      "code": "W-03",
+      "name": "质谱废液暂存柜",
+      "kind": "solvent_waste",
+      "x": 5.7,
+      "z": 4,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "实验室管理员",
+      "description": "质谱废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "P-01",
+      "labId": "lab-201",
+      "code": "P-01",
+      "name": "冷冻离心机",
+      "kind": "centrifuge",
+      "x": -5.2,
+      "z": -1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于样品分离与低温前处理；转子、最高转速和校准记录需按设备台账确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "P-02",
+      "labId": "lab-201",
+      "code": "P-02",
+      "name": "旋转蒸发仪",
+      "kind": "evaporator",
+      "x": -1.8,
+      "z": -1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于有机溶剂浓缩；真空、冷凝和水浴联锁属于使用前核对条件。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "P-03",
+      "labId": "lab-201",
+      "code": "P-03",
+      "name": "真空泵组",
+      "kind": "vacuum_pump",
+      "x": 1,
+      "z": -1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "为旋蒸和抽滤提供真空；油雾过滤、排气去向与维护状态需要证据。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "P-04",
+      "labId": "lab-201",
+      "code": "P-04",
+      "name": "氮吹浓缩仪",
+      "kind": "nitrogen_blowdown",
+      "x": 3.6,
+      "z": -1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于挥发性样品浓缩；氮气来源、针位和通风控制需要和SOP绑定。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "M-01",
+      "labId": "lab-201",
+      "code": "M-01",
+      "name": "气体报警与联动点",
+      "kind": "gas_detector",
+      "x": 7,
+      "z": 2.2,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "可燃/有毒气体监测点；报警设定、校验日期和覆盖区域来自设施台账。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "M-02",
+      "labId": "lab-201",
+      "code": "M-02",
+      "name": "温湿度与 VOC 监测点",
+      "kind": "environment_monitor",
+      "x": 4.8,
+      "z": 3.7,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "记录实验室环境和挥发性有机物趋势；数据源和采样周期需要明确。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "E-01",
+      "labId": "lab-201",
+      "code": "E-01",
+      "name": "洗眼器",
+      "kind": "eyewash",
+      "x": -7.1,
+      "z": 2,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "紧急冲洗设施；可达性、流量和月度点检记录属于安全前置条件。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "E-02",
+      "labId": "lab-201",
+      "code": "E-02",
+      "name": "紧急喷淋",
+      "kind": "safety_shower",
+      "x": -5,
+      "z": 3.9,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "紧急冲淋设施；可达性、排水和点检记录需要保持有效。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-01",
+      "labId": "lab-301",
+      "code": "R-01",
+      "name": "洁净工作台",
+      "kind": "clean_bench",
+      "x": -5.6,
+      "z": -3.3,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "为低尘样品制备提供局部洁净环境；洁净级别与过滤器维护需要证据。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-02",
+      "labId": "lab-301",
+      "code": "R-02",
+      "name": "生物安全柜",
+      "kind": "biosafety_cabinet",
+      "x": -2.3,
+      "z": -3.3,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于需要定向防护的样品操作；本项目仅登记设备依赖，不替代生物安全认证。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-03",
+      "labId": "lab-301",
+      "code": "R-03",
+      "name": "实时荧光 PCR",
+      "kind": "pcr",
+      "x": 1,
+      "z": -3.3,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于核酸扩增检测；运行程序、校准和样品区分区要求绑定到计划。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-04",
+      "labId": "lab-301",
+      "code": "R-04",
+      "name": "分析天平",
+      "kind": "balance",
+      "x": 4.3,
+      "z": -3.3,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于标准品与样品称量；量程、分度值和校准证书需要按对象核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-05",
+      "labId": "lab-301",
+      "code": "R-05",
+      "name": "低温冰箱",
+      "kind": "freezer",
+      "x": -5.6,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于标准品和样品低温保存；温度范围、报警和维护窗口需要记录。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-06",
+      "labId": "lab-301",
+      "code": "R-06",
+      "name": "鼓风干燥箱",
+      "kind": "drying_oven",
+      "x": -2.5,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于器皿和样品干燥；温度上限、校准和与挥发性物质的适用范围需确认。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-07",
+      "labId": "lab-301",
+      "code": "R-07",
+      "name": "马弗炉",
+      "kind": "furnace",
+      "x": 0.6,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于高温灰化；高温隔离、排气和冷却条件需要在计划中显式声明。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-08",
+      "labId": "lab-301",
+      "code": "R-08",
+      "name": "气瓶柜",
+      "kind": "gas_cabinet",
+      "x": 3.6,
+      "z": 1,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "用于受控存放气瓶；气体种类、减压器、固定和通风证据需要关联。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": []
+    },
+    {
+      "id": "R-09",
+      "labId": "lab-301",
+      "code": "R-09",
+      "name": "门禁与人员识别点",
+      "kind": "access_control",
+      "x": 6.5,
+      "z": 3.2,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "available",
+      "owner": "实验室管理员",
+      "description": "记录受控区域进出；此对象只表示设施关联，不把门禁状态当作实验批准。",
+      "requiresEvidence": false,
+      "specVersion": 1,
+      "maintenance": []
+    }
+  ],
+  "plans": [
+    {
+      "id": "EXP-001",
+      "code": "EXP-001",
+      "labId": "lab-201",
+      "name": "挥发性有机物样品前处理与 GC 复核",
+      "owner": "陈同学",
+      "revision": 1,
+      "source": "确认实验计划、样品批次与当前 SOP 版本。\n在 C-01 核对易燃溶剂标签、批号与储存状态。\n在 B-01 完成样品接收、称量与编号。\n在 F-01 内完成第一次液液萃取前的装置检查。\n在 F-01 内进行分液操作，并记录相界面变化。\n在 S-01 完成玻璃器皿初步清洗与冲洗登记。\n在 B-02 配制待测样品的稀释系列。\n在 A-01 上机前核对方法文件、灯源状态与序列。\n在 A-01 完成样品序列采集并记录异常峰。\n在 A-02 对关键样品执行复测与积分复核。\n在 C-02 暂存已完成分析的留样与原始记录。\n在 W-01 分流收集有机废液并完成容器标签。\n在 F-02 完成台面清场、断电确认与照片留证。\n由负责人核对原始数据、检查证据和放行意见。",
+      "sourceName": "EXP-001-挥发性有机物样品前处理与 GC 复核.md",
+      "steps": [
+        {
+          "id": "EXP-001-s1",
+          "text": "确认实验计划、样品批次与当前 SOP 版本。",
+          "line": 1,
+          "equipmentIds": [],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s2",
+          "text": "在 C-01 核对易燃溶剂标签、批号与储存状态。",
+          "line": 2,
+          "equipmentIds": [
+            "C-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s3",
+          "text": "在 B-01 完成样品接收、称量与编号。",
+          "line": 3,
+          "equipmentIds": [
+            "B-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s4",
+          "text": "在 F-01 内完成第一次液液萃取前的装置检查。",
+          "line": 4,
+          "equipmentIds": [
+            "F-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s5",
+          "text": "在 F-01 内进行分液操作，并记录相界面变化。",
+          "line": 5,
+          "equipmentIds": [
+            "F-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s6",
+          "text": "在 S-01 完成玻璃器皿初步清洗与冲洗登记。",
+          "line": 6,
+          "equipmentIds": [
+            "S-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s7",
+          "text": "在 B-02 配制待测样品的稀释系列。",
+          "line": 7,
+          "equipmentIds": [
+            "B-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s8",
+          "text": "在 A-01 上机前核对方法文件、灯源状态与序列。",
+          "line": 8,
+          "equipmentIds": [
+            "A-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s9",
+          "text": "在 A-01 完成样品序列采集并记录异常峰。",
+          "line": 9,
+          "equipmentIds": [
+            "A-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s10",
+          "text": "在 A-02 对关键样品执行复测与积分复核。",
+          "line": 10,
+          "equipmentIds": [
+            "A-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s11",
+          "text": "在 C-02 暂存已完成分析的留样与原始记录。",
+          "line": 11,
+          "equipmentIds": [
+            "C-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s12",
+          "text": "在 W-01 分流收集有机废液并完成容器标签。",
+          "line": 12,
+          "equipmentIds": [
+            "W-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s13",
+          "text": "在 F-02 完成台面清场、断电确认与照片留证。",
+          "line": 13,
+          "equipmentIds": [
+            "F-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-001-s14",
+          "text": "由负责人核对原始数据、检查证据和放行意见。",
+          "line": 14,
+          "equipmentIds": [],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-001-r0",
+          "equipmentId": "C-01",
+          "start": "2026-10-09T08:40:00+08:00",
+          "end": "2026-10-09T09:00:00+08:00"
+        },
+        {
+          "id": "EXP-001-r1",
+          "equipmentId": "B-01",
+          "start": "2026-10-09T08:45:00+08:00",
+          "end": "2026-10-09T10:00:00+08:00"
+        },
+        {
+          "id": "EXP-001-r2",
+          "equipmentId": "F-01",
+          "start": "2026-10-09T09:00:00+08:00",
+          "end": "2026-10-09T11:30:00+08:00"
+        },
+        {
+          "id": "EXP-001-r3",
+          "equipmentId": "S-01",
+          "start": "2026-10-09T09:20:00+08:00",
+          "end": "2026-10-09T10:10:00+08:00"
+        },
+        {
+          "id": "EXP-001-r4",
+          "equipmentId": "B-02",
+          "start": "2026-10-09T10:00:00+08:00",
+          "end": "2026-10-09T11:00:00+08:00"
+        },
+        {
+          "id": "EXP-001-r5",
+          "equipmentId": "A-01",
+          "start": "2026-10-09T11:30:00+08:00",
+          "end": "2026-10-09T12:30:00+08:00"
+        },
+        {
+          "id": "EXP-001-r6",
+          "equipmentId": "A-02",
+          "start": "2026-10-09T11:30:00+08:00",
+          "end": "2026-10-09T12:30:00+08:00"
+        },
+        {
+          "id": "EXP-001-r7",
+          "equipmentId": "C-02",
+          "start": "2026-10-09T12:30:00+08:00",
+          "end": "2026-10-09T13:00:00+08:00"
+        },
+        {
+          "id": "EXP-001-r8",
+          "equipmentId": "W-01",
+          "start": "2026-10-09T13:00:00+08:00",
+          "end": "2026-10-09T14:00:00+08:00"
+        },
+        {
+          "id": "EXP-001-r9",
+          "equipmentId": "F-02",
+          "start": "2026-10-09T14:00:00+08:00",
+          "end": "2026-10-09T15:00:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-002",
+      "code": "EXP-002",
+      "labId": "lab-201",
+      "name": "色谱分析准备与共享通风柜预约",
+      "owner": "林同学",
+      "revision": 1,
+      "source": "核对样品、设备与当前 SOP 版本。\n按已审核计划预约 F-01 与 B-02。\n确认本次使用时段的检查证据。\n在 A-03 完成标准曲线复核。",
+      "sourceName": "EXP-002-色谱分析准备与共享通风柜预约.md",
+      "steps": [
+        {
+          "id": "EXP-002-s1",
+          "text": "核对样品、设备与当前 SOP 版本。",
+          "line": 1,
+          "equipmentIds": [],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-002-s2",
+          "text": "按已审核计划预约 F-01 与 B-02。",
+          "line": 2,
+          "equipmentIds": [
+            "F-01",
+            "B-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-002-s3",
+          "text": "确认本次使用时段的检查证据。",
+          "line": 3,
+          "equipmentIds": [],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-002-s4",
+          "text": "在 A-03 完成标准曲线复核。",
+          "line": 4,
+          "equipmentIds": [
+            "A-03"
+          ],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-002-r0",
+          "equipmentId": "F-01",
+          "start": "2026-10-09T10:00:00+08:00",
+          "end": "2026-10-09T12:00:00+08:00"
+        },
+        {
+          "id": "EXP-002-r1",
+          "equipmentId": "B-02",
+          "start": "2026-10-09T09:30:00+08:00",
+          "end": "2026-10-09T11:00:00+08:00"
+        },
+        {
+          "id": "EXP-002-r2",
+          "equipmentId": "A-03",
+          "start": "2026-10-09T11:00:00+08:00",
+          "end": "2026-10-09T12:00:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-003",
+      "code": "EXP-003",
+      "labId": "lab-201",
+      "name": "样品称量与登记",
+      "owner": "周同学",
+      "revision": 1,
+      "source": "核对 A-01 的检查记录。\n在 B-02 完成样品登记。\n检查原始记录并提交复核。",
+      "sourceName": "EXP-003-样品称量与登记.md",
+      "steps": [
+        {
+          "id": "EXP-003-s1",
+          "text": "核对 A-01 的检查记录。",
+          "line": 1,
+          "equipmentIds": [
+            "A-01"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-003-s2",
+          "text": "在 B-02 完成样品登记。",
+          "line": 2,
+          "equipmentIds": [
+            "B-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-003-s3",
+          "text": "检查原始记录并提交复核。",
+          "line": 3,
+          "equipmentIds": [],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-003-r0",
+          "equipmentId": "A-01",
+          "start": "2026-10-09T08:00:00+08:00",
+          "end": "2026-10-09T09:00:00+08:00"
+        },
+        {
+          "id": "EXP-003-r1",
+          "equipmentId": "B-02",
+          "start": "2026-10-09T08:00:00+08:00",
+          "end": "2026-10-09T09:00:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-004",
+      "code": "EXP-004",
+      "labId": "lab-201",
+      "name": "废液记录与设备清场",
+      "owner": "赵同学",
+      "revision": 1,
+      "source": "核对 W-01 对应的记录与适用范围。\n补充当前时段的有效检查材料。\n由负责人确认记录，不生成应急处置指令。",
+      "sourceName": "EXP-004-废液记录与设备清场.md",
+      "steps": [
+        {
+          "id": "EXP-004-s1",
+          "text": "核对 W-01 对应的记录与适用范围。",
+          "line": 1,
+          "equipmentIds": [
+            "W-01"
+          ],
+          "confirmed": false
+        },
+        {
+          "id": "EXP-004-s2",
+          "text": "补充当前时段的有效检查材料。",
+          "line": 2,
+          "equipmentIds": [],
+          "confirmed": false
+        },
+        {
+          "id": "EXP-004-s3",
+          "text": "由负责人确认记录，不生成应急处置指令。",
+          "line": 3,
+          "equipmentIds": [],
+          "confirmed": false
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-004-r0",
+          "equipmentId": "W-01",
+          "start": "2026-10-09T15:00:00+08:00",
+          "end": "2026-10-09T16:00:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-005",
+      "code": "EXP-005",
+      "labId": "lab-201",
+      "name": "低温浓缩与溶剂回收复核",
+      "owner": "何同学",
+      "revision": 1,
+      "source": "在 F-02 完成旋蒸前的冷却水和密封检查。\n在 A-02 采集回收溶剂的纯度复测数据。\n在 W-02 完成酸碱废液分流登记。\n提交回收批次的原始记录和设备照片。",
+      "sourceName": "EXP-005-低温浓缩与溶剂回收复核.md",
+      "steps": [
+        {
+          "id": "EXP-005-s1",
+          "text": "在 F-02 完成旋蒸前的冷却水和密封检查。",
+          "line": 1,
+          "equipmentIds": [
+            "F-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-005-s2",
+          "text": "在 A-02 采集回收溶剂的纯度复测数据。",
+          "line": 2,
+          "equipmentIds": [
+            "A-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-005-s3",
+          "text": "在 W-02 完成酸碱废液分流登记。",
+          "line": 3,
+          "equipmentIds": [
+            "W-02"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-005-s4",
+          "text": "提交回收批次的原始记录和设备照片。",
+          "line": 4,
+          "equipmentIds": [],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-005-r0",
+          "equipmentId": "F-02",
+          "start": "2026-10-10T08:30:00+08:00",
+          "end": "2026-10-10T09:30:00+08:00"
+        },
+        {
+          "id": "EXP-005-r1",
+          "equipmentId": "A-02",
+          "start": "2026-10-10T10:00:00+08:00",
+          "end": "2026-10-10T11:00:00+08:00"
+        },
+        {
+          "id": "EXP-005-r2",
+          "equipmentId": "W-02",
+          "start": "2026-10-10T09:30:00+08:00",
+          "end": "2026-10-10T10:30:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-006",
+      "code": "EXP-006",
+      "labId": "lab-201",
+      "name": "酸碱衍生化样品复测",
+      "owner": "吴同学",
+      "revision": 1,
+      "source": "在 F-03 内确认衍生化反应器皿与局部排风状态。\n在 B-03 完成样品和批次关系登记。\n在 A-03 执行复测序列并核对空白样。\n在 S-02 完成器皿冲洗和去离子水记录。",
+      "sourceName": "EXP-006-酸碱衍生化样品复测.md",
+      "steps": [
+        {
+          "id": "EXP-006-s1",
+          "text": "在 F-03 内确认衍生化反应器皿与局部排风状态。",
+          "line": 1,
+          "equipmentIds": [
+            "F-03"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-006-s2",
+          "text": "在 B-03 完成样品和批次关系登记。",
+          "line": 2,
+          "equipmentIds": [
+            "B-03"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-006-s3",
+          "text": "在 A-03 执行复测序列并核对空白样。",
+          "line": 3,
+          "equipmentIds": [
+            "A-03"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-006-s4",
+          "text": "在 S-02 完成器皿冲洗和去离子水记录。",
+          "line": 4,
+          "equipmentIds": [
+            "S-02"
+          ],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-006-r0",
+          "equipmentId": "F-03",
+          "start": "2026-10-10T09:00:00+08:00",
+          "end": "2026-10-10T10:30:00+08:00"
+        },
+        {
+          "id": "EXP-006-r1",
+          "equipmentId": "B-03",
+          "start": "2026-10-10T09:00:00+08:00",
+          "end": "2026-10-10T10:45:00+08:00"
+        },
+        {
+          "id": "EXP-006-r2",
+          "equipmentId": "A-03",
+          "start": "2026-10-10T11:00:00+08:00",
+          "end": "2026-10-10T12:00:00+08:00"
+        },
+        {
+          "id": "EXP-006-r3",
+          "equipmentId": "S-02",
+          "start": "2026-10-10T12:00:00+08:00",
+          "end": "2026-10-10T12:30:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-007",
+      "code": "EXP-007",
+      "labId": "lab-301",
+      "name": "UHPLC 序列准备与标准曲线核查",
+      "owner": "孙同学",
+      "revision": 1,
+      "source": "在 C-03 核对标准品批号、有效期和低温储存记录。\n在 B-04 完成质谱样品前处理和编号。\n在 F-05 内完成流动相脱气与上机前检查。\n在 A-04 建立 UHPLC 序列并记录方法版本。\n在 B-05 复核标准曲线浓度梯度与稀释记录。",
+      "sourceName": "EXP-007-UHPLC 序列准备与标准曲线核查.md",
+      "steps": [
+        {
+          "id": "EXP-007-s1",
+          "text": "在 C-03 核对标准品批号、有效期和低温储存记录。",
+          "line": 1,
+          "equipmentIds": [
+            "C-03"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-007-s2",
+          "text": "在 B-04 完成质谱样品前处理和编号。",
+          "line": 2,
+          "equipmentIds": [
+            "B-04"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-007-s3",
+          "text": "在 F-05 内完成流动相脱气与上机前检查。",
+          "line": 3,
+          "equipmentIds": [
+            "F-05"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-007-s4",
+          "text": "在 A-04 建立 UHPLC 序列并记录方法版本。",
+          "line": 4,
+          "equipmentIds": [
+            "A-04"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-007-s5",
+          "text": "在 B-05 复核标准曲线浓度梯度与稀释记录。",
+          "line": 5,
+          "equipmentIds": [
+            "B-05"
+          ],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-007-r0",
+          "equipmentId": "C-03",
+          "start": "2026-10-09T08:30:00+08:00",
+          "end": "2026-10-09T09:00:00+08:00"
+        },
+        {
+          "id": "EXP-007-r1",
+          "equipmentId": "B-04",
+          "start": "2026-10-09T08:45:00+08:00",
+          "end": "2026-10-09T10:00:00+08:00"
+        },
+        {
+          "id": "EXP-007-r2",
+          "equipmentId": "F-05",
+          "start": "2026-10-09T09:00:00+08:00",
+          "end": "2026-10-09T10:00:00+08:00"
+        },
+        {
+          "id": "EXP-007-r3",
+          "equipmentId": "A-04",
+          "start": "2026-10-09T10:00:00+08:00",
+          "end": "2026-10-09T12:00:00+08:00"
+        },
+        {
+          "id": "EXP-007-r4",
+          "equipmentId": "B-05",
+          "start": "2026-10-09T09:30:00+08:00",
+          "end": "2026-10-09T10:30:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-008",
+      "code": "EXP-008",
+      "labId": "lab-301",
+      "name": "LC-MS 维护后验证与离子抑制检查",
+      "owner": "高同学",
+      "revision": 1,
+      "source": "确认 A-05 维护记录、校准文件和当前仪器规格版本。\n在 F-06 内配制离子抑制检查样品。\n在 A-05 完成维护后空白、校准和样品序列。\n在 A-06 对关键离子进行交叉复核。\n在 S-03 完成流路冲洗和废液交接记录。",
+      "sourceName": "EXP-008-LC-MS 维护后验证与离子抑制检查.md",
+      "steps": [
+        {
+          "id": "EXP-008-s1",
+          "text": "确认 A-05 维护记录、校准文件和当前仪器规格版本。",
+          "line": 1,
+          "equipmentIds": [
+            "A-05"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-008-s2",
+          "text": "在 F-06 内配制离子抑制检查样品。",
+          "line": 2,
+          "equipmentIds": [
+            "F-06"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-008-s3",
+          "text": "在 A-05 完成维护后空白、校准和样品序列。",
+          "line": 3,
+          "equipmentIds": [
+            "A-05"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-008-s4",
+          "text": "在 A-06 对关键离子进行交叉复核。",
+          "line": 4,
+          "equipmentIds": [
+            "A-06"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-008-s5",
+          "text": "在 S-03 完成流路冲洗和废液交接记录。",
+          "line": 5,
+          "equipmentIds": [
+            "S-03"
+          ],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-008-r0",
+          "equipmentId": "A-05",
+          "start": "2026-10-10T08:00:00+08:00",
+          "end": "2026-10-10T09:30:00+08:00"
+        },
+        {
+          "id": "EXP-008-r1",
+          "equipmentId": "F-06",
+          "start": "2026-10-10T08:30:00+08:00",
+          "end": "2026-10-10T09:30:00+08:00"
+        },
+        {
+          "id": "EXP-008-r2",
+          "equipmentId": "A-05",
+          "start": "2026-10-10T09:30:00+08:00",
+          "end": "2026-10-10T11:00:00+08:00"
+        },
+        {
+          "id": "EXP-008-r3",
+          "equipmentId": "A-06",
+          "start": "2026-10-10T11:00:00+08:00",
+          "end": "2026-10-10T12:00:00+08:00"
+        },
+        {
+          "id": "EXP-008-r4",
+          "equipmentId": "S-03",
+          "start": "2026-10-10T12:00:00+08:00",
+          "end": "2026-10-10T12:30:00+08:00"
+        }
+      ],
+      "archived": false
+    },
+    {
+      "id": "EXP-009",
+      "code": "EXP-009",
+      "labId": "lab-301",
+      "name": "样品留样与归档追踪",
+      "owner": "郑同学",
+      "revision": 1,
+      "source": "在 C-04 按批次核对留样容器、标签和归档位置。\n在 B-06 完成原始记录索引与交接登记。\n将已复核样品移入 C-04 并锁定归档状态。",
+      "sourceName": "EXP-009-样品留样与归档追踪.md",
+      "steps": [
+        {
+          "id": "EXP-009-s1",
+          "text": "在 C-04 按批次核对留样容器、标签和归档位置。",
+          "line": 1,
+          "equipmentIds": [
+            "C-04"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-009-s2",
+          "text": "在 B-06 完成原始记录索引与交接登记。",
+          "line": 2,
+          "equipmentIds": [
+            "B-06"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-009-s3",
+          "text": "将已复核样品移入 C-04 并锁定归档状态。",
+          "line": 3,
+          "equipmentIds": [
+            "C-04"
+          ],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-009-r0",
+          "equipmentId": "C-04",
+          "start": "2026-10-10T13:00:00+08:00",
+          "end": "2026-10-10T14:00:00+08:00"
+        },
+        {
+          "id": "EXP-009-r1",
+          "equipmentId": "B-06",
+          "start": "2026-10-10T13:00:00+08:00",
+          "end": "2026-10-10T14:00:00+08:00"
+        }
+      ],
+      "archived": true
+    },
+    {
+      "id": "EXP-010",
+      "code": "EXP-010",
+      "labId": "lab-301",
+      "name": "质谱废液交接与清场",
+      "owner": "韩同学",
+      "revision": 1,
+      "source": "在 W-03 核对废液容器标签、密封状态与交接单。\n在 B-06 完成废液批次和设备来源关联。\n在 C-04 暂存待转运样品并更新台账。\n由负责人复核交接记录与现场照片。",
+      "sourceName": "EXP-010-质谱废液交接与清场.md",
+      "steps": [
+        {
+          "id": "EXP-010-s1",
+          "text": "在 W-03 核对废液容器标签、密封状态与交接单。",
+          "line": 1,
+          "equipmentIds": [
+            "W-03"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-010-s2",
+          "text": "在 B-06 完成废液批次和设备来源关联。",
+          "line": 2,
+          "equipmentIds": [
+            "B-06"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-010-s3",
+          "text": "在 C-04 暂存待转运样品并更新台账。",
+          "line": 3,
+          "equipmentIds": [
+            "C-04"
+          ],
+          "confirmed": true
+        },
+        {
+          "id": "EXP-010-s4",
+          "text": "由负责人复核交接记录与现场照片。",
+          "line": 4,
+          "equipmentIds": [],
+          "confirmed": true
+        }
+      ],
+      "reservations": [
+        {
+          "id": "EXP-010-r0",
+          "equipmentId": "W-03",
+          "start": "2026-10-10T15:00:00+08:00",
+          "end": "2026-10-10T16:00:00+08:00"
+        },
+        {
+          "id": "EXP-010-r1",
+          "equipmentId": "B-06",
+          "start": "2026-10-10T15:00:00+08:00",
+          "end": "2026-10-10T16:00:00+08:00"
+        },
+        {
+          "id": "EXP-010-r2",
+          "equipmentId": "C-04",
+          "start": "2026-10-10T14:00:00+08:00",
+          "end": "2026-10-10T15:00:00+08:00"
+        }
+      ],
+      "archived": false
+    }
+  ],
+  "documents": [
+    {
+      "id": "doc-F-01",
+      "name": "F-01 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "F-01",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "F-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-F-02",
+      "name": "F-02 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "F-02",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "F-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-C-01",
+      "name": "C-01 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "C-01",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "C-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-A-01",
+      "name": "A-01 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-01",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "A-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-A-02",
+      "name": "A-02 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-02",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "A-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-A-03",
+      "name": "A-03 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-03",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "A-03 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-F-04",
+      "name": "F-04 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "F-04",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "F-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-C-03",
+      "name": "C-03 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "C-03",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "C-03 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-A-04",
+      "name": "A-04 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-04",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "A-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-B-04",
+      "name": "B-04 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "B-04",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "B-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-C-04",
+      "name": "C-04 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "C-04",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "C-04 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-A-06",
+      "name": "A-06 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-06",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "A-06 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-S-01",
+      "name": "S-01 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "S-01",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "S-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-S-02",
+      "name": "S-02 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "S-02",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "S-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-B-01",
+      "name": "B-01 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "B-01",
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "B-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n该记录用于演示资源与证据的关联核验，不替代现场检查或机构安全结论。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": "设施与安全组",
+      "reviewedAt": "2026-10-08T16:00:00+08:00"
+    },
+    {
+      "id": "doc-W-01",
+      "name": "W-01 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "W-01",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "W-01 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n记录已上传，尚未完成独立核验；提交不等于适用。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-F-03",
+      "name": "F-03 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "F-03",
+      "specVersion": 1,
+      "status": "rejected",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "F-03 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n退回原因：现场状态与记录中的排风联锁描述不一致。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-C-02",
+      "name": "C-02 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "C-02",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "C-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n待补充温度曲线和留样柜校准记录。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-05-old",
+      "name": "A-05 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-05",
+      "specVersion": 1,
+      "status": "rejected",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-08T23:59:00+08:00",
+      "content": "A-05 历史设备检查记录。\n记录有效期已结束，且规格版本 v1 与当前台账 v2 不匹配。\n该记录不能覆盖维护后使用时段。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-05-current",
+      "name": "A-05 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "A-05",
+      "specVersion": 2,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "A-05 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n维护后检查记录待负责人确认；当前状态仍为待确认。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-W-02",
+      "name": "W-02 设备检查记录",
+      "kind": "inspection",
+      "equipmentId": "W-02",
+      "specVersion": 1,
+      "status": "rejected",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "W-02 设备检查记录。\n检查范围：设备编号、规格版本、联锁、记录完整性与适用时段。\n退回原因：密封性检查未完成，设备登记为停用。",
+      "source": "设备维护台账 · 2026-Q4（示例）",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "sop-organic-prep",
+      "name": "有机样品前处理 SOP · v3.2",
+      "kind": "sop",
+      "equipmentId": null,
+      "specVersion": 3,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "规定样品接收、液液萃取、器皿清洗、废液分流与原始记录要求。",
+      "source": "实验室质量文件库 · SOP-ORG-032",
+      "reviewedBy": "质量负责人",
+      "reviewedAt": "2026-10-07T15:00:00+08:00"
+    },
+    {
+      "id": "sop-gc-sequence",
+      "name": "GC 序列与进样检查 SOP · v2.4",
+      "kind": "sop",
+      "equipmentId": null,
+      "specVersion": 2,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "规定气相色谱序列建立、空白样、校准点、异常峰和复测记录要求。",
+      "source": "仪器平台文件库 · SOP-GC-024",
+      "reviewedBy": "质量负责人",
+      "reviewedAt": "2026-10-07T15:00:00+08:00"
+    },
+    {
+      "id": "sop-lcms-maint",
+      "name": "LC-MS 维护后验证 SOP · v1.8",
+      "kind": "sop",
+      "equipmentId": null,
+      "specVersion": 2,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "规定维护后空白、校准、离子抑制检查和流路冲洗的记录要求。",
+      "source": "仪器平台文件库 · SOP-LCMS-018",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "ref-waste-routing",
+      "name": "废液分流与交接记录模板",
+      "kind": "reference",
+      "equipmentId": null,
+      "specVersion": 1,
+      "status": "verified",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "记录废液类别、容器标签、交接批次和负责人签字位置。",
+      "source": "实验室运行模板库 · TMP-WASTE-01",
+      "reviewedBy": "运行负责人",
+      "reviewedAt": "2026-10-06T10:00:00+08:00"
+    },
+    {
+      "id": "ref-sample-chain",
+      "name": "样品流转与留样索引说明",
+      "kind": "reference",
+      "equipmentId": null,
+      "specVersion": 1,
+      "status": "rejected",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-10-30T23:59:00+08:00",
+      "content": "退回：当前模板未覆盖跨实验室转移时的批次关联字段。",
+      "source": "质量文件库 · REF-SAMPLE-07",
+      "reviewedBy": "质量负责人",
+      "reviewedAt": "2026-10-06T10:00:00+08:00"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "补充 F-01 覆盖全部预约时段的检查记录",
+      "planId": "EXP-001",
+      "equipmentId": "F-01",
+      "owner": "陈同学",
+      "dueAt": "2026-10-09T08:30:00+08:00",
+      "status": "open",
+      "note": "上传不等于核验通过；需要独立确认适用范围。"
+    },
+    {
+      "id": "task-2",
+      "title": "协调共享通风柜使用时段",
+      "planId": "EXP-002",
+      "equipmentId": "F-01",
+      "owner": "林同学",
+      "dueAt": "2026-10-09T09:00:00+08:00",
+      "status": "open",
+      "note": "与关联计划对照后提交变更方案。"
+    },
+    {
+      "id": "task-3",
+      "title": "核对废液暂存记录的适用范围",
+      "planId": "EXP-004",
+      "equipmentId": "W-01",
+      "owner": "实验室管理员",
+      "dueAt": "2026-10-09T14:00:00+08:00",
+      "status": "submitted",
+      "note": "待负责人核验资料。"
+    },
+    {
+      "id": "task-4",
+      "title": "处理 F-03 退回的联锁检查记录",
+      "planId": "EXP-006",
+      "equipmentId": "F-03",
+      "owner": "吴同学",
+      "dueAt": "2026-10-10T08:30:00+08:00",
+      "status": "open",
+      "note": "需要补充现场联锁测试记录后重新提交。"
+    },
+    {
+      "id": "task-5",
+      "title": "确认 W-02 停用期间的废液替代路径",
+      "planId": "EXP-005",
+      "equipmentId": "W-02",
+      "owner": "何同学",
+      "dueAt": "2026-10-10T09:00:00+08:00",
+      "status": "open",
+      "note": "候选方案应独立保存，不能直接覆盖原计划。"
+    },
+    {
+      "id": "task-6",
+      "title": "复核 A-04 方法版本和序列模板",
+      "planId": "EXP-007",
+      "equipmentId": "A-04",
+      "owner": "孙同学",
+      "dueAt": "2026-10-09T09:30:00+08:00",
+      "status": "done",
+      "note": "已提交方法版本、序列截图和原始记录索引。"
+    },
+    {
+      "id": "task-7",
+      "title": "补交 A-05 维护后校准证据",
+      "planId": "EXP-008",
+      "equipmentId": "A-05",
+      "owner": "高同学",
+      "dueAt": "2026-10-10T10:30:00+08:00",
+      "status": "submitted",
+      "note": "记录已提交，仍需独立核验规格与有效时段。"
+    },
+    {
+      "id": "task-8",
+      "title": "核对 C-03 标准品批号与温度曲线",
+      "planId": "EXP-007",
+      "equipmentId": "C-03",
+      "owner": "孙同学",
+      "dueAt": "2026-10-09T08:00:00+08:00",
+      "status": "done",
+      "note": "批号和储存曲线已关联到资料记录。"
+    },
+    {
+      "id": "task-9",
+      "title": "更新跨实验室样品转移索引",
+      "planId": "EXP-009",
+      "equipmentId": "C-04",
+      "owner": "郑同学",
+      "dueAt": "2026-10-10T12:00:00+08:00",
+      "status": "done",
+      "note": "归档计划已停止新增预约，保留历史关系用于追踪。"
+    },
+    {
+      "id": "task-10",
+      "title": "完成 W-03 废液交接单复核",
+      "planId": "EXP-010",
+      "equipmentId": "W-03",
+      "owner": "韩同学",
+      "dueAt": "2026-10-10T14:30:00+08:00",
+      "status": "open",
+      "note": "需补齐容器标签、交接批次与现场照片。"
+    },
+    {
+      "id": "task-11",
+      "title": "整理无设备关联的 SOP 版本清单",
+      "planId": null,
+      "equipmentId": null,
+      "owner": "质量负责人",
+      "dueAt": "2026-10-11T12:00:00+08:00",
+      "status": "submitted",
+      "note": "用于后续计划导入时的原文与版本核对。"
+    },
+    {
+      "id": "task-12",
+      "title": "确认 301 实验室冲洗台使用安排",
+      "planId": "EXP-008",
+      "equipmentId": "S-03",
+      "owner": "高同学",
+      "dueAt": "2026-10-10T11:30:00+08:00",
+      "status": "done",
+      "note": "已完成清洗站交接记录，但不改变仪器放行状态。"
+    }
+  ],
+  "decisions": [],
+  "events": [],
+  "branches": []
+}

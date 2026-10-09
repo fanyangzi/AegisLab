@@ -1,5 +1,5 @@
 import type { Workspace, Plan, Check, Operation, Equipment, DocumentRecord, Task, Branch, Laboratory } from './types'
-import { uid } from './types'
+import { uid, kindNames } from './types'
 
 export const RULE_PACK = 'resource-prerequisites/1.0'
 export const emptyWorkspace = (): Workspace => ({ schemaVersion: 1, revision: 0, name: '我的实验工作区', provenance: 'user', laboratories: [], equipment: [], plans: [], documents: [], tasks: [], decisions: [], events: [], branches: [] })
@@ -78,7 +78,7 @@ export function assertWorkspace(w: Workspace): void {
   const labIds = new Set(w.laboratories.map(l => l.id)), eqIds = new Set(w.equipment.map(e => e.id)), planIds = new Set(w.plans.map(p => p.id))
   for (const l of w.laboratories) if (!l.name?.trim() || !Number.isFinite(l.width) || !Number.isFinite(l.depth) || l.width < 6 || l.width > 40 || l.depth < 6 || l.depth > 40) fail('实验室名称或尺寸无效。')
   for (const e of w.equipment) {
-    if (!labIds.has(e.labId) || !e.name?.trim() || !e.code?.trim() || !['hood','bench','storage','analyzer','sink','waste'].includes(e.kind) || !['available','unavailable','unknown'].includes(e.status)) fail('设备资料不完整。')
+    if (!labIds.has(e.labId) || !e.name?.trim() || !e.code?.trim() || !(e.kind in kindNames) || !['available','unavailable','unknown'].includes(e.status)) fail('设备资料不完整。')
     if (![e.x,e.z,e.rotation,e.specVersion].every(Number.isFinite) || !Number.isInteger(e.capacity) || e.capacity < 1 || e.capacity > 100 || e.specVersion < 1) fail('设备坐标、容量或规格版本无效。')
     const l = w.laboratories.find(l => l.id === e.labId)!
     if (Math.abs(e.x) > l.width / 2 - 0.5 || Math.abs(e.z) > l.depth / 2 - 0.5) fail('设备位置超出实验室边界。')
