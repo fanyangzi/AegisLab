@@ -47,6 +47,12 @@ export function WebWorkspace(){
  useEffect(()=>{const key=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setSearchOpen(true)}};addEventListener('keydown',key);return()=>removeEventListener('keydown',key)},[])
  const initialize=async()=>{try{await act({type:'initialize',payload:{workspace:prepareExample(example as Workspace,route.date)}});navigate({labId:'lab-201',selection:{type:'equipment',id:'F-01'},page:'space',view:'space'})}catch{}}
  const common={w,labId,mutate:act,onClose:close,onLabCreated:(id:string)=>{setListOpen(true);navigate({page:'space',view:'space',labId:id,planId:'',selection:null});setNotice('实验室已建立，已切换到新空间。')},onEquipmentCreated:(id:string)=>{navigate({page:'space',view:'space',labId,planId:'',selection:{type:'equipment',id}});setListOpen(false);setNotice('资源已加入空间并自动定位。')}}
+ useEffect(()=>{
+  if(route.page!=='space'||route.selection||booting||!labId||!equipment.length)return
+  const preferred=snapshot.checks.find(check=>check.state==='blocked'||check.state==='unknown')?.equipmentId
+  const target=equipment.find(item=>item.id===preferred)||equipment[0]
+  if(target)navigate({labId,selection:{type:'equipment',id:target.id}})
+ },[booting,equipment,labId,navigate,route.page,route.selection,snapshot.checks])
  const inspector=<Inspector key={`${route.selection?.type}:${route.selection?.id}`} snapshot={snapshot} activeLabId={labId} selection={route.selection} onSelect={select} onOpenPlan={openPlan} onTask={(planId,equipmentId)=>setForm({type:'task',planId,equipmentId})} onDocument={()=>setForm({type:'document',equipmentId:route.selection?.type==='equipment'?route.selection.id:undefined})} onEditEquipment={id=>setForm({type:'equipment',id})} onBranch={id=>setForm({type:'branch',id})} onReviewDocument={id=>setForm({type:'verify',id})}/>
  const currentPlan=w.plans.find(p=>p.id===route.planId)
  return <div className={`al-shell ${expanded?'nav-expanded':''} ${route.selection?'has-selection':''}`}>

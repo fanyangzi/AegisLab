@@ -156,7 +156,7 @@ export default function LabScene(props:Props) {
   scene.add(room(props.lab))
   const camera=new THREE.OrthographicCamera(-10,10,8,-8,.1,200)
   const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.minZoom=.5;controls.maxZoom=3;controls.minPolarAngle=.30;controls.maxPolarAngle=Math.PI*.45;controls.enablePan=true;controls.target.set(0,.6,0)
-  const reset=()=>{const w=props.lab.width,d=props.lab.depth;camera.position.set(w*1.08,Math.max(10,d*1.06),d*1.32);camera.zoom=1.08;controls.target.set(0,.55,0);camera.updateProjectionMatrix();controls.update()};reset()
+  const reset=()=>{const w=props.lab.width,d=props.lab.depth;camera.position.set(w*1.08,Math.max(10,d*1.06),d*1.32);camera.zoom=1.2;controls.target.set(0,.55,0);camera.updateProjectionMatrix();controls.update()};reset()
   const models=props.equipment.map(e=>{const m=model(e);scene.add(m.group);const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.width+.12,m.height+.1,m.depth+.12)),new THREE.LineBasicMaterial({color:C.blue,transparent:true,opacity:.8}));outline.position.set(e.x,m.height/2,e.z);outline.rotation.y=e.rotation*Math.PI/180;scene.add(outline);return {...m,e,outline}})
   const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
   let aiPointer:HTMLButtonElement|null=null
