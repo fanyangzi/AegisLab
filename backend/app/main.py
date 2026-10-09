@@ -87,6 +87,75 @@ def parse_sop_endpoint(payload: SOPParseRequest) -> Dict[str, Any]:
     return {"title": payload.title, "room": payload.room, **parsed}
 
 
+@app.post("/parse/sop/ai-preview", tags=["parser"])
+@app.post("/api/parse/sop/ai-preview", include_in_schema=False, tags=["parser"])
+def ai_preview_sop(payload: SOPParseRequest) -> Dict[str, Any]:
+    """Return a reviewable AI candidate before a spatial plan is saved.
+
+    The deterministic parser always supplies the evidence-preserving baseline.
+    If an OpenAI-compatible model is configured, it may enrich ambiguous SOP
+    language.  The response is explicitly a candidate preview: it does not
+    write a review, approve a plan, or replace the hard-rule checks.
+    """
+    parsed = parse_sop(payload.sop_text)
+    llm_fields = service.llm.extract_sop(payload.sop_text)
+    llm_used = False
+    if llm_fields:
+        try:
+            llm_steps = [
+                LabStep(**item)
+                for item in llm_fields.get("steps", [])
+                if isinstance(item, dict) and str(item.get("instruction", "")).strip()
+            ]
+            for index, step in enumerate(llm_steps):
+                if not step.evidence_refs and index < len(parsed["steps"]):
+                    step.evidence_refs = parsed["steps"][index].evidence_refs
+            if llm_steps:
+                parsed["steps"] = llm_steps
+                llm_used = True
+            llm_substances = [
+                Substance(**item)
+                for item in llm_fields.get("substances", [])
+                if isinstance(item, dict) and str(item.get("name", "")).strip()
+            ]
+            if llm_substances:
+                parsed["substances"] = llm_substances
+                llm_used = True
+            for key in ("ppe", "equipment", "waste_streams"):
+                values = llm_fields.get(key)
+                if isinstance(values, list) and values:
+                    parsed[key] = sorted({str(value).strip() for value in values if str(value).strip()})
+                    llm_used = True
+            if isinstance(llm_fields.get("ventilation"), str) and llm_fields["ventilation"].strip():
+                parsed["ventilation"] = llm_fields["ventilation"].strip()
+                llm_used = True
+        except (TypeError, ValueError):
+            # Keep the deterministic parse if the remote response is incomplete.
+            llm_used = False
+
+    status = service.llm.status()
+    return {
+        "title": payload.title,
+        "room": payload.room,
+        "steps": [item.model_dump(mode="json") for item in parsed["steps"]],
+        "substances": [item.model_dump(mode="json") for item in parsed["substances"]],
+        "ppe": parsed["ppe"],
+        "equipment": parsed["equipment"],
+        "ventilation": parsed["ventilation"],
+        "waste_streams": parsed["waste_streams"],
+        "evidence": parsed["evidence"],
+        "ai": {
+            "provider": status["provider"],
+            "model": status["model"],
+            "configured": status["configured"],
+            "used": llm_used,
+            "mode": "remote" if llm_used else "deterministic",
+            "message": "模型已生成候选结构，待人工确认。" if llm_used else "当前使用确定性抽取；配置模型后可补充歧义字段。",
+        },
+        "scope": "候选结构仅用于人工确认；不写入工作区，不构成安全审批或开工许可。",
+    }
+
+
 @app.post("/reviews/from-sop", response_model=Review, status_code=201, tags=["parser"])
 def create_review_from_sop(payload: SOPParseRequest) -> Review:
     parsed = parse_sop(payload.sop_text)

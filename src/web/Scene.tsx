@@ -29,7 +29,6 @@ function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
  // real shared research facility rather than a wall of interchangeable cabinets.
  if(['nmr','epr'].includes(e.kind)) {
    w=2.45;d=1.75;h=3.25; cabinetBase(g,w,d); box(g,0,1.06,0,w+.1,.13,d+.1,C.worktop)
-   // Shielded magnet / cryostat column with a sample access neck.
    cylinder(g,0,2.02,-.08,.62,1.92,0xd9e6f1,.70); cylinder(g,0,2.95,-.08,.76,.22,0xb8cde0,.78)
    box(g,0,1.18,.55,.72,.08,.20,C.blue); box(g,0,1.44,.55,.06,.38,.06,C.ink)
    box(g,.83,1.64,.18,.56,.85,.76,C.white); box(g,.83,1.82,.58,.40,.28,.03,0x7fa7c8); cylinder(g,.83,2.17,.58,.06,.05,C.blue)

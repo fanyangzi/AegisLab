@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "revision": 0,
+  "revision": 1,
   "name": "AegisLab · 高校分析测试与化学安全空间",
   "provenance": "example",
   "laboratories": [
@@ -3558,6 +3558,763 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
+    },
+    {
+      "id": "A-15",
+      "labId": "lab-301",
+      "code": "A-15",
+      "name": "电子顺磁共振 EPR/ESR",
+      "kind": "epr",
+      "x": -7.3,
+      "z": -2.0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；自由基与顺磁中心表征。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "spectroscopy",
+      "subtype": "电子顺磁共振 EPR/ESR",
+      "aliases": [],
+      "typicalUse": "自由基与顺磁中心表征",
+      "hazardTags": [
+        "强磁场",
+        "微波",
+        "低温"
+      ],
+      "controlTags": [
+        "禁带区",
+        "波导与腔体",
+        "样品兼容性"
+      ],
+      "utilityRequirements": [
+        "微波源",
+        "液氮/液氦"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-16",
+      "labId": "lab-301",
+      "code": "A-16",
+      "name": "原子力显微镜 AFM",
+      "kind": "afm",
+      "x": -3.8,
+      "z": -2.0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；纳米表面形貌与力学表征。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "structure_material",
+      "subtype": "原子力显微镜 AFM",
+      "aliases": [],
+      "typicalUse": "纳米表面形貌与力学表征",
+      "hazardTags": [
+        "探针破损",
+        "振动"
+      ],
+      "controlTags": [
+        "防振",
+        "探针登记",
+        "样品洁净"
+      ],
+      "utilityRequirements": [
+        "防振台"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-17",
+      "labId": "lab-301",
+      "code": "A-17",
+      "name": "惰性气体吸附与孔结构分析仪",
+      "kind": "bet",
+      "x": 0.0,
+      "z": -2.0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；比表面积、孔径和气体吸附。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "structure_material",
+      "subtype": "惰性气体吸附与孔结构分析仪 BET",
+      "aliases": [],
+      "typicalUse": "比表面积、孔径和气体吸附",
+      "hazardTags": [
+        "高温脱气",
+        "液氮",
+        "真空"
+      ],
+      "controlTags": [
+        "脱气温度",
+        "真空完整性",
+        "低温供给"
+      ],
+      "utilityRequirements": [
+        "氮气",
+        "真空"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-18",
+      "labId": "lab-301",
+      "code": "A-18",
+      "name": "差示扫描量热仪 DSC",
+      "kind": "dsc",
+      "x": 3.8,
+      "z": -2.0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；相变、热焓与材料稳定性。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "thermal_process",
+      "subtype": "差示扫描量热仪 DSC",
+      "aliases": [],
+      "typicalUse": "相变、热焓与材料稳定性",
+      "hazardTags": [
+        "高温",
+        "密封坩埚"
+      ],
+      "controlTags": [
+        "样品质量",
+        "温程",
+        "密封检查"
+      ],
+      "utilityRequirements": [
+        "氮气"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-19",
+      "labId": "lab-301",
+      "code": "A-19",
+      "name": "X射线荧光光谱仪 XRF",
+      "kind": "xrf",
+      "x": 7.4,
+      "z": -2.0,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；无损元素分析。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "structure_material",
+      "subtype": "X射线荧光光谱仪 XRF",
+      "aliases": [],
+      "typicalUse": "无损元素分析",
+      "hazardTags": [
+        "X射线辐射"
+      ],
+      "controlTags": [
+        "辐射联锁",
+        "辐射指示",
+        "样品腔完整性"
+      ],
+      "utilityRequirements": [
+        "电源"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-20",
+      "labId": "lab-301",
+      "code": "A-20",
+      "name": "透射电子显微镜 TEM",
+      "kind": "tem",
+      "x": -7.2,
+      "z": 2.5,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；纳米结构与晶格表征。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "structure_material",
+      "subtype": "透射电子显微镜 TEM",
+      "aliases": [],
+      "typicalUse": "纳米结构与晶格表征",
+      "hazardTags": [
+        "高压",
+        "电子束",
+        "真空"
+      ],
+      "controlTags": [
+        "高压联锁",
+        "样品制备",
+        "真空记录"
+      ],
+      "utilityRequirements": [
+        "真空",
+        "冷却水"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-21",
+      "labId": "lab-301",
+      "code": "A-21",
+      "name": "原子吸收光谱仪 AAS",
+      "kind": "aas",
+      "x": -3.6,
+      "z": 2.5,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；火焰/石墨炉元素定量。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "mass_analysis",
+      "subtype": "原子吸收光谱仪 AAS",
+      "aliases": [],
+      "typicalUse": "火焰/石墨炉元素定量",
+      "hazardTags": [
+        "火焰",
+        "乙炔",
+        "高温"
+      ],
+      "controlTags": [
+        "燃气联锁",
+        "火焰检查",
+        "排风"
+      ],
+      "utilityRequirements": [
+        "乙炔",
+        "空气",
+        "排风"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-22",
+      "labId": "lab-301",
+      "code": "A-22",
+      "name": "表面等离子共振 SPR",
+      "kind": "spr",
+      "x": 0.0,
+      "z": 2.5,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；分子结合动力学与微流控分析。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "structure_material",
+      "subtype": "表面等离子共振 SPR",
+      "aliases": [],
+      "typicalUse": "分子结合动力学与微流控分析",
+      "hazardTags": [
+        "微流控泄漏",
+        "生物样品"
+      ],
+      "controlTags": [
+        "芯片兼容性",
+        "流路清洗",
+        "废液"
+      ],
+      "utilityRequirements": [
+        "电源",
+        "废液"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "A-23",
+      "labId": "lab-301",
+      "code": "A-23",
+      "name": "动态光散射 DLS",
+      "kind": "dls",
+      "x": 3.6,
+      "z": 2.5,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；粒径、聚集态与分散稳定性。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "structure_material",
+      "subtype": "动态光散射 DLS",
+      "aliases": [],
+      "typicalUse": "粒径、聚集态与分散稳定性",
+      "hazardTags": [
+        "激光",
+        "样品污染"
+      ],
+      "controlTags": [
+        "激光联锁",
+        "样品池洁净"
+      ],
+      "utilityRequirements": [
+        "电源"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "P-07",
+      "labId": "lab-301",
+      "code": "P-07",
+      "name": "光化学反应器",
+      "kind": "photoreactor",
+      "x": 7.3,
+      "z": 2.5,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；UV/可见光驱动反应。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "thermal_process",
+      "subtype": "光化学反应器",
+      "aliases": [],
+      "typicalUse": "UV/可见光驱动反应",
+      "hazardTags": [
+        "UV",
+        "高温",
+        "可燃溶剂"
+      ],
+      "controlTags": [
+        "光源屏蔽",
+        "门禁联锁",
+        "冷却"
+      ],
+      "utilityRequirements": [
+        "冷却水",
+        "排风"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "P-08",
+      "labId": "lab-301",
+      "code": "P-08",
+      "name": "微波合成与消解仪",
+      "kind": "microwave_reactor",
+      "x": -7.2,
+      "z": 5.8,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；快速合成和密闭消解。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "thermal_process",
+      "subtype": "微波合成与消解仪",
+      "aliases": [],
+      "typicalUse": "快速合成和密闭消解",
+      "hazardTags": [
+        "压力",
+        "微波",
+        "高温"
+      ],
+      "controlTags": [
+        "溶剂适配",
+        "腔体完整性",
+        "压力联锁"
+      ],
+      "utilityRequirements": [
+        "电源",
+        "排风"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "G-05",
+      "labId": "lab-301",
+      "code": "G-05",
+      "name": "低温冷阱",
+      "kind": "cold_trap",
+      "x": -3.6,
+      "z": 5.8,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；真空蒸馏和挥发物捕集。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "cold_chain",
+      "subtype": "低温冷阱",
+      "aliases": [],
+      "typicalUse": "真空蒸馏和挥发物捕集",
+      "hazardTags": [
+        "冻伤",
+        "真空",
+        "冷凝物"
+      ],
+      "controlTags": [
+        "冷凝物兼容性",
+        "真空破坏",
+        "防冻"
+      ],
+      "utilityRequirements": [
+        "液氮",
+        "真空"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "R-15",
+      "labId": "lab-301",
+      "code": "R-15",
+      "name": "喷雾干燥机",
+      "kind": "spray_dryer",
+      "x": 0.0,
+      "z": 5.8,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；溶液制粉和颗粒制备。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "thermal_process",
+      "subtype": "喷雾干燥机",
+      "aliases": [],
+      "typicalUse": "溶液制粉和颗粒制备",
+      "hazardTags": [
+        "高温",
+        "粉尘",
+        "气溶胶"
+      ],
+      "controlTags": [
+        "粉尘收集",
+        "温度",
+        "清洗记录"
+      ],
+      "utilityRequirements": [
+        "压缩空气",
+        "排风"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
+    },
+    {
+      "id": "R-16",
+      "labId": "lab-301",
+      "code": "R-16",
+      "name": "凝胶成像系统",
+      "kind": "gel_documentation",
+      "x": 3.6,
+      "z": 5.8,
+      "rotation": 0,
+      "capacity": 1,
+      "status": "unknown",
+      "owner": "仪器平台管理员",
+      "description": "公开高校/研究院平台常见设备类别映射；核酸/蛋白电泳成像。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "requiresEvidence": true,
+      "specVersion": 1,
+      "maintenance": [],
+      "family": "bio_molecular",
+      "subtype": "凝胶成像系统",
+      "aliases": [],
+      "typicalUse": "核酸/蛋白电泳成像",
+      "hazardTags": [
+        "UV/蓝光",
+        "染料废物"
+      ],
+      "controlTags": [
+        "光源屏蔽",
+        "染料废液分类"
+      ],
+      "utilityRequirements": [
+        "电源"
+      ],
+      "requiredTraining": [
+        "设备使用培训",
+        "平台预约与样品边界确认"
+      ],
+      "calibrationOrInspection": [
+        "设备状态检查",
+        "校准/性能确认记录"
+      ],
+      "evidenceKinds": [
+        "sop",
+        "inspection",
+        "training",
+        "calibration"
+      ],
+      "sourceRefs": [
+        "docs/equipment-taxonomy-research.md",
+        "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
+        "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ]
     }
   ],
   "plans": [
@@ -4728,6 +5485,202 @@
       "source": "质量文件库 · REF-SAMPLE-07",
       "reviewedBy": "质量负责人",
       "reviewedAt": "2026-10-06T10:00:00+08:00"
+    },
+    {
+      "id": "doc-A-15",
+      "name": "A-15 电子顺磁共振 EPR/ESR 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-15",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "电子顺磁共振 EPR/ESR 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-16",
+      "name": "A-16 原子力显微镜 AFM 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-16",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "原子力显微镜 AFM 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-17",
+      "name": "A-17 惰性气体吸附与孔结构分析仪 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-17",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "惰性气体吸附与孔结构分析仪 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-18",
+      "name": "A-18 差示扫描量热仪 DSC 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-18",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "差示扫描量热仪 DSC 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-19",
+      "name": "A-19 X射线荧光光谱仪 XRF 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-19",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "X射线荧光光谱仪 XRF 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-20",
+      "name": "A-20 透射电子显微镜 TEM 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-20",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "透射电子显微镜 TEM 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-21",
+      "name": "A-21 原子吸收光谱仪 AAS 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-21",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "原子吸收光谱仪 AAS 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-22",
+      "name": "A-22 表面等离子共振 SPR 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-22",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "表面等离子共振 SPR 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-A-23",
+      "name": "A-23 动态光散射 DLS 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "A-23",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "动态光散射 DLS 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-P-07",
+      "name": "P-07 光化学反应器 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "P-07",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "光化学反应器 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-P-08",
+      "name": "P-08 微波合成与消解仪 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "P-08",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "微波合成与消解仪 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-G-05",
+      "name": "G-05 低温冷阱 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "G-05",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "低温冷阱 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-R-15",
+      "name": "R-15 喷雾干燥机 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "R-15",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "喷雾干燥机 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
+    },
+    {
+      "id": "doc-R-16",
+      "name": "R-16 凝胶成像系统 公开平台核验线索",
+      "kind": "reference",
+      "equipmentId": "R-16",
+      "specVersion": 1,
+      "status": "pending",
+      "validFrom": "2026-10-01T08:00:00+08:00",
+      "validUntil": "2026-12-31T23:59:00+08:00",
+      "content": "凝胶成像系统 属于公开高校/研究院大型仪器平台常见类别。\n来源索引：山东大学现代分析测试中心、中科院理化所化学分析室、清华大学实验室化学安全管理办法。\n该条记录只证明类别与控制点的公开来源，不证明本示例资产已安装或已通过机构验收；需由管理员补充本校型号、校准、培训和现场检查证据。",
+      "source": "docs/equipment-taxonomy-research.md · public platform survey",
+      "reviewedBy": null,
+      "reviewedAt": null
     }
   ],
   "tasks": [
