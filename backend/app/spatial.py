@@ -42,6 +42,14 @@ EQUIPMENT_FOOTPRINTS: dict[str, tuple[float, float]] = {
     "solid_waste": (1.4, 1.1), "eyewash": (1.0, .9), "safety_shower": (1.2, 1.0),
     "gas_detector": (.8, .8), "environment_monitor": (.8, .8), "access_control": (1.0, .6),
     "chromatography": (2.5, 1.7), "ion_chromatography": (2.5, 1.7),
+    "glovebox": (2.8, 1.6), "nmr": (3.2, 2.4), "ftir": (1.8, 1.4), "raman": (2.0, 1.5),
+    "xrd": (3.0, 2.0), "xps": (3.4, 2.4), "sem": (3.0, 2.0), "tem": (3.6, 2.6), "afm": (2.2, 1.8), "epr": (2.8, 2.0),
+    "icp_ms": (3.0, 2.0), "icp_oes": (2.8, 1.9), "aas": (2.4, 1.7), "xrf": (2.5, 1.7), "spr": (2.1, 1.6), "dls": (1.8, 1.4),
+    "bet": (2.5, 1.8), "tga": (2.2, 1.7), "dsc": (2.0, 1.5), "reactor": (2.8, 2.0), "microwave_reactor": (2.0, 1.6),
+    "photoreactor": (2.2, 1.6), "electrochemistry": (1.8, 1.4), "preparative_hplc": (2.8, 1.9), "solid_phase_extraction": (1.8, 1.4),
+    "liquid_nitrogen": (1.6, 1.4), "cold_trap": (1.4, 1.2), "gas_manifold": (1.8, 1.2), "exhaust_treatment": (2.0, 1.4),
+    "lyophilizer": (2.5, 1.8), "spray_dryer": (2.4, 1.8), "co2_incubator": (1.8, 1.5), "gel_documentation": (1.8, 1.4),
+    "electrophoresis": (1.6, 1.2), "flow_cytometer": (2.5, 1.8), "fluorescence_microscope": (2.2, 1.7), "cleanroom": (3.0, 2.5),
 }
 PLACEMENT_GAP = 0.35
 
@@ -79,6 +87,14 @@ class Maintenance(StrictModel):
     end: str
     reason: str = Field(max_length=2000)
 
+
+EquipmentFamily = Literal[
+    "containment", "workstation", "separation", "spectroscopy", "mass_analysis",
+    "structure_material", "thermal_process", "cold_chain", "gas_vacuum",
+    "bio_molecular", "safety_response", "waste_environment", "utility",
+]
+EvidenceKind = Literal["sop", "inspection", "sds", "training", "calibration", "reservation", "permit", "sensor"]
+
 class Equipment(StrictModel):
     id: str
     labId: str
@@ -90,7 +106,10 @@ class Equipment(StrictModel):
         "evaporator", "vacuum_pump", "nitrogen_blowdown", "water_purification", "refrigerator", "freezer",
         "drying_oven", "furnace", "gas_cabinet", "flammable_cabinet", "acid_base_cabinet", "solvent_waste",
         "solid_waste", "eyewash", "safety_shower", "gas_detector", "environment_monitor", "access_control",
-        "chromatography", "ion_chromatography"
+        "chromatography", "ion_chromatography", "glovebox", "nmr", "ftir", "raman", "xrd", "xps", "sem", "tem", "afm", "epr",
+        "icp_ms", "icp_oes", "aas", "xrf", "spr", "dls", "bet", "tga", "dsc", "reactor", "microwave_reactor", "photoreactor",
+        "electrochemistry", "preparative_hplc", "solid_phase_extraction", "liquid_nitrogen", "cold_trap", "gas_manifold", "exhaust_treatment",
+        "lyophilizer", "spray_dryer", "co2_incubator", "gel_documentation", "electrophoresis", "flow_cytometer", "fluorescence_microscope", "cleanroom"
     ]
     x: float = Field(ge=-20, le=20)
     z: float = Field(ge=-20, le=20)
@@ -102,6 +121,18 @@ class Equipment(StrictModel):
     requiresEvidence: bool
     specVersion: int = Field(ge=1, strict=True)
     maintenance: list[Maintenance] = Field(max_length=100)
+    # Operational profile fields are optional so old exported workspaces remain valid.
+    family: EquipmentFamily | None = None
+    subtype: str | None = Field(default=None, max_length=180)
+    aliases: list[str] = Field(default_factory=list, max_length=30)
+    typicalUse: str | None = Field(default=None, max_length=1000)
+    hazardTags: list[str] = Field(default_factory=list, max_length=30)
+    controlTags: list[str] = Field(default_factory=list, max_length=40)
+    utilityRequirements: list[str] = Field(default_factory=list, max_length=30)
+    requiredTraining: list[str] = Field(default_factory=list, max_length=30)
+    calibrationOrInspection: list[str] = Field(default_factory=list, max_length=30)
+    evidenceKinds: list[EvidenceKind] = Field(default_factory=list, max_length=20)
+    sourceRefs: list[str] = Field(default_factory=list, max_length=20)
 
 class Step(StrictModel):
     id: str
@@ -272,6 +303,11 @@ def equipment_overlaps(a: dict, b: dict, *, x: float | None = None, z: float | N
     still rotate a resource after it has been created; this check only prevents
     the common failure where every new resource is saved at ``(0, 0)``.
     """
+    # Resources in different laboratories have independent coordinate spaces.
+    # Comparing their scene coordinates would make a new object in one room
+    # appear to collide with an object in another room.
+    if a.get("labId") != b.get("labId"):
+        return False
     ax = a["x"] if x is None else x
     az = a["z"] if z is None else z
     aw, ad = equipment_footprint(a["kind"])
