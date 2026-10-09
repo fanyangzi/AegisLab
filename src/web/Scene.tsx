@@ -144,7 +144,7 @@ export default function LabScene(props:Props) {
  const live=useRef(props);live.current=props
  const actions=useRef<{zoom:(delta:number)=>void;reset:()=>void;focus:()=>void}|null>(null)
  const [failed,setFailed]=useState(false)
- const layout=JSON.stringify([props.lab,props.equipment.map(({id,kind,x,z,rotation,code})=>({id,kind,x,z,rotation,code}))])
+ const layout=JSON.stringify([props.lab,props.equipment.map(({id,kind,x,z,rotation,code})=>({id,kind,x,z,rotation,code})),props.planId,props.checks.map(({id,state,equipmentId})=>({id,state,equipmentId}))])
  useEffect(()=>{
   if(props.flat)return
   const el=host.current; if(!el)return; let renderer:THREE.WebGLRenderer
@@ -161,7 +161,8 @@ export default function LabScene(props:Props) {
   const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
   let aiPointer:HTMLButtonElement|null=null
   if(overlay.current){overlay.current.replaceChildren();
-   const ai=document.createElement('button');ai.type='button';ai.className='al-scene-ai-core';ai.setAttribute('aria-label','打开 AI 安全孪生预审');ai.title='打开 AI 安全孪生预审';ai.innerHTML='<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>理解 · 推演 · 放行</small></div>';ai.addEventListener('click',()=>live.current.onOpenAI?.());overlay.current.appendChild(ai);aiPointer=ai
+   const blocked=props.checks.filter(c=>c.state==='blocked').length,unknown=props.checks.filter(c=>c.state==='unknown').length,activePlan=props.plans.find(p=>p.id===props.planId),aiState=blocked?`${blocked} 项阻断 · 需处理`:unknown?`${unknown} 项待确认 · AI 可解释`:'等待选择对象';
+   const ai=document.createElement('button');ai.type='button';ai.className='al-scene-ai-core';ai.setAttribute('aria-label','打开 AI 安全孪生预审');ai.title='打开 AI 安全孪生预审';ai.innerHTML=`<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>${activePlan?`${activePlan.code} · ${aiState}`:aiState}</small></div>`;ai.addEventListener('click',()=>live.current.onOpenAI?.());overlay.current.appendChild(ai);aiPointer=ai
    models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
   let width=1,height=1
   const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);const base=Math.max(props.lab.width*.46,props.lab.depth*.64,6.1);camera.top=base;camera.bottom=-base;camera.left=-base*width/height;camera.right=base*width/height;camera.updateProjectionMatrix()}
