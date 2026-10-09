@@ -1068,14 +1068,38 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     # The trace is intentionally explicit in the response so the UI can show
     # what came from the model, what came from deterministic rules, and what
     # still requires a human decision.  It is metadata, not an approval.
+    plan_checks = [item for item in evaluation.results if getattr(item, "rule_id", None)]
+    check_counts = {
+        "pass": sum(1 for item in plan_checks if item.passed),
+        "needs_review": sum(1 for item in plan_checks if not item.passed),
+    }
+    decision_state = "blocked" if copilot["ruleSummary"]["blocked"] else "needs_review" if copilot["ruleSummary"]["unknown"] else "ready_for_human_review"
+    decision_label = {
+        "blocked": "存在阻断，安全门保持关闭",
+        "needs_review": "存在未知项，需补证后人工复核",
+        "ready_for_human_review": "规则范围内未见未满足项，仍需人工复核",
+    }[decision_state]
+    # This is a provenance ledger for the run, not a claim that the model or
+    # public sources certify the experiment.  Keeping the input/output counts
+    # next to each stage makes it visible which work was deterministic and
+    # which part (if any) came from the configured model.
     trace = {
+        'runId': f"copilot:{p['id']}:v{p['revision']}",
+        'generatedAt': now(),
         'stages': [
-            {'id': 'understand', 'label': '结构化理解', 'status': 'model' if model_used else 'deterministic', 'detail': f"识别 {len(parsed['steps'])} 个步骤、{len(parsed['substances'])} 个化学品实体"},
-            {'id': 'check', 'label': '规则核验', 'status': 'rule', 'detail': f"{sum(1 for item in evaluation.results if item.passed)} 项满足，{sum(1 for item in evaluation.results if not item.passed)} 项待处理"},
-            {'id': 'scenario', 'label': '场景推演', 'status': 'deterministic', 'detail': f"生成 {len(copilot['scenarios'])} 个隔离候选方案"},
-            {'id': 'review', 'label': '人工复核', 'status': 'required', 'detail': '候选结果需要负责人确认后才可形成计划修订'},
+            {'id': 'understand', 'label': '结构化理解', 'status': 'model' if model_used else 'deterministic', 'detail': f"识别 {len(parsed['steps'])} 个步骤、{len(parsed['substances'])} 个化学品实体", 'inputs': ['计划原文'], 'outputs': ['步骤实体', '化学品实体', '设备语义']},
+            {'id': 'check', 'label': '规则核验', 'status': 'rule', 'detail': f"{check_counts['pass']} 项满足，{check_counts['needs_review']} 项待处理", 'inputs': ['结构化步骤', '资源台账', '证据目录'], 'outputs': ['阻断项', '未知项', '规则来源']},
+            {'id': 'scenario', 'label': '场景推演', 'status': 'deterministic', 'detail': f"生成 {len(copilot['scenarios'])} 个隔离候选方案", 'inputs': ['阻断项', '未知项', '预约安排'], 'outputs': ['替代资源候选', '先补证候选']},
+            {'id': 'review', 'label': '人工复核', 'status': 'required', 'detail': '候选结果需要负责人确认后才可形成计划修订', 'inputs': ['候选结果', '来源与证据'], 'outputs': ['人工意见', '版本化决定']},
         ],
         'model': {'configured': adapter.status()['configured'], 'used': model_used, 'provider': result.provider, 'name': adapter.model or None},
+        'sources': [
+            {'kind': 'sop', 'label': '计划原文', 'reference': p['sourceName'], 'detail': f"{len(parsed['steps'])} 个结构化步骤 · 保留原文行号", 'status': 'used'},
+            {'kind': 'rules', 'label': '确定性规则包', 'reference': engine.version, 'detail': f"{len(plan_checks)} 条规则结果 · {check_counts['needs_review']} 项待处理", 'status': 'used'},
+            {'kind': 'resources', 'label': '资源与证据目录', 'reference': f"{len(w['equipment'])} 台设备 · {len(w['documents'])} 份资料", 'detail': '只依据当前工作区登记，不替代现场核验', 'status': 'used'},
+            {'kind': 'model', 'label': '模型解释层', 'reference': adapter.model or '未配置', 'detail': '仅生成候选解释；不可自动批准或改写计划', 'status': 'used' if model_used else 'degraded'},
+        ],
+        'decision': {'state': decision_state, 'label': decision_label, 'approvalRequired': True, 'reason': 'AI 候选和规则结果不能替代机构审批或现场确认。'},
         'source_policy': '所有候选都绑定 SOP 行号、资源检查或证据记录；无法建立来源时保留为待确认。',
     }
     return {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,

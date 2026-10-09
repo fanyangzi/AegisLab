@@ -35,6 +35,27 @@ function zonesFor(lab:Laboratory):ZoneSpec[]{const w=lab.width,d=lab.depth;retur
  {id:'storage',name:'化学品暂存',x:w*.26,z:d*.27,width:w*.38,depth:d*.25,color:0xe6c98d},
 ]}
 function zoneFloor(g:THREE.Group,z:ZoneSpec){const plate=box(g,z.x,.045,z.z,z.width,.035,z.depth,z.color,.08);const mat=plate.material as THREE.MeshStandardMaterial;mat.transparent=true;mat.opacity=.16;mat.depthWrite=false;const edge=material(z.color,{transparent:true,opacity:.48,roughness:.8});for(const x of [z.x-z.width/2,z.x+z.width/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.025,.018,z.depth),edge);bar.position.set(x,.07,z.z);g.add(bar)}for(const zz of [z.z-z.depth/2,z.z+z.depth/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(z.width,.018,.025),edge);bar.position.set(z.x,.07,zz);g.add(bar)}const canvas=document.createElement('canvas');canvas.width=320;canvas.height=64;const ctx=canvas.getContext('2d');if(!ctx)return;ctx.fillStyle='#ffffffc8';if(typeof ctx.roundRect==='function')ctx.roundRect(2,2,316,60,12);else ctx.fillRect(2,2,316,60);ctx.fill();ctx.fillStyle='#58769c';ctx.font='600 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(z.name,160,33);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2.4,z.width*.65),.42),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));sign.rotation.x=-Math.PI/2;sign.position.set(z.x,.09,z.z);g.add(sign)}
+function pane(g:THREE.Group,x:number,y:number,z:number,w:number,h:number,side:'front'|'right'='front'){
+ const glass=box(g,x,y,z,w,h,.035,0xb9dceb,.018);const gm=glass.material as THREE.MeshStandardMaterial;gm.transparent=true;gm.opacity=.3;gm.roughness=.16;gm.metalness=.08
+ const frame=material(0xc2d4e5,{roughness:.35,metalness:.14});
+ if(side==='front'){for(const dx of [-w/2,w/2]){const m=new THREE.Mesh(new THREE.BoxGeometry(.055,h+.08,.06),frame);m.position.set(x+dx,y,z-.018);g.add(m)}for(const dy of [-h/2,h/2]){const m=new THREE.Mesh(new THREE.BoxGeometry(w+.08,.055,.06),frame);m.position.set(x,y+dy,z-.018);g.add(m)}}
+ else {for(const dz of [-w/2,w/2]){const m=new THREE.Mesh(new THREE.BoxGeometry(.06,h+.08,.055),frame);m.position.set(x-.018,y,z+dz);g.add(m)}for(const dy of [-h/2,h/2]){const m=new THREE.Mesh(new THREE.BoxGeometry(.06,.055,w+.08),frame);m.position.set(x-.018,y+dy,z);g.add(m)}}
+}
+function wallBadge(g:THREE.Group,x:number,y:number,z:number,text:string,color:number){
+ const p=box(g,x,y,z,.64,.45,.035,color,.06);const pm=p.material as THREE.MeshStandardMaterial;pm.roughness=.4;
+ // A simple inset mark is intentionally geometry, so the safety cues remain
+ // legible in WebGL and do not depend on a texture or an external asset.
+ box(g,x,y,z-.025,.26,.07,.012,0xffffff,.018);box(g,x,y,z-.026,.07,.26,.012,0xffffff,.018)
+ label(g,text,x,y-.28,z-.035,.65)
+}
+function drain(g:THREE.Group,x:number,z:number){
+ const m=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,.018,24),material(0x8198ad,{roughness:.72,metalness:.25}));m.rotation.x=Math.PI/2;m.position.set(x,.075,z);g.add(m)
+ for(let a=0;a<4;a++){const slat=box(g,x-.16+a*.105,.092,z,.035,.012,.42,0x506b85,.008);slat.rotation.y=Math.PI/2;}
+}
+function overheadVent(g:THREE.Group,x:number,z:number,w=1.5,d=.42){
+ const frame=box(g,x,3.05,z,w,.045,d,0xdceaf4,.025);const fm=frame.material as THREE.MeshStandardMaterial;fm.emissive.setHex(0xbfe3f4);fm.emissiveIntensity=.2
+ for(let i=0;i<6;i++)box(g,x-w*.38+i*w*.15,3.083,z,.025,.018,d-.1,0xb3c9dc,.006)
+}
 function cabinetBase(g:THREE.Group,w:number,d:number) {box(g,0,.47,0,w,.9,d,C.body);box(g,0,.08,0,w-.12,.12,d-.04,C.ink);for(const side of [-1,1]){box(g,side*w/4,.5,d/2+.018,w/2-.045,.74,.035,C.white);box(g,side*.11,.67,d/2+.055,.035,.23,.035,C.metal)}}
 function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
  // Instrument families use distinct silhouettes so the spatial scene reads like a
@@ -107,8 +128,11 @@ function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
    else {cylinder(g,0,1.5,.04,.34,.92,C.metal);cylinder(g,0,2.02,.04,.22,.12,accent);tube(g,[[0,2.09,.04],[.5,2.09,.04],[.5,2.45,.04]],.035,C.metal);box(g,.5,2.40,.04,.30,.12,.28,C.body)}
    label(g,e.code,0,.60,.63,.66)}
  else if(['analyzer','gc','hplc','uv_vis','mass_spec','elemental_analyzer','chromatography','ion_chromatography','centrifuge','pcr','balance','evaporator','vacuum_pump','nitrogen_blowdown'].includes(e.kind)){w=2.35;d=1.35;h=2.0;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.1,d+.08,C.worktop);box(g,-.42,1.43,-.02,.89,.79,.9,C.white);box(g,-.42,1.59,.455,.70,.28,.02,C.ink);box(g,-.42,1.60,.472,.55,.14,.015,0x91bfdc);box(g,-.43,1.25,.46,.60,.07,.03,C.metal);cylinder(g,-.18,1.38,.51,.035,.025,C.blue);box(g,.7,1.08,0,.60,.06,.54,C.metal);box(g,.7,1.36,-.2,.06,.56,.08,C.ink);box(g,.7,1.64,-.16,.68,.42,.06,C.ink);box(g,.7,1.64,-.12,.59,.34,.012,0xb2d3e7);label(g,e.code,0,.60,.725,.66)}
- else if(['sink','water_purification','eyewash','safety_shower','gas_detector','environment_monitor','access_control'].includes(e.kind)){w=2.25;d=1.26;h=1.7;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.1,d+.05,C.worktop);box(g,-.18,1.06,.02,1.20,.025,.78,C.metal);box(g,-.18,1.077,.02,1.02,.012,.63,0x71899e);tube(g,[[.03,1.05,-.45],[.03,1.61,-.45],[.03,1.65,-.1],[.03,1.44,-.1]],.036,C.metal);bottle(g,.86,1.06,-.3,1.2);label(g,e.code,0,.6,.68,.65)}
- else {w=1.7;d=1.1;h=1.7;box(g,0,.8,0,w,1.6,d,0xefd7a5);for(const s of [-1,1]){box(g,s*.4,.82,.57,.73,1.35,.045,0xf9e3b4);box(g,s*.1,.95,.61,.03,.25,.03,C.ink)}box(g,0,1.65,0,w+.06,.07,d+.05,C.ink);label(g,e.code,0,1.37,.603,.65);box(g,0,.38,.61,.60,.15,.01,0xc89b44)}
+ else if(['sink','water_purification','gas_detector','environment_monitor','access_control'].includes(e.kind)){w=2.25;d=1.26;h=1.7;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.1,d+.05,C.worktop);box(g,-.18,1.06,.02,1.20,.025,.78,C.metal);box(g,-.18,1.077,.02,1.02,.012,.63,0x71899e);tube(g,[[.03,1.05,-.45],[.03,1.61,-.45],[.03,1.65,-.1],[.03,1.44,-.1]],.036,C.metal);bottle(g,.86,1.06,-.3,1.2);label(g,e.code,0,.6,.68,.65)}
+ else if(e.kind==='eyewash'){w=1.7;d=1.15;h=1.65;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.1,d+.05,C.worktop);const bowl=new THREE.Mesh(new THREE.TorusGeometry(.28,.07,10,24),material(0x80b9c9,{roughness:.22,metalness:.12}));bowl.rotation.x=Math.PI/2;bowl.position.set(-.16,1.13,.05);g.add(bowl);cylinder(g,-.16,1.12,.05,.19,.035,0x8fc8d5);for(const x of [-.34,.02]){cylinder(g,x,1.28,.05,.035,.24,C.metal);tube(g,[[x,1.40,.05],[x,1.53,.18]],.022,0x69b8c9)}box(g,.60,1.12,.05,.16,.48,.11,0xc7e1e8);wallBadge(g,.60,1.66,.03,'EYE',0xd8f0e9);label(g,e.code,0,.6,.64,.65)}
+ else if(e.kind==='safety_shower'){w=1.45;d=1.10;h=2.85;box(g,0,1.30,0,w,2.6,d,0xe4edf3);box(g,0,.10,0,w-.1,.16,d,C.ink);box(g,0,2.38,.34,.08,.07,.06,0xd56e7c);cylinder(g,0,2.75,.24,.27,.09,0xd9e5ee);box(g,-.22,2.18,.25,.35,.035,.06,0xd56e7c);cylinder(g,-.22,2.04,.25,.025,.24,0xd56e7c);wallBadge(g,0,2.98,.49,'SOS',0xf4d7dc);label(g,e.code,0,2.42,.58,.65)}
+ else if(['solvent_waste','waste_container','waste_storage'].includes(e.kind)){w=1.65;d=1.18;h=1.55;box(g,0,.78,0,w,1.55,d,0xd4c4a4,.08);box(g,0,1.58,0,w+.08,.12,d+.06,0xb99c67,.04);for(const x of [-.44,.44]){cylinder(g,x,1.7,.05,.22,.08,0xeadfcb);box(g,x,1.43,.60,.27,.35,.025,0xf5e9b4)}box(g,0,.32,.61,.65,.08,.04,0xc49f55);label(g,e.code,0,1.25,.63,.65)}
+ else {w=2.05;d=1.22;h=1.92;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.10,d+.08,C.worktop);box(g,-.38,1.42,.02,.84,.75,.78,0xf5f9fc);box(g,-.38,1.60,.44,.62,.24,.025,0x6f9bc3);box(g,-.38,1.26,.45,.48,.06,.035,C.metal);box(g,.52,1.36,.02,.57,.62,.62,0xe3edf3);box(g,.52,1.56,.34,.40,.18,.025,C.ink);cylinder(g,.52,1.16,.37,.09,.07,C.blue);label(g,e.code,0,.60,.67,.65)}
  g.position.set(e.x,0,e.z);g.rotation.y=e.rotation*Math.PI/180;g.traverse(o=>o.userData.equipmentId=e.id)
  return {group:g,height:h,width:w,depth:d}
 }
@@ -118,6 +142,22 @@ function room(lab:Laboratory) {const g=new THREE.Group(),w=lab.width,d=lab.depth
  const lines=new THREE.Group();for(let i=-Math.floor(w/2);i<=w/2;i++)box(lines,i,.015,0,.009,.006,d-.15,0xdce4ed,0);for(let i=-Math.floor(d/2);i<=d/2;i++)box(lines,0,.015,i,w-.15,.006,.009,0xdce4ed,0);g.add(lines)
  box(g,0,1.65,-d/2,w,3.3,.16,0xe7edf3);box(g,w/2,1.65,0,.16,3.3,d,0xe7edf3)
  box(g,0,.22,-d/2+.09,w,.35,.04,0xcfddeb);box(g,w/2-.09,.22,0,.04,.35,d,0xcfddeb)
+ // Front elevation: framed glazing and a proper access door make the room read
+ // as a facility rather than an isolated collection of floating instruments.
+ pane(g,-w*.27,2.03,-d/2-.091,w*.28,1.15,'front');
+ pane(g,w*.16,2.03,-d/2-.091,w*.30,1.15,'front');
+ const doorX=-w*.02;box(g,doorX,1.25,-d/2-.095,1.15,2.35,.055,0xd3e3ee,.02);box(g,doorX,1.25,-d/2-.13,1.01,2.18,.022,0xe8f4fa,.012);box(g,doorX+.42,1.25,-d/2-.153,.035,2.18,.018,0xb1c7db,.004);cylinder(g,doorX+.36,1.26,-d/2-.17,.045,.16,0x557a9f,.05)
+ // Visible emergency and utility cues are part of the scene semantics: they
+ // remain geometry so selection/labels continue to work without image assets.
+ wallBadge(g,w*.38,2.28,-d/2-.115,'EYE',0xd9f2e7);wallBadge(g,w*.38,1.62,-d/2-.116,'PPE',0xf3e2b9)
+ for(const z of [-d*.30,d*.02,d*.32]){overheadVent(g,w*.17,z,1.35,.42)}
+ // A wall-mounted service rail connects the hood/bench area to exhaust and gas
+ // evidence in the model, giving the spatial twin a legible infrastructure layer.
+ const rail=material(0x6f8ea9,{metalness:.65,roughness:.28});for(const z of [-d*.34,-d*.04,d*.27]){const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,d*.25,12),rail);pipe.rotation.x=Math.PI/2;pipe.position.set(w/2-.20,2.72,z);g.add(pipe)}
+ drain(g,-w*.27,d*.27)
+ // Emergency shower assembly in the wash zone: pole, pull handle, and broad
+ // shower head are deliberately simple but immediately recognisable at a glance.
+ const showerX=w*.37,showerZ=d*.28;box(g,showerX,1.62,showerZ,.07,2.55,.07,0xd0dce6,.015);cylinder(g,showerX,2.88,showerZ,.26,.10,0xd9e5ee);box(g,showerX-.18,2.28,showerZ,.35,.035,.05,0xd26e7b,.01);cylinder(g,showerX-.18,2.16,showerZ,.025,.23,0xd26e7b,.03);wallBadge(g,showerX-.12,2.95,showerZ-.09,'SOS',0xf4d7dc)
  for(let x=-w/2+2;x<w/2-1;x+=3){box(g,x,2.80,-d/2+.09,2.40,.38,.035,0xc1ddee);for(const a of [-1,1])box(g,x+a*1.21,2.8,-d/2+.12,.06,.46,.045,C.white);box(g,x,2.8,-d/2+.12,.045,.4,.045,C.white)}
  for(let z=-d/2+2;z<d/2-1;z+=3){box(g,w/2-.10,2.15,z,.04,1.45,2.15,0xc2dcea);for(const a of [-1,0,1])box(g,w/2-.14,2.15,z+a*1.04,.04,1.55,.05,C.white);box(g,w/2-.13,2.93,z,.05,.05,2.2,C.white);box(g,w/2-.13,1.4,z,.14,.08,2.3,C.white)}
  box(g,0,3.08,-d/2+.15,w-.5,.12,.13,C.white);box(g,w/2-.15,3.08,0,.13,.12,d-.5,C.white)
