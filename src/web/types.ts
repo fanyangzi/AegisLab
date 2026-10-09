@@ -40,6 +40,11 @@ export interface EquipmentOperationalProfile {
   evidenceKinds: EvidenceKind[];
   sourceRefs: string[];
 }
+export interface EquipmentSourceCitation {
+  sourceId: string;
+  relation: 'category-or-control-reference';
+  note: string;
+}
 export const equipmentFamilies: EquipmentFamily[] = ['containment','workstation','separation','spectroscopy','mass_analysis','structure_material','thermal_process','cold_chain','gas_vacuum','bio_molecular','safety_response','waste_environment','utility']
 export const evidenceKinds: EvidenceKind[] = ['sop','inspection','sds','training','calibration','reservation','permit','sensor']
 export type Tone = 'blue' | 'green' | 'amber' | 'red' | 'muted'
@@ -63,6 +68,7 @@ export interface Equipment {
   calibrationOrInspection?: string[];
   evidenceKinds?: EvidenceKind[];
   sourceRefs?: string[];
+  sourceCitations?: EquipmentSourceCitation[];
 }
 export interface Step { id: string; text: string; line: number; equipmentIds: string[]; confirmed: boolean }
 export interface Reservation { id: string; equipmentId: string; start: string; end: string }
