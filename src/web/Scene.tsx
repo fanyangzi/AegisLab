@@ -21,12 +21,12 @@ function aiCore(){
  const plate=new THREE.Mesh(new THREE.CylinderGeometry(.76,.76,.035,48),base);plate.position.y=.06;plate.castShadow=true;g.add(plate);
  const ring=new THREE.Mesh(new THREE.TorusGeometry(.69,.026,8,64),glow);ring.rotation.x=Math.PI/2;ring.position.y=.095;g.add(ring);
  const ring2=new THREE.Mesh(new THREE.TorusGeometry(.49,.014,8,64),new THREE.MeshBasicMaterial({color:0xb9edff,transparent:true,opacity:.8}));ring2.rotation.x=Math.PI/2;ring2.position.y=.11;g.add(ring2);
- const core=new THREE.Mesh(new THREE.OctahedronGeometry(.27,.1),new THREE.MeshStandardMaterial({color:0xe9fbff,emissive:0x56c7ee,emissiveIntensity:.75,roughness:.14,metalness:.08,transparent:true,opacity:.94}));core.position.y=.39;core.rotation.y=Math.PI/4;core.castShadow=true;g.add(core);
+ const core=new THREE.Mesh(new THREE.OctahedronGeometry(.27,1),new THREE.MeshStandardMaterial({color:0xe9fbff,emissive:0x56c7ee,emissiveIntensity:.75,roughness:.14,metalness:.08,transparent:true,opacity:.94}));core.position.y=.39;core.rotation.y=Math.PI/4;core.castShadow=true;g.add(core);
  const beacon=new THREE.Mesh(new THREE.CylinderGeometry(.02,.06,.56,12),new THREE.MeshBasicMaterial({color:0x90e8ff,transparent:true,opacity:.68}));beacon.position.y=.52;g.add(beacon);
  g.traverse(o=>{o.userData.aiCore=true});
  return g;
 }
-function label(g:THREE.Group,text:string,x:number,y:number,z:number,width=1.0){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=80;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#346bea';ctx.fillRect(0,0,256,80);ctx.fillStyle='white';ctx.font='600 40px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,42);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,width*80/256),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);g.add(mesh)}
+function label(g:THREE.Group,text:string,x:number,y:number,z:number,width=1.0){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=80;const ctx=canvas.getContext('2d');if(!ctx)return;ctx.fillStyle='#346bea';ctx.fillRect(0,0,256,80);ctx.fillStyle='white';ctx.font='600 40px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,42);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,width*80/256),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);g.add(mesh)}
 type ZoneSpec={id:string;name:string;x:number;z:number;width:number;depth:number;color:number}
 function zonesFor(lab:Laboratory):ZoneSpec[]{const w=lab.width,d=lab.depth;return [
  {id:'prep',name:'前处理区',x:-w*.27,z:-d*.22,width:w*.42,depth:d*.38,color:0x8eb7ef},
@@ -34,7 +34,7 @@ function zonesFor(lab:Laboratory):ZoneSpec[]{const w=lab.width,d=lab.depth;retur
  {id:'wash',name:'清洗与废物',x:-w*.26,z:d*.27,width:w*.44,depth:d*.25,color:0xb4c8e7},
  {id:'storage',name:'化学品暂存',x:w*.26,z:d*.27,width:w*.38,depth:d*.25,color:0xe6c98d},
 ]}
-function zoneFloor(g:THREE.Group,z:ZoneSpec){const plate=box(g,z.x,.045,z.z,z.width,.035,z.depth,z.color,.08);const mat=plate.material as THREE.MeshStandardMaterial;mat.transparent=true;mat.opacity=.16;mat.depthWrite=false;const edge=material(z.color,{transparent:true,opacity:.48,roughness:.8});for(const x of [z.x-z.width/2,z.x+z.width/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.025,.018,z.depth),edge);bar.position.set(x,.07,z.z);g.add(bar)}for(const zz of [z.z-z.depth/2,z.z+z.depth/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(z.width,.018,.025),edge);bar.position.set(z.x,.07,zz);g.add(bar)}const canvas=document.createElement('canvas');canvas.width=320;canvas.height=64;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#ffffffc8';ctx.roundRect(2,2,316,60,12);ctx.fill();ctx.fillStyle='#58769c';ctx.font='600 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(z.name,160,33);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2.4,z.width*.65),.42),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));sign.rotation.x=-Math.PI/2;sign.position.set(z.x,.09,z.z);g.add(sign)}
+function zoneFloor(g:THREE.Group,z:ZoneSpec){const plate=box(g,z.x,.045,z.z,z.width,.035,z.depth,z.color,.08);const mat=plate.material as THREE.MeshStandardMaterial;mat.transparent=true;mat.opacity=.16;mat.depthWrite=false;const edge=material(z.color,{transparent:true,opacity:.48,roughness:.8});for(const x of [z.x-z.width/2,z.x+z.width/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.025,.018,z.depth),edge);bar.position.set(x,.07,z.z);g.add(bar)}for(const zz of [z.z-z.depth/2,z.z+z.depth/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(z.width,.018,.025),edge);bar.position.set(z.x,.07,zz);g.add(bar)}const canvas=document.createElement('canvas');canvas.width=320;canvas.height=64;const ctx=canvas.getContext('2d');if(!ctx)return;ctx.fillStyle='#ffffffc8';if(typeof ctx.roundRect==='function')ctx.roundRect(2,2,316,60,12);else ctx.fillRect(2,2,316,60);ctx.fill();ctx.fillStyle='#58769c';ctx.font='600 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(z.name,160,33);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2.4,z.width*.65),.42),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));sign.rotation.x=-Math.PI/2;sign.position.set(z.x,.09,z.z);g.add(sign)}
 function cabinetBase(g:THREE.Group,w:number,d:number) {box(g,0,.47,0,w,.9,d,C.body);box(g,0,.08,0,w-.12,.12,d-.04,C.ink);for(const side of [-1,1]){box(g,side*w/4,.5,d/2+.018,w/2-.045,.74,.035,C.white);box(g,side*.11,.67,d/2+.055,.035,.23,.035,C.metal)}}
 function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
  // Instrument families use distinct silhouettes so the spatial scene reads like a
@@ -180,7 +180,13 @@ export default function LabScene(props:Props) {
     if(focusTarget){const before=controls.target.clone();controls.target.lerp(focusTarget,p.reduced?1:.10);camera.position.add(controls.target.clone().sub(before));if(controls.target.distanceTo(focusTarget)<.015)focusTarget=null}
     controls.update();points.clear()
     const currentPlan=p.plans.find(q=>q.id===p.planId),planEq=new Set(currentPlan?.reservations.map(r=>r.equipmentId)||[])
+    // Reserve the AI anchor's label footprint before placing equipment labels.
+    // This prevents a selected instrument card from sitting directly on top of
+    // the semantic center when the camera is zoomed or the viewport is narrow.
+    const aiScreen=new THREE.Vector3(0,1.05,1.0).project(camera)
+    const aiPosition={x:(aiScreen.x+1)*width/2,y:(-aiScreen.y+1)*height/2}
     const boxes:{x:number;y:number}[]=[]
+    if(aiPosition.x>=70&&aiPosition.x<=width-70&&aiPosition.y>=34&&aiPosition.y<=height-45)boxes.push(aiPosition)
     models.sort((a,b)=>Number(p.selection?.id===b.e.id)-Number(p.selection?.id===a.e.id)).forEach(({e,height:mh,outline})=>{
       const selected=p.selection?.type==='equipment'&&p.selection.id===e.id
       const bad=p.checks.some(c=>c.equipmentId===e.id&&c.state==='blocked'),unknown=p.checks.some(c=>c.equipmentId===e.id&&c.state==='unknown')
@@ -189,7 +195,10 @@ export default function LabScene(props:Props) {
       const b=pointers.get(e.id)!;const show=selected||((!p.planId||planEq.has(e.id))&&boxes.every(q=>Math.abs(q.x-v.x)>165||Math.abs(q.y-v.y)>61))
       b.hidden=!show||v.x<75||v.x>width-80||v.y<45||v.y>height-50
       if(!b.hidden)boxes.push(v)
-      b.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-100%)`;b.className=`al-scene-label ${selected?'selected':''} ${bad?'red':unknown?'amber':'blue'}`
+      const nearAI=Math.abs(v.x-aiPosition.x)<150&&Math.abs(v.y-aiPosition.y)<88
+      const labelOffset=selected&&nearAI?(v.x<width/2?96:-96):0
+      const labelX=Math.max(86,Math.min(width-86,v.x+labelOffset)),labelY=Math.max(42,v.y-(selected&&nearAI?20:0))
+      b.style.transform=`translate(${labelX}px,${labelY}px) translate(-50%,-100%)`;b.className=`al-scene-label ${selected?'selected':''} ${bad?'red':unknown?'amber':'blue'}`
       b.querySelector('small')!.textContent=bad?'预约约束冲突':unknown?'有待核验事项':`${p.plans.filter(q=>q.reservations.some(r=>r.equipmentId===e.id)).length} 项关联计划`
     })
     zonesFor(p.lab).forEach(z=>{const node=zonePointers.get(z.id);if(!node)return;const world=new THREE.Vector3(z.x,.12,z.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};node.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-50%)`;node.hidden=v.x<20||v.x>width-20||v.y<20||v.y>height-20})
