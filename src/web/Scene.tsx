@@ -138,7 +138,7 @@ function room(lab:Laboratory) {const g=new THREE.Group(),w=lab.width,d=lab.depth
  return g
 }
 
-interface Props { lab:Laboratory; equipment:Equipment[]; plans:Plan[]; checks:Check[]; selection:Selection; planId:string; onSelect:(value:Selection)=>void; reduced:boolean; flat:boolean }
+interface Props { lab:Laboratory; equipment:Equipment[]; plans:Plan[]; checks:Check[]; selection:Selection; planId:string; onSelect:(value:Selection)=>void; onOpenAI?:()=>void; reduced:boolean; flat:boolean }
 export default function LabScene(props:Props) {
  const host=useRef<HTMLDivElement>(null), overlay=useRef<HTMLDivElement>(null), lines=useRef<SVGSVGElement>(null)
  const live=useRef(props);live.current=props
@@ -159,9 +159,9 @@ export default function LabScene(props:Props) {
   const reset=()=>{const w=props.lab.width,d=props.lab.depth;camera.position.set(w*1.08,Math.max(10,d*1.06),d*1.32);camera.zoom=1.08;controls.target.set(0,.55,0);camera.updateProjectionMatrix();controls.update()};reset()
   const models=props.equipment.map(e=>{const m=model(e);scene.add(m.group);const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.width+.12,m.height+.1,m.depth+.12)),new THREE.LineBasicMaterial({color:C.blue,transparent:true,opacity:.8}));outline.position.set(e.x,m.height/2,e.z);outline.rotation.y=e.rotation*Math.PI/180;scene.add(outline);return {...m,e,outline}})
   const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
-  let aiPointer:HTMLDivElement|null=null
+  let aiPointer:HTMLButtonElement|null=null
   if(overlay.current){overlay.current.replaceChildren();
-   const ai=document.createElement('div');ai.className='al-scene-ai-core';ai.innerHTML='<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>理解 · 推演 · 放行</small></div>';overlay.current.appendChild(ai);aiPointer=ai
+   const ai=document.createElement('button');ai.type='button';ai.className='al-scene-ai-core';ai.setAttribute('aria-label','打开 AI 安全孪生预审');ai.title='打开 AI 安全孪生预审';ai.innerHTML='<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>理解 · 推演 · 放行</small></div>';ai.addEventListener('click',()=>live.current.onOpenAI?.());overlay.current.appendChild(ai);aiPointer=ai
    models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
   let width=1,height=1
   const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);const base=Math.max(props.lab.width*.46,props.lab.depth*.64,6.1);camera.top=base;camera.bottom=-base;camera.left=-base*width/height;camera.right=base*width/height;camera.updateProjectionMatrix()}
@@ -185,20 +185,41 @@ export default function LabScene(props:Props) {
     // the semantic center when the camera is zoomed or the viewport is narrow.
     const aiScreen=new THREE.Vector3(0,1.05,1.0).project(camera)
     const aiPosition={x:(aiScreen.x+1)*width/2,y:(-aiScreen.y+1)*height/2}
-    const boxes:{x:number;y:number}[]=[]
-    if(aiPosition.x>=70&&aiPosition.x<=width-70&&aiPosition.y>=34&&aiPosition.y<=height-45)boxes.push(aiPosition)
+    type Rect={x:number;y:number;w:number;h:number}
+    const boxes:Rect[]=[]
+    const overlaps=(a:Rect,b:Rect)=>a.x<b.x+b.w+8&&a.x+a.w+8>b.x&&a.y<b.y+b.h+8&&a.y+a.h+8>b.y
+    const inside=(a:Rect)=>a.x>=10&&a.y>=10&&a.x+a.w<=width-10&&a.y+a.h<=height-10
+    const reserve=(r:Rect)=>{if(inside(r))boxes.push(r)}
+    if(aiPosition.x>=70&&aiPosition.x<=width-70&&aiPosition.y>=34&&aiPosition.y<=height-45)reserve({x:aiPosition.x-92,y:aiPosition.y-20,w:184,h:40})
+    // Zone pills are semantic anchors too; reserve their actual footprint so
+    // equipment labels never cover the room's operating areas.
+    zonesFor(p.lab).forEach(z=>{
+      const world=new THREE.Vector3(z.x,.12,z.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2}
+      const node=zonePointers.get(z.id);const zw=node?.offsetWidth||78,zh=node?.offsetHeight||24
+      if(node)node.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-50%)`
+      if(node)node.hidden=v.x<20||v.x>width-20||v.y<20||v.y>height-20
+      if(node&&!node.hidden)reserve({x:v.x-zw/2,y:v.y-zh/2,w:zw,h:zh})
+    })
     models.sort((a,b)=>Number(p.selection?.id===b.e.id)-Number(p.selection?.id===a.e.id)).forEach(({e,height:mh,outline})=>{
       const selected=p.selection?.type==='equipment'&&p.selection.id===e.id
       const bad=p.checks.some(c=>c.equipmentId===e.id&&c.state==='blocked'),unknown=p.checks.some(c=>c.equipmentId===e.id&&c.state==='unknown')
       outline.visible=selected||Boolean(p.planId&&planEq.has(e.id));(outline.material as THREE.LineBasicMaterial).color.setHex(bad?0xe26476:C.blue)
       const world=new THREE.Vector3(e.x,mh+.35,e.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};points.set(e.id,v)
-      const b=pointers.get(e.id)!;const show=selected||((!p.planId||planEq.has(e.id))&&boxes.every(q=>Math.abs(q.x-v.x)>165||Math.abs(q.y-v.y)>61))
-      b.hidden=!show||v.x<75||v.x>width-80||v.y<45||v.y>height-50
-      if(!b.hidden)boxes.push(v)
       const nearAI=Math.abs(v.x-aiPosition.x)<150&&Math.abs(v.y-aiPosition.y)<88
-      const labelOffset=selected&&nearAI?(v.x<width/2?96:-96):0
-      const labelX=Math.max(86,Math.min(width-86,v.x+labelOffset)),labelY=Math.max(42,v.y-(selected&&nearAI?20:0))
-      b.style.transform=`translate(${labelX}px,${labelY}px) translate(-50%,-100%)`;b.className=`al-scene-label ${selected?'selected':''} ${bad?'red':unknown?'amber':'blue'}`
+      const b=pointers.get(e.id)!;b.hidden=false
+      const lw=b.offsetWidth||188,lh=b.offsetHeight||48
+      const offsets=selected&&nearAI?[v.x<width/2?115:-115,0,v.x<width/2?175:-175]:[0]
+      let rect:Rect|undefined
+      for(const dx of offsets){const candidate={x:v.x+dx-lw/2,y:v.y-lh-8,w:lw,h:lh};if(inside(candidate)&&boxes.every(q=>!overlaps(candidate,q))){rect=candidate;break}}
+      // The selected object remains discoverable even in a dense view. If all
+      // collision-free candidates are occupied, place it at the nearest valid
+      // edge and let its selected styling establish the visual priority.
+      if(!rect&&selected){const x=Math.max(10,Math.min(width-lw-10,v.x-lw/2)),y=Math.max(lh+10,Math.min(height-10,v.y-8));rect={x,y:y-lh,w:lw,h:lh}}
+      const eligible=!p.planId||planEq.has(e.id)
+      const show=Boolean(rect)&&(selected||eligible)
+      b.hidden=!show||v.x<75||v.x>width-80||v.y<45||v.y>height-50
+      if(!b.hidden&&rect){boxes.push(rect);const labelX=rect.x+rect.w/2,labelY=rect.y+rect.h;b.style.transform=`translate(${labelX}px,${labelY}px) translate(-50%,-100%)`}
+      b.className=`al-scene-label ${selected?'selected':''} ${bad?'red':unknown?'amber':'blue'}`
       b.querySelector('small')!.textContent=bad?'预约约束冲突':unknown?'有待核验事项':`${p.plans.filter(q=>q.reservations.some(r=>r.equipmentId===e.id)).length} 项关联计划`
     })
     zonesFor(p.lab).forEach(z=>{const node=zonePointers.get(z.id);if(!node)return;const world=new THREE.Vector3(z.x,.12,z.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};node.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-50%)`;node.hidden=v.x<20||v.x>width-20||v.y<20||v.y>height-20})
@@ -207,10 +228,10 @@ export default function LabScene(props:Props) {
       const selectedEq=p.selection?.type==='equipment'?p.selection.id:null
       const relevant=p.planId?currentPlan:p.plans.find(q=>q.reservations.some(r=>r.equipmentId===selectedEq))
       const dest=[...new Set(relevant?.reservations.map(r=>r.equipmentId)||[])].map(id=>({id,pos:points.get(id)})).filter(x=>x.pos)
-      const stamp=JSON.stringify([dest,cx,cy,relevant?.id,p.checks.filter(c=>c.state==='blocked').map(c=>c.equipmentId)])
+      const stamp=JSON.stringify([dest,cx,cy,relevant?.id,p.selection?.type,p.selection?.id,p.reduced,p.checks.filter(c=>c.state==='blocked').map(c=>c.equipmentId)])
       if(stamp!==previousStamp){previousStamp=stamp;lines.current.replaceChildren();
        const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');const marker=document.createElementNS('http://www.w3.org/2000/svg','marker');marker.setAttribute('id','al-arrow');marker.setAttribute('viewBox','0 0 10 10');marker.setAttribute('refX','8');marker.setAttribute('refY','5');marker.setAttribute('markerWidth','4');marker.setAttribute('markerHeight','4');marker.setAttribute('orient','auto-start-reverse');const arrow=document.createElementNS('http://www.w3.org/2000/svg','path');arrow.setAttribute('d','M 0 0 L 10 5 L 0 10 z');arrow.setAttribute('fill','#6898e7');marker.appendChild(arrow);defs.appendChild(marker);lines.current.appendChild(defs)
-       if(relevant){dest.forEach(({id,pos})=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');const bad=p.checks.some(c=>c.planId===relevant.id&&c.equipmentId===id&&c.state==='blocked');path.setAttribute('d',`M ${cx} ${cy} Q ${cx} ${pos!.y+20} ${pos!.x} ${pos!.y+12}`);path.setAttribute('class',`al-scene-connection ${bad?'red':''}`);path.setAttribute('marker-end','url(#al-arrow)');path.setAttribute('aria-label',`${relevant.code} 使用 ${id}`);path.addEventListener('click',()=>live.current.onSelect({type:'equipment',id}));lines.current!.appendChild(path);const node=document.createElementNS('http://www.w3.org/2000/svg','circle');node.setAttribute('cx',String(pos!.x));node.setAttribute('cy',String(pos!.y+12));node.setAttribute('r',bad?'5':'4');node.setAttribute('class',`al-scene-connection-node ${bad?'red':''}`);lines.current!.appendChild(node)});const halo=document.createElementNS('http://www.w3.org/2000/svg','circle');halo.setAttribute('cx',String(cx));halo.setAttribute('cy',String(cy));halo.setAttribute('r','18');halo.setAttribute('class','al-scene-ai-halo');lines.current.appendChild(halo);const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','6');circle.setAttribute('class','al-scene-ai-node');lines.current.appendChild(circle)}}}
+       if(relevant){const active=(p.selection?.type==='plan'||p.selection?.type==='equipment')&&!p.reduced;dest.forEach(({id,pos})=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');const bad=p.checks.some(c=>c.planId===relevant.id&&c.equipmentId===id&&c.state==='blocked');path.setAttribute('d',`M ${cx} ${cy} Q ${cx} ${pos!.y+20} ${pos!.x} ${pos!.y+12}`);path.setAttribute('class',`al-scene-connection ${bad?'red':''} ${active?'is-active':''}`);path.setAttribute('marker-end','url(#al-arrow)');path.setAttribute('aria-label',`${relevant.code} 使用 ${id}`);path.addEventListener('click',()=>live.current.onSelect({type:'equipment',id}));lines.current!.appendChild(path);const node=document.createElementNS('http://www.w3.org/2000/svg','circle');node.setAttribute('cx',String(pos!.x));node.setAttribute('cy',String(pos!.y+12));node.setAttribute('r',bad?'5':'4');node.setAttribute('class',`al-scene-connection-node ${bad?'red':''}`);lines.current!.appendChild(node)});const halo=document.createElementNS('http://www.w3.org/2000/svg','circle');halo.setAttribute('cx',String(cx));halo.setAttribute('cy',String(cy));halo.setAttribute('r','18');halo.setAttribute('class',`al-scene-ai-halo ${active?'is-active':''}`);lines.current.appendChild(halo);const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','6');circle.setAttribute('class','al-scene-ai-node');lines.current.appendChild(circle)}}}
     renderer.render(scene,camera);raf=requestAnimationFrame(draw)
   };draw()
   return()=>{cancelAnimationFrame(raf);ro.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('webglcontextlost',contextLost);scene.traverse(o=>{const m=o as THREE.Mesh;m.geometry?.dispose();const materials=Array.isArray(m.material)?m.material:[m.material];materials.forEach(mat=>{if(mat){Object.values(mat).forEach(v=>{if(v instanceof THREE.Texture)v.dispose()});mat.dispose()}})});renderer.dispose();renderer.domElement.remove();overlay.current?.replaceChildren();lines.current?.replaceChildren();actions.current=null}
