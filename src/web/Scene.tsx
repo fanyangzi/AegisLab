@@ -156,7 +156,13 @@ export default function LabScene(props:Props) {
   scene.add(room(props.lab))
   const camera=new THREE.OrthographicCamera(-10,10,8,-8,.1,200)
   const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.minZoom=.5;controls.maxZoom=3;controls.minPolarAngle=.30;controls.maxPolarAngle=Math.PI*.45;controls.enablePan=true;controls.target.set(0,.6,0)
-  const reset=()=>{const w=props.lab.width,d=props.lab.depth;camera.position.set(w*1.08,Math.max(10,d*1.06),d*1.32);camera.zoom=1.2;controls.target.set(0,.55,0);camera.updateProjectionMatrix();controls.update()};reset()
+  const reset=()=>{const w=props.lab.width,d=props.lab.depth;
+   // Keep the room readable at the 1440px acceptance width.  The previous
+   // distance was tuned for a much taller canvas and made the real assets
+   // collapse into a tiny island beside the inspector.
+   camera.position.set(w*.82,Math.max(8,d*.82),d*1.02);camera.zoom=1.28;
+   controls.target.set(0,.58,0);camera.updateProjectionMatrix();controls.update()
+  };reset()
   const models=props.equipment.map(e=>{const m=model(e);scene.add(m.group);const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.width+.12,m.height+.1,m.depth+.12)),new THREE.LineBasicMaterial({color:C.blue,transparent:true,opacity:.8}));outline.position.set(e.x,m.height/2,e.z);outline.rotation.y=e.rotation*Math.PI/180;scene.add(outline);return {...m,e,outline}})
   const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
   let aiPointer:HTMLButtonElement|null=null
@@ -165,7 +171,10 @@ export default function LabScene(props:Props) {
    const ai=document.createElement('button');ai.type='button';ai.className='al-scene-ai-core';ai.setAttribute('aria-label','打开 AI 安全孪生预审');ai.title='打开 AI 安全孪生预审';ai.innerHTML=`<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>${activePlan?`${activePlan.code} · ${aiState}`:aiState}</small></div>`;ai.addEventListener('click',()=>live.current.onOpenAI?.());overlay.current.appendChild(ai);aiPointer=ai
    models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
   let width=1,height=1
-  const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);const base=Math.max(props.lab.width*.46,props.lab.depth*.64,6.1);camera.top=base;camera.bottom=-base;camera.left=-base*width/height;camera.right=base*width/height;camera.updateProjectionMatrix()}
+  const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);
+   const base=Math.max(props.lab.width*.35,props.lab.depth*.49,4.9);
+   camera.top=base;camera.bottom=-base;camera.left=-base*width/height;camera.right=base*width/height;camera.updateProjectionMatrix()
+  }
   const ro=new ResizeObserver(resize);ro.observe(el);resize()
   const raycaster=new THREE.Raycaster(),mouse=new THREE.Vector2();let down=[0,0]
   const pointerDown=(e:PointerEvent)=>down=[e.clientX,e.clientY]

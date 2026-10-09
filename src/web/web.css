@@ -72,6 +72,16 @@
  .al-space-title h1{font-size:13px}.al-space-toolbar-actions{width:100%;justify-content:flex-start}.al-space-toolbar{display:block}.al-space-title{margin-bottom:7px}.al-space-toolbar-actions>.al-button{flex:1}.al-content-page{padding:16px 11px}.al-page-title h1{font-size:22px}.al-summary-row{grid-template-columns:1fr 1fr}.al-copilot-overview{grid-template-columns:1fr 1fr}.al-copilot-kpi{padding:11px 9px}.al-copilot-kpi strong{font-size:19px}
 }
 
+/* Preserve a useful amount of scene at 1280x720 and other short desktop
+   viewports.  The schedule cards remain present, but no longer crush the
+   spatial work surface into a thumbnail. */
+@media (min-width:1100px) and (max-height:800px){
+ .al-space-dock{min-height:168px;max-height:182px;padding-top:8px;padding-bottom:9px}
+ .al-dock-card>header{height:42px}
+ .al-dock-plan-list>button{padding:6px 4px}
+ .al-dock-network{padding-top:9px}
+}
+
 /* v5 visual refinement: the spatial canvas is a calm blue-white instrument
    surface, while labels and graph semantics remain crisp above the 3D model. */
 .al-space-content{background:radial-gradient(ellipse at 50% 38%,#ffffff 0%,#f4f8fd 47%,#e9f0f8 100%);isolation:isolate}
