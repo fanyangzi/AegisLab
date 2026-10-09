@@ -454,9 +454,11 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
             step.setdefault("line", source_step.get("line"))
             step.setdefault("planEquipmentIds", source_step.get("equipmentIds", []))
     hazards: list[dict] = []
+    relations: list[dict] = []
     for index, step in enumerate(steps, 1):
         hazard = step.get("hazard")
         if hazard or step.get("requires_ppe") or step.get("waste_stream") or step.get("ventilation"):
+            source = f"SOP 原文 L{step.get('line')}" if step.get("line") else "SOP 原文（待定位）"
             hazards.append({
                 "id": f"step-{step.get('order', index)}",
                 "step": step.get("order", index),
@@ -467,7 +469,17 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
                 "ppe": step.get("requires_ppe", []),
                 "evidence": step.get("evidence_refs", []),
                 "severity": "high" if hazard else "medium",
+                "source": source,
+                "origin": "source-anchored",
             })
+        for substance in substances:
+            substance_name = str(substance.get("name", "")).strip()
+            if substance_name and substance_name in str(step.get("instruction", "")):
+                relations.append({"from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "kind": "uses", "label": "使用化学品", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文"})
+        for equipment in step.get("equipment", []):
+            relations.append({"from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "kind": "requires", "label": "需要设备", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文"})
+        for control in step.get("controls", []):
+            relations.append({"from": f"step-{step.get('order', index)}", "to": f"control-{control}", "kind": "controlled-by", "label": "控制措施", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文"})
     # If a plan uses generic wording rather than a known substance, retain a
     # signal from the deterministic rule engine instead of pretending the
     # parser identified a chemical that was not present in the source.
@@ -477,7 +489,7 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
                 "id": f"rule-{result.rule_id}", "step": None,
                 "title": result.message, "detail": result.recommended_control or result.message,
                 "controls": [], "ppe": [], "evidence": list(result.evidence_refs),
-                "severity": result.severity.value,
+                "severity": result.severity.value, "source": result.source or f"规则包 {result.rule_version}", "origin": "deterministic-rule",
             })
     # Keep the graph compact and stable when a long SOP contains repeated
     # mentions of the same control.
@@ -523,17 +535,17 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
             detail = "不能只替换画面中的关系线；需要修订计划。"
         else:
             title, detail = gap["title"], gap["detail"]
-        next_actions.append({"id": f"action-{gap['id']}", "title": title, "detail": detail, "sourceId": gap["id"], "owner": "实验负责人"})
+        next_actions.append({"id": f"action-{gap['id']}", "title": title, "detail": detail, "sourceId": gap["id"], "owner": "实验负责人", "status": "suggested", "taskDraft": {"title": title, "note": detail, "equipmentId": gap.get("equipmentId"), "line": gap.get("line")}})
     for conflict in conflicts[:4]:
-        next_actions.append({"id": f"action-{conflict['id']}", "title": "打开方案推演，比较可行资源或时段", "detail": "候选方案先在隔离副本中核验，正式计划不会被自动覆盖。", "sourceId": conflict["id"], "owner": "计划负责人"})
+        next_actions.append({"id": f"action-{conflict['id']}", "title": "打开方案推演，比较可行资源或时段", "detail": "候选方案先在隔离副本中核验，正式计划不会被自动覆盖。", "sourceId": conflict["id"], "owner": "计划负责人", "status": "suggested", "taskDraft": {"title": "复核资源或时段冲突", "note": conflict["detail"], "equipmentId": conflict.get("equipmentId")}})
     if not next_actions:
-        next_actions.append({"id": "action-review", "title": "由安全负责人复核当前版本", "detail": "AI 解释和规则结果不能替代机构审批或现场确认。", "sourceId": plan["id"], "owner": "安全负责人"})
+        next_actions.append({"id": "action-review", "title": "由安全负责人复核当前版本", "detail": "AI 解释和规则结果不能替代机构审批或现场确认。", "sourceId": plan["id"], "owner": "安全负责人", "status": "required", "taskDraft": {"title": "复核实验计划当前版本", "note": "请核对 AI 解释、原文来源、资源约束和机构流程。"}})
 
     # Produce two deterministic candidates for the scenario comparison.  They
     # are suggestions only; applying one still requires the existing branch
     # workflow and creates a new plan revision.
     baseline_counts = {"blocked": sum(c["state"] == "blocked" for c in plan_checks), "unknown": sum(c["state"] == "unknown" for c in plan_checks), "pass": sum(c["state"] == "pass" for c in plan_checks)}
-    scenarios = [{"id": "baseline", "name": "当前正式安排", "kind": "baseline", "status": "current", "summary": "以当前计划和已登记资源为基线。", "counts": baseline_counts, "changes": []}]
+    scenarios = [{"id": "baseline", "name": "当前正式安排", "kind": "baseline", "status": "current", "summary": "以当前计划和已登记资源为基线。", "counts": baseline_counts, "changes": [], "reasoning": ["保留正式计划作为比较基准", "不会因为 AI 结果自动修改"], "actionability": "reference"}]
     # Alternate resource candidate: use the first available same-kind resource
     # for a conflicted/unknown reservation, if one exists.
     candidate_reservations = [dict(r) for r in plan["reservations"]]
@@ -554,11 +566,12 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
         candidate_plan = next(q for q in candidate["plans"] if q["id"] == plan["id"])
         candidate_plan["reservations"] = candidate_reservations
         candidate_checks = [c for c in check_workspace(candidate) if c["planId"] == plan["id"]]
-        scenarios.append({"id": "resource-alternative", "name": "AI 资源替代候选", "kind": "alternative", "status": "suggested", "summary": "用同类别且当前可用资源替代受约束对象，结果仍需人工确认。", "counts": {"blocked": sum(c["state"] == "blocked" for c in candidate_checks), "unknown": sum(c["state"] == "unknown" for c in candidate_checks), "pass": sum(c["state"] == "pass" for c in candidate_checks)}, "changes": changes})
-    scenarios.append({"id": "evidence-first", "name": "先补证再放行", "kind": "workflow", "status": "suggested", "summary": "不改变排程，优先处理证据缺口和原文确认。", "counts": baseline_counts, "changes": [{"action": "complete-evidence", "count": len(evidence_gaps)}]})
+        scenarios.append({"id": "resource-alternative", "name": "AI 资源替代候选", "kind": "alternative", "status": "suggested", "summary": "用同类别且当前可用资源替代受约束对象，结果仍需人工确认。", "counts": {"blocked": sum(c["state"] == "blocked" for c in candidate_checks), "unknown": sum(c["state"] == "unknown" for c in candidate_checks), "pass": sum(c["state"] == "pass" for c in candidate_checks)}, "changes": changes, "reasoning": ["同类别资源保持设备能力语义", "避开已登记维护窗口和停用状态", "替代结果将在隔离副本中重新核验"], "actionability": "branch"})
+    scenarios.append({"id": "evidence-first", "name": "先补证再放行", "kind": "workflow", "status": "suggested", "summary": "不改变排程，优先处理证据缺口和原文确认。", "counts": baseline_counts, "changes": [{"action": "complete-evidence", "count": len(evidence_gaps)}], "reasoning": ["不改变正式资源预约", f"先闭环 {len(evidence_gaps)} 个证据或确认缺口", "由负责人完成复核后再形成新修订"], "actionability": "task"})
 
     return {
         "entities": {"steps": len(steps), "hazards": unique_hazards, "substances": substances, "ppe": parsed.get("ppe", []), "equipment": parsed.get("equipment", []), "wasteStreams": parsed.get("waste_streams", []), "ventilation": parsed.get("ventilation")},
+        "relations": relations,
         "riskSignals": unique_hazards,
         "conflicts": conflicts,
         "evidenceGaps": evidence_gaps,
@@ -566,6 +579,90 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
         "scenarios": scenarios,
         "ruleSummary": {"total": len(plan_checks), **baseline_counts, "failedTextRules": [r.rule_id for r in failed_rules]},
     }
+
+
+def _merge_model_parse(parsed: dict, model_fields: Any) -> tuple[dict, bool]:
+    """Merge a model candidate without losing deterministic source anchors.
+
+    The model is useful for prose SOPs where the deterministic vocabulary is
+    intentionally small.  Every accepted step inherits the deterministic
+    evidence reference at the same ordinal position; the plan endpoint later
+    adds the actual source line.  Invalid or partial model output is ignored
+    field-by-field so the offline parser remains the authoritative fallback.
+    """
+    if not isinstance(model_fields, dict):
+        return parsed, False
+    merged = dict(parsed)
+    used = False
+
+    raw_steps = model_fields.get("steps")
+    if isinstance(raw_steps, list):
+        candidates = []
+        from .models import LabStep, Substance
+        for index, item in enumerate(raw_steps):
+            if not isinstance(item, dict):
+                continue
+            instruction = str(item.get("instruction", "")).strip()
+            if not instruction:
+                continue
+            try:
+                step = LabStep(
+                    order=int(item.get("order") or index + 1),
+                    instruction=instruction[:500],
+                    hazard=str(item.get("hazard") or "").strip() or None,
+                    controls=[str(v).strip() for v in item.get("controls", []) if str(v).strip()][:20],
+                    requires_ppe=[str(v).strip() for v in item.get("requires_ppe", []) if str(v).strip()][:20],
+                    equipment=[str(v).strip() for v in item.get("equipment", []) if str(v).strip()][:20],
+                    ventilation=str(item.get("ventilation") or "").strip() or None,
+                    waste_stream=str(item.get("waste_stream") or "").strip() or None,
+                    evidence_refs=(parsed.get("steps", [])[index].evidence_refs if index < len(parsed.get("steps", [])) else []),
+                )
+            except (TypeError, ValueError):
+                continue
+            candidates.append(step)
+        if candidates:
+            # A model may omit a low-signal line.  Keep the deterministic
+            # source step instead of silently shrinking the review surface.
+            if len(candidates) < len(parsed.get("steps", [])):
+                merged["steps"] = candidates + list(parsed.get("steps", []))[len(candidates):]
+            else:
+                merged["steps"] = candidates
+            used = True
+
+    raw_substances = model_fields.get("substances")
+    if isinstance(raw_substances, list):
+        candidates = []
+        from .models import Substance
+        for item in raw_substances:
+            if not isinstance(item, dict) or not str(item.get("name", "")).strip():
+                continue
+            try:
+                candidates.append(Substance(
+                    name=str(item["name"]).strip()[:180],
+                    cas_number=str(item.get("cas_number") or "").strip() or None,
+                    hazard_classes=[str(v).strip() for v in item.get("hazard_classes", []) if str(v).strip()][:10],
+                ))
+            except (TypeError, ValueError):
+                continue
+        if candidates:
+            # Keep model output reviewable, but do not let it erase chemicals
+            # found deterministically in the source.
+            existing = {str(getattr(item, "name", "")).strip() for item in merged.get("substances", [])}
+            merged["substances"] = list(merged.get("substances", [])) + [item for item in candidates if item.name not in existing]
+            used = True
+
+    for key in ("ppe", "equipment", "waste_streams"):
+        values = model_fields.get(key)
+        if isinstance(values, list):
+            normalized = sorted({str(value).strip() for value in values if str(value).strip()})
+            if normalized:
+                merged[key] = sorted({*merged.get(key, []), *normalized})
+                used = True
+    ventilation = model_fields.get("ventilation")
+    if isinstance(ventilation, str) and ventilation.strip():
+        merged["ventilation"] = ventilation.strip()
+        used = True
+    return merged, used
 
 
 def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
@@ -870,18 +967,34 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
         parsed['equipment'] = sorted({item for step in structured_steps for item in step.equipment})
         parsed['ventilation'] = '通风柜' if any(step.ventilation for step in structured_steps) else parsed.get('ventilation')
         parsed['waste_streams'] = sorted({step.waste_stream for step in structured_steps if step.waste_stream})
+    adapter = LLMAdapter()
+    model_fields = adapter.extract_sop(p['source'])
+    parsed, model_used = _merge_model_parse(parsed, model_fields)
     review = Review(id=p['id'], title=p['name'], objective='实验计划辅助文本预审', requester=p['owner'], room=p['labId'],
         sop=p['source'], created_at=now(), updated_at=now(), steps=parsed['steps'], substances=parsed['substances'],
         ppe=parsed['ppe'], equipment=parsed['equipment'], ventilation=parsed['ventilation'], waste_streams=parsed['waste_streams'],
         evidence=[Evidence(**item) for item in parsed['evidence']])
     engine = ReviewRuleEngine()
     evaluation = engine.evaluate(review)
-    result = LLMAdapter().summarize(review.model_dump(mode='json'), evaluation.model_dump(mode='json'))
-    adapter = LLMAdapter()
+    result = adapter.summarize(review.model_dump(mode='json'), evaluation.model_dump(mode='json'))
     copilot = _copilot_packet(w, p, parsed, evaluation)
+    # The trace is intentionally explicit in the response so the UI can show
+    # what came from the model, what came from deterministic rules, and what
+    # still requires a human decision.  It is metadata, not an approval.
+    trace = {
+        'stages': [
+            {'id': 'understand', 'label': '结构化理解', 'status': 'model' if model_used else 'deterministic', 'detail': f"识别 {len(parsed['steps'])} 个步骤、{len(parsed['substances'])} 个化学品实体"},
+            {'id': 'check', 'label': '规则核验', 'status': 'rule', 'detail': f"{sum(1 for item in evaluation.results if item.passed)} 项满足，{sum(1 for item in evaluation.results if not item.passed)} 项待处理"},
+            {'id': 'scenario', 'label': '场景推演', 'status': 'deterministic', 'detail': f"生成 {len(copilot['scenarios'])} 个隔离候选方案"},
+            {'id': 'review', 'label': '人工复核', 'status': 'required', 'detail': '候选结果需要负责人确认后才可形成计划修订'},
+        ],
+        'model': {'configured': adapter.status()['configured'], 'used': model_used, 'provider': result.provider, 'name': adapter.model or None},
+        'source_policy': '所有候选都绑定 SOP 行号、资源检查或证据记录；无法建立来源时保留为待确认。',
+    }
     return {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
-        'parser': 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
+        'parser': 'model-enriched-deterministic-sop-v2' if model_used else 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
         'degraded': result.provider == 'offline' or result.degraded or not result.available,
         'summary': result.text, 'results': [r.model_dump(mode='json') for r in evaluation.results],
         'copilot': copilot,
+        'trace': trace,
         'scope': 'AI 负责结构化理解与解释；确定性规则和人工复核负责约束结论。不会自动批准、修改计划或生成事故处置指令。'}

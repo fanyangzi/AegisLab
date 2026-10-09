@@ -14,6 +14,18 @@ function cylinder(g:THREE.Group,x:number,y:number,z:number,r:number,h:number,col
 function tube(g:THREE.Group,points:number[][],radius:number,color:number) {const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p as [number,number,number])));const m=new THREE.Mesh(new THREE.TubeGeometry(curve,16,radius,8,false),material(color,{metalness:.7,roughness:.25}));g.add(m);return m}
 function bottle(g:THREE.Group,x:number,y:number,z:number,scale=1,color=0xa9d9d3) {const h=.28*scale;cylinder(g,x,y+h/2,z,.075*scale,h,color);cylinder(g,x,y+h+.015*scale,z,.04*scale,.06*scale,C.ink);box(g,x,y+h/2,z+.075*scale,.09*scale,.11*scale,.004,C.white,0)}
 function flask(g:THREE.Group,x:number,y:number,z:number,scale=1) {const bulb=new THREE.Mesh(new THREE.SphereGeometry(.12*scale,14,10),material(C.glass,{transparent:true,opacity:.7,roughness:.12}));bulb.position.set(x,y+.13*scale,z);g.add(bulb);cylinder(g,x,y+.30*scale,z,.035*scale,.23*scale,C.glass);cylinder(g,x,y+.42*scale,z,.05*scale,.03*scale,C.white)}
+function aiCore(){
+ const g=new THREE.Group();
+ const base=material(0x5e8ee8,{emissive:0x1d4fbe,emissiveIntensity:.48,transparent:true,opacity:.88,roughness:.28,metalness:.18});
+ const glow=material(0x8bd9f3,{emissive:0x218bc4,emissiveIntensity:.7,transparent:true,opacity:.52,roughness:.18,metalness:.08});
+ const plate=new THREE.Mesh(new THREE.CylinderGeometry(.76,.76,.035,48),base);plate.position.y=.06;plate.castShadow=true;g.add(plate);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.69,.026,8,64),glow);ring.rotation.x=Math.PI/2;ring.position.y=.095;g.add(ring);
+ const ring2=new THREE.Mesh(new THREE.TorusGeometry(.49,.014,8,64),new THREE.MeshBasicMaterial({color:0xb9edff,transparent:true,opacity:.8}));ring2.rotation.x=Math.PI/2;ring2.position.y=.11;g.add(ring2);
+ const core=new THREE.Mesh(new THREE.OctahedronGeometry(.27,.1),new THREE.MeshStandardMaterial({color:0xe9fbff,emissive:0x56c7ee,emissiveIntensity:.75,roughness:.14,metalness:.08,transparent:true,opacity:.94}));core.position.y=.39;core.rotation.y=Math.PI/4;core.castShadow=true;g.add(core);
+ const beacon=new THREE.Mesh(new THREE.CylinderGeometry(.02,.06,.56,12),new THREE.MeshBasicMaterial({color:0x90e8ff,transparent:true,opacity:.68}));beacon.position.y=.52;g.add(beacon);
+ g.traverse(o=>{o.userData.aiCore=true});
+ return g;
+}
 function label(g:THREE.Group,text:string,x:number,y:number,z:number,width=1.0){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=80;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#346bea';ctx.fillRect(0,0,256,80);ctx.fillStyle='white';ctx.font='600 40px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,42);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,width*80/256),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);g.add(mesh)}
 type ZoneSpec={id:string;name:string;x:number;z:number;width:number;depth:number;color:number}
 function zonesFor(lab:Laboratory):ZoneSpec[]{const w=lab.width,d=lab.depth;return [
@@ -109,6 +121,19 @@ function room(lab:Laboratory) {const g=new THREE.Group(),w=lab.width,d=lab.depth
  for(let x=-w/2+2;x<w/2-1;x+=3){box(g,x,2.80,-d/2+.09,2.40,.38,.035,0xc1ddee);for(const a of [-1,1])box(g,x+a*1.21,2.8,-d/2+.12,.06,.46,.045,C.white);box(g,x,2.8,-d/2+.12,.045,.4,.045,C.white)}
  for(let z=-d/2+2;z<d/2-1;z+=3){box(g,w/2-.10,2.15,z,.04,1.45,2.15,0xc2dcea);for(const a of [-1,0,1])box(g,w/2-.14,2.15,z+a*1.04,.04,1.55,.05,C.white);box(g,w/2-.13,2.93,z,.05,.05,2.2,C.white);box(g,w/2-.13,1.4,z,.14,.08,2.3,C.white)}
  box(g,0,3.08,-d/2+.15,w-.5,.12,.13,C.white);box(g,w/2-.15,3.08,0,.13,.12,d-.5,C.white)
+ // Diffuse ceiling light bays give the room the clean, softly lit look of a
+ // modern university core facility while keeping the orthographic view open.
+ for(let x=-w/2+1.7;x<w/2-1;x+=3.1){
+  const panel=box(g,x,3.04,-d*.14,1.55,.025,.34,0xf5fbff,.02)
+  const panelMat=panel.material as THREE.MeshStandardMaterial;panelMat.emissive.setHex(0xc4e8ff);panelMat.emissiveIntensity=.35
+ }
+ for(let z=-d/2+2.2;z<d/2-1;z+=3.1){
+  const panel=box(g,w*.22,3.04,z,.34,.025,1.55,0xf5fbff,.02)
+  const panelMat=panel.material as THREE.MeshStandardMaterial;panelMat.emissive.setHex(0xc4e8ff);panelMat.emissiveIntensity=.3
+ }
+ // A subtle central marker is the visual anchor for the AI safety twin. The
+ // projected overlay added below carries the readable label and live state.
+ const core=aiCore();core.position.set(0,.02,1.0);g.add(core)
  label(g,lab.name.slice(0,12),-w/2+1.7,2.45,-d/2+.11,2.0)
  return g
 }
@@ -134,7 +159,10 @@ export default function LabScene(props:Props) {
   const reset=()=>{const w=props.lab.width,d=props.lab.depth;camera.position.set(w*1.08,Math.max(10,d*1.06),d*1.32);camera.zoom=1.08;controls.target.set(0,.55,0);camera.updateProjectionMatrix();controls.update()};reset()
   const models=props.equipment.map(e=>{const m=model(e);scene.add(m.group);const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.width+.12,m.height+.1,m.depth+.12)),new THREE.LineBasicMaterial({color:C.blue,transparent:true,opacity:.8}));outline.position.set(e.x,m.height/2,e.z);outline.rotation.y=e.rotation*Math.PI/180;scene.add(outline);return {...m,e,outline}})
   const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
-  if(overlay.current){overlay.current.replaceChildren();models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
+  let aiPointer:HTMLDivElement|null=null
+  if(overlay.current){overlay.current.replaceChildren();
+   const ai=document.createElement('div');ai.className='al-scene-ai-core';ai.innerHTML='<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>理解 · 推演 · 放行</small></div>';overlay.current.appendChild(ai);aiPointer=ai
+   models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
   let width=1,height=1
   const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);const base=Math.max(props.lab.width*.46,props.lab.depth*.64,6.1);camera.top=base;camera.bottom=-base;camera.left=-base*width/height;camera.right=base*width/height;camera.updateProjectionMatrix()}
   const ro=new ResizeObserver(resize);ro.observe(el);resize()
@@ -165,12 +193,15 @@ export default function LabScene(props:Props) {
       b.querySelector('small')!.textContent=bad?'预约约束冲突':unknown?'有待核验事项':`${p.plans.filter(q=>q.reservations.some(r=>r.equipmentId===e.id)).length} 项关联计划`
     })
     zonesFor(p.lab).forEach(z=>{const node=zonePointers.get(z.id);if(!node)return;const world=new THREE.Vector3(z.x,.12,z.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};node.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-50%)`;node.hidden=v.x<20||v.x>width-20||v.y<20||v.y>height-20})
-    if(lines.current){const center=new THREE.Vector3(0,1.75,1.0).project(camera),cx=(center.x+1)*width/2,cy=(-center.y+1)*height/2
+    if(lines.current){const center=new THREE.Vector3(0,1.05,1.0).project(camera),cx=(center.x+1)*width/2,cy=(-center.y+1)*height/2
+      if(aiPointer){aiPointer.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;aiPointer.hidden=cx<70||cx>width-70||cy<34||cy>height-45}
       const selectedEq=p.selection?.type==='equipment'?p.selection.id:null
       const relevant=p.planId?currentPlan:p.plans.find(q=>q.reservations.some(r=>r.equipmentId===selectedEq))
       const dest=[...new Set(relevant?.reservations.map(r=>r.equipmentId)||[])].map(id=>({id,pos:points.get(id)})).filter(x=>x.pos)
       const stamp=JSON.stringify([dest,cx,cy,relevant?.id,p.checks.filter(c=>c.state==='blocked').map(c=>c.equipmentId)])
-      if(stamp!==previousStamp){previousStamp=stamp;lines.current.replaceChildren();if(relevant){dest.forEach(({id,pos})=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');const bad=p.checks.some(c=>c.planId===relevant.id&&c.equipmentId===id&&c.state==='blocked');path.setAttribute('d',`M ${cx} ${cy} Q ${cx} ${pos!.y+20} ${pos!.x} ${pos!.y+12}`);path.setAttribute('class',`al-scene-connection ${bad?'red':''}`);path.setAttribute('aria-label',`${relevant.code} 使用 ${id}`);path.addEventListener('click',()=>live.current.onSelect({type:'equipment',id}));lines.current!.appendChild(path)});const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','6');circle.setAttribute('fill','#3975eb');lines.current.appendChild(circle)}}}
+      if(stamp!==previousStamp){previousStamp=stamp;lines.current.replaceChildren();
+       const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');const marker=document.createElementNS('http://www.w3.org/2000/svg','marker');marker.setAttribute('id','al-arrow');marker.setAttribute('viewBox','0 0 10 10');marker.setAttribute('refX','8');marker.setAttribute('refY','5');marker.setAttribute('markerWidth','4');marker.setAttribute('markerHeight','4');marker.setAttribute('orient','auto-start-reverse');const arrow=document.createElementNS('http://www.w3.org/2000/svg','path');arrow.setAttribute('d','M 0 0 L 10 5 L 0 10 z');arrow.setAttribute('fill','#6898e7');marker.appendChild(arrow);defs.appendChild(marker);lines.current.appendChild(defs)
+       if(relevant){dest.forEach(({id,pos})=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');const bad=p.checks.some(c=>c.planId===relevant.id&&c.equipmentId===id&&c.state==='blocked');path.setAttribute('d',`M ${cx} ${cy} Q ${cx} ${pos!.y+20} ${pos!.x} ${pos!.y+12}`);path.setAttribute('class',`al-scene-connection ${bad?'red':''}`);path.setAttribute('marker-end','url(#al-arrow)');path.setAttribute('aria-label',`${relevant.code} 使用 ${id}`);path.addEventListener('click',()=>live.current.onSelect({type:'equipment',id}));lines.current!.appendChild(path);const node=document.createElementNS('http://www.w3.org/2000/svg','circle');node.setAttribute('cx',String(pos!.x));node.setAttribute('cy',String(pos!.y+12));node.setAttribute('r',bad?'5':'4');node.setAttribute('class',`al-scene-connection-node ${bad?'red':''}`);lines.current!.appendChild(node)});const halo=document.createElementNS('http://www.w3.org/2000/svg','circle');halo.setAttribute('cx',String(cx));halo.setAttribute('cy',String(cy));halo.setAttribute('r','18');halo.setAttribute('class','al-scene-ai-halo');lines.current.appendChild(halo);const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','6');circle.setAttribute('class','al-scene-ai-node');lines.current.appendChild(circle)}}}
     renderer.render(scene,camera);raf=requestAnimationFrame(draw)
   };draw()
   return()=>{cancelAnimationFrame(raf);ro.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('webglcontextlost',contextLost);scene.traverse(o=>{const m=o as THREE.Mesh;m.geometry?.dispose();const materials=Array.isArray(m.material)?m.material:[m.material];materials.forEach(mat=>{if(mat){Object.values(mat).forEach(v=>{if(v instanceof THREE.Texture)v.dispose()});mat.dispose()}})});renderer.dispose();renderer.domElement.remove();overlay.current?.replaceChildren();lines.current?.replaceChildren();actions.current=null}

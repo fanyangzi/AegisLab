@@ -20,6 +20,8 @@ SUBSTANCES = {
     "正己烷": ("110-54-3", [HazardClass.FLAMMABLE, HazardClass.TOXIC]),
     "乙醇": ("64-17-5", [HazardClass.FLAMMABLE]),
     "丙酮": ("67-64-1", [HazardClass.FLAMMABLE]),
+    "甲醇": ("67-56-1", [HazardClass.FLAMMABLE, HazardClass.TOXIC]),
+    "乙腈": ("75-05-8", [HazardClass.FLAMMABLE, HazardClass.TOXIC]),
     "二氯甲烷": ("75-09-2", [HazardClass.TOXIC]),
     "浓硫酸": ("7664-93-9", [HazardClass.CORROSIVE, HazardClass.REACTIVE]),
     "过氧化氢": ("7722-84-1", [HazardClass.OXIDIZER, HazardClass.REACTIVE]),
@@ -45,7 +47,8 @@ def _evidence_id(line_no: int, line: str) -> str:
 
 
 def parse_sop(text: str) -> Dict[str, Any]:
-    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    source_lines = [(line_no, raw.strip()) for line_no, raw in enumerate(text.splitlines(), 1) if raw.strip()]
+    lines = [line for _, line in source_lines]
     steps: List[LabStep] = []
     all_text = "\n".join(lines)
     substances: List[Substance] = []
@@ -62,12 +65,10 @@ def parse_sop(text: str) -> Dict[str, Any]:
                 sds_reference=f"PubChem:{cas}; NIOSH Pocket Guide",
             ))
 
-    for line_no, line in enumerate(lines, 1):
+    for ordinal, (line_no, line) in enumerate(source_lines, 1):
         match = re.match(r"^(?:步骤\s*)?(\d+)[.、)）:]\s*(.+)$", line)
-        if not match:
-            continue
-        order = int(match.group(1))
-        instruction = match.group(2)
+        order = int(match.group(1)) if match else ordinal
+        instruction = match.group(2) if match else line
         refs = [_evidence_id(line_no, line)]
         lower = instruction.lower()
         hazard = None
@@ -130,6 +131,6 @@ def parse_sop(text: str) -> Dict[str, Any]:
                 "sha256": _hash(line),
                 "metadata": {"line": i, "synthetic": True},
             }
-            for i, line in enumerate(lines, 1)
+            for i, line in source_lines
         ],
     }

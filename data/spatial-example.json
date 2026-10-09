@@ -31,15 +31,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于挥发性有机溶剂前处理；配置联锁、局部排风和台面清场记录。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "用于挥发性有机溶剂前处理；配置联锁、局部排风和台面清场记录。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：挥发性、腐蚀性或衍生化操作的局部捕集节点；审查锚点：通风柜面风速、视窗位置、排风联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "普通化学通风柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "fume hood",
+        "局部排风"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 挥发性、腐蚀性或衍生化操作的局部捕集节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "挥发性有机物",
         "腐蚀性蒸气"
@@ -47,15 +50,21 @@
       "controlTags": [
         "面风速记录",
         "排风联锁",
-        "尾气处理"
+        "尾气处理",
+        "通风柜面风速",
+        "视窗位置"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "通风柜与局部排风培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "面风速记录",
+        "排风联锁检查",
+        "视窗与导流板检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -67,10 +76,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -84,8 +93,8 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "备用通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "挥发性、腐蚀性或衍生化操作的局部捕集节点。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：挥发性、腐蚀性或衍生化操作的局部捕集节点；审查锚点：通风柜面风速、视窗位置、排风联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [
@@ -98,8 +107,11 @@
       ],
       "family": "containment",
       "subtype": "普通化学通风柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "fume hood",
+        "局部排风"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 挥发性、腐蚀性或衍生化操作的局部捕集节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "挥发性有机物",
         "腐蚀性蒸气"
@@ -107,15 +119,21 @@
       "controlTags": [
         "面风速记录",
         "排风联锁",
-        "尾气处理"
+        "尾气处理",
+        "通风柜面风速",
+        "视窗位置"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "通风柜与局部排风培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "面风速记录",
+        "排风联锁检查",
+        "视窗与导流板检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -127,10 +145,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -144,15 +162,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "实验室管理员",
-      "description": "用于酸碱和衍生化前处理；现场状态待当班负责人确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "用于酸碱和衍生化前处理；现场状态待当班负责人确认。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：挥发性、腐蚀性或衍生化操作的局部捕集节点；审查锚点：通风柜面风速、视窗位置、排风联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "普通化学通风柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "fume hood",
+        "局部排风"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 挥发性、腐蚀性或衍生化操作的局部捕集节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "挥发性有机物",
         "腐蚀性蒸气"
@@ -160,15 +181,21 @@
       "controlTags": [
         "面风速记录",
         "排风联锁",
-        "尾气处理"
+        "尾气处理",
+        "通风柜面风速",
+        "视窗位置"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "通风柜与局部排风培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "面风速记录",
+        "排风联锁检查",
+        "视窗与导流板检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -180,10 +207,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -197,15 +224,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "小型称量通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "标准品、样品和校准物的定量称量节点。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：标准品、样品和校准物的定量称量节点；审查锚点：防风罩、环境振动、砝码校准。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "分析天平 / 微量称量台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "analytical balance",
+        "微量天平"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 标准品、样品和校准物的定量称量节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "粉尘暴露",
         "静电"
@@ -213,13 +243,19 @@
       "controlTags": [
         "校准砝码",
         "防风罩",
-        "称量环境"
+        "称量环境",
+        "环境振动",
+        "砝码校准"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "分析天平与称量记录培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "砝码校准证书",
+        "水平与防风罩",
+        "温湿度与振动记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -231,9 +267,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -248,31 +286,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "易燃溶剂防火柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "易燃溶剂的防爆暂存节点。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：易燃溶剂的防爆暂存节点；审查锚点：库存上限、柜体接地、分区托盘。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "waste_environment",
       "subtype": "化学品防爆柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "flammable storage",
+        "防爆柜"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 易燃溶剂的防爆暂存节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "易燃溶剂"
       ],
       "controlTags": [
         "接地",
         "库存上限",
-        "分区与托盘"
+        "分区与托盘",
+        "柜体接地",
+        "分区托盘"
       ],
       "utilityRequirements": [
         "接地",
         "环境监测"
       ],
       "requiredTraining": [
+        "易燃品存储与防爆柜培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "防爆等级",
+        "接地与通风",
+        "库存上限",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -283,10 +330,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -300,15 +348,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "实验室管理员",
-      "description": "样品留样冷藏柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "需控温留样与标准品暂存节点。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：需控温留样与标准品暂存节点；审查锚点：温度报警、防爆等级、断电预案。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "cold_chain",
       "subtype": "防爆冷藏柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "explosion-proof refrigerator",
+        "冷藏留样柜"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 需控温留样与标准品暂存节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "易燃溶剂",
         "温度失控"
@@ -316,16 +367,21 @@
       "controlTags": [
         "防爆等级",
         "库存上限",
-        "温度报警"
+        "温度报警",
+        "断电预案"
       ],
       "utilityRequirements": [
         "电源",
         "温度监测"
       ],
       "requiredTraining": [
+        "防爆冷藏与易燃品管理培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "温度曲线",
+        "防爆铭牌",
+        "断电预案",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -337,9 +393,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -354,15 +411,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "气相色谱分析台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "挥发性有机物的气相分离与定量节点。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：挥发性有机物的气相分离与定量节点；审查锚点：载气压力、高温区、尾气导出。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "气相色谱 GC",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "GC-FID",
+        "gas chromatography"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 挥发性有机物的气相分离与定量节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "高温",
         "可燃氢气",
@@ -371,7 +431,10 @@
       "controlTags": [
         "载气检查",
         "点火源控制",
-        "废气导出"
+        "废气导出",
+        "载气压力",
+        "高温区",
+        "尾气导出"
       ],
       "utilityRequirements": [
         "载气",
@@ -379,9 +442,13 @@
         "排风"
       ],
       "requiredTraining": [
+        "GC 方法、载气和点火培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "载气压力",
+        "方法版本",
+        "进样口与检测器状态",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -393,9 +460,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -410,15 +478,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "液相色谱分析台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "有机样品的高效液相分离与复核节点。空间标签：201 / 分析与监测区；共享平台：有机分析与前处理平台。运行画像：有机样品的高效液相分离与复核节点；审查锚点：柱压上限、流动相相容性、废液容量。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "高效液相色谱 HPLC",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "HPLC",
+        "liquid chromatography"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 有机样品的高效液相分离与复核节点；覆盖分析与监测区的当前设备点位",
       "hazardTags": [
         "高压",
         "有机溶剂"
@@ -426,16 +497,22 @@
       "controlTags": [
         "柱压上限",
         "废液分类",
-        "溶剂相容性"
+        "溶剂相容性",
+        "流动相相容性",
+        "废液容量"
       ],
       "utilityRequirements": [
         "电源",
         "废液"
       ],
       "requiredTraining": [
+        "HPLC 高压流路与溶剂培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "柱压上限",
+        "流动相与废液",
+        "方法版本",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -447,9 +524,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -464,30 +542,39 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "紫外可见分光光度计的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "吸收光谱和浓度复核节点。空间标签：201 / 分析与监测区；共享平台：有机分析与前处理平台。运行画像：吸收光谱和浓度复核节点；审查锚点：光源状态、比色皿相容性、样品溢洒。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "spectroscopy",
       "subtype": "紫外可见分光光度计",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "UV-Vis",
+        "吸收光谱"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 吸收光谱和浓度复核节点；覆盖分析与监测区的当前设备点位",
       "hazardTags": [
         "紫外辐射",
         "溶剂"
       ],
       "controlTags": [
         "光源状态",
-        "比色皿兼容性"
+        "比色皿兼容性",
+        "比色皿相容性",
+        "样品溢洒"
       ],
       "utilityRequirements": [
         "电源"
       ],
       "requiredTraining": [
+        "UV-Vis 光源与样品池培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "波长/光源校准",
+        "比色皿完整性",
+        "样品溢洒清场",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -499,9 +586,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -516,26 +605,38 @@
       "rotation": 0,
       "capacity": 2,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "样品前处理工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "样品接收、配液与原始记录的防腐蚀工作面。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：样品接收、配液与原始记录的防腐蚀工作面；审查锚点：台面相容性、溢洒控制、紧急通道。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "防腐蚀化学操作台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "aliases": [
+        "chemical bench",
+        "wet lab bench"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 样品接收、配液与原始记录的防腐蚀工作面；覆盖前处理与应急区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "台面材质",
         "溢洒盘",
-        "动线与应急通道"
+        "动线与应急通道",
+        "台面相容性",
+        "溢洒控制",
+        "紧急通道"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "化学品相容性与溢洒响应培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "台面材质与溢洒盘",
+        "通道无遮挡",
+        "清场记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -546,9 +647,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -563,15 +666,18 @@
       "rotation": 0,
       "capacity": 2,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "称量与稀释工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "标准品、样品和校准物的定量称量节点。空间标签：201 / 分析与监测区；共享平台：有机分析与前处理平台。运行画像：标准品、样品和校准物的定量称量节点；审查锚点：防风罩、环境振动、砝码校准。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "分析天平 / 微量称量台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "analytical balance",
+        "微量天平"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 标准品、样品和校准物的定量称量节点；覆盖分析与监测区的当前设备点位",
       "hazardTags": [
         "粉尘暴露",
         "静电"
@@ -579,13 +685,19 @@
       "controlTags": [
         "校准砝码",
         "防风罩",
-        "称量环境"
+        "称量环境",
+        "环境振动",
+        "砝码校准"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "分析天平与称量记录培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "砝码校准证书",
+        "水平与防风罩",
+        "温湿度与振动记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -597,9 +709,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -614,26 +728,38 @@
       "rotation": 0,
       "capacity": 2,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "原始记录工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "样品接收、配液与原始记录的防腐蚀工作面。空间标签：201 / 分析与监测区；共享平台：有机分析与前处理平台。运行画像：样品接收、配液与原始记录的防腐蚀工作面；审查锚点：台面相容性、溢洒控制、紧急通道。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "防腐蚀化学操作台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "aliases": [
+        "chemical bench",
+        "wet lab bench"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 样品接收、配液与原始记录的防腐蚀工作面；覆盖分析与监测区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "台面材质",
         "溢洒盘",
-        "动线与应急通道"
+        "动线与应急通道",
+        "台面相容性",
+        "溢洒控制",
+        "紧急通道"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "化学品相容性与溢洒响应培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "台面材质与溢洒盘",
+        "通道无遮挡",
+        "清场记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -644,9 +770,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -661,25 +789,37 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "器皿清洗工作站的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "器皿清洗、冲洗登记和废液预分流节点。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：器皿清洗、冲洗登记和废液预分流节点；审查锚点：水路状态、废液分流、破碎物收集。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "utility",
-      "subtype": "sink",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "subtype": "器皿清洗与废液预冲洗站",
+      "aliases": [
+        "wash station",
+        "清洗站"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 器皿清洗、冲洗登记和废液预分流节点；覆盖前处理与应急区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "关联当前 SOP",
-        "核对设备状态与适用范围"
+        "核对设备状态与适用范围",
+        "水路状态",
+        "废液分流",
+        "破碎物收集"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "器皿清洗与废液分流培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "水路与排水",
+        "废液标签",
+        "破碎物容器",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -690,10 +830,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -707,15 +847,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "去离子水清洗台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "前处理和仪器冲洗用水的制备节点。空间标签：201 / 清洗与公用工程区；共享平台：有机分析与前处理平台。运行画像：前处理和仪器冲洗用水的制备节点；审查锚点：电阻率记录、滤芯寿命、漏水报警。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "utility",
       "subtype": "纯水 / 超纯水系统",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "DI water",
+        "ultrapure water"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 前处理和仪器冲洗用水的制备节点；覆盖清洗与公用工程区的当前设备点位",
       "hazardTags": [
         "微生物污染",
         "漏水"
@@ -723,7 +866,8 @@
       "controlTags": [
         "电阻率记录",
         "滤芯更换",
-        "漏水报警"
+        "漏水报警",
+        "滤芯寿命"
       ],
       "utilityRequirements": [
         "自来水",
@@ -731,9 +875,13 @@
         "排水"
       ],
       "requiredTraining": [
+        "纯水系统与滤芯维护培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "电阻率/TOC",
+        "滤芯更换",
+        "漏水报警",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -745,10 +893,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -762,15 +910,15 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "实验室管理员",
-      "description": "有机废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准；审查锚点：。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "waste_environment",
       "subtype": "有机废液柜",
       "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "typicalUse": "有机分析与前处理平台 · 高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "易燃废液",
         "有毒蒸气"
@@ -798,10 +946,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -815,8 +964,8 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unavailable",
-      "owner": "实验室管理员",
-      "description": "酸碱废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "酸、碱和腐蚀性废液的分类暂存节点。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：酸、碱和腐蚀性废液的分类暂存节点；审查锚点：相容性分区、托盘防漏、容器标签。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [
@@ -829,23 +978,32 @@
       ],
       "family": "waste_environment",
       "subtype": "酸碱柜 / 腐蚀品柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "corrosives cabinet",
+        "酸碱分柜"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 酸、碱和腐蚀性废液的分类暂存节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "腐蚀性化学品"
       ],
       "controlTags": [
         "相容性分区",
         "托盘",
-        "标签"
+        "标签",
+        "托盘防漏",
+        "容器标签"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "腐蚀品相容性与废液分类培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "酸碱分区",
+        "防漏托盘",
+        "容器标签",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -856,10 +1014,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -873,15 +1032,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "质谱前处理通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "挥发性、腐蚀性或衍生化操作的局部捕集节点。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：挥发性、腐蚀性或衍生化操作的局部捕集节点；审查锚点：通风柜面风速、视窗位置、排风联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "普通化学通风柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "fume hood",
+        "局部排风"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 挥发性、腐蚀性或衍生化操作的局部捕集节点；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "挥发性有机物",
         "腐蚀性蒸气"
@@ -889,15 +1051,21 @@
       "controlTags": [
         "面风速记录",
         "排风联锁",
-        "尾气处理"
+        "尾气处理",
+        "通风柜面风速",
+        "视窗位置"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "通风柜与局部排风培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "面风速记录",
+        "排风联锁检查",
+        "视窗与导流板检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -909,10 +1077,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -926,15 +1094,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "实验室管理员",
-      "description": "衍生化操作通风柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "挥发性、腐蚀性或衍生化操作的局部捕集节点。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：挥发性、腐蚀性或衍生化操作的局部捕集节点；审查锚点：通风柜面风速、视窗位置、排风联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "普通化学通风柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "fume hood",
+        "局部排风"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 挥发性、腐蚀性或衍生化操作的局部捕集节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "挥发性有机物",
         "腐蚀性蒸气"
@@ -942,15 +1113,21 @@
       "controlTags": [
         "面风速记录",
         "排风联锁",
-        "尾气处理"
+        "尾气处理",
+        "通风柜面风速",
+        "视窗位置"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "通风柜与局部排风培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "面风速记录",
+        "排风联锁检查",
+        "视窗与导流板检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -962,10 +1139,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -979,15 +1156,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "标准品低温储存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "标准品、生物样品和长期留样的低温节点。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：标准品、生物样品和长期留样的低温节点；审查锚点：温度曲线、报警联动、断电预案。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "cold_chain",
       "subtype": "-20℃ / -80℃ 低温冰箱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "-80 freezer",
+        "低温保存"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 标准品、生物样品和长期留样的低温节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "低温",
         "断电风险"
@@ -995,16 +1175,22 @@
       "controlTags": [
         "温度报警",
         "断电预案",
-        "样品台账"
+        "样品台账",
+        "温度曲线",
+        "报警联动"
       ],
       "utilityRequirements": [
         "电源",
         "温度监测"
       ],
       "requiredTraining": [
+        "低温设备与断电应急培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "温度报警",
+        "探头校准",
+        "备用电源/断电预案",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1016,9 +1202,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1033,25 +1220,37 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "归档样品储存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "留样、原始记录和待复核样品的归档节点。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：留样、原始记录和待复核样品的归档节点；审查锚点：批次标签、访问记录、相容性分区。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "utility",
-      "subtype": "storage",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "subtype": "样品与原始记录归档柜",
+      "aliases": [
+        "sample archive",
+        "样品归档柜"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 留样、原始记录和待复核样品的归档节点；覆盖环境与应急区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "关联当前 SOP",
-        "核对设备状态与适用范围"
+        "核对设备状态与适用范围",
+        "批次标签",
+        "访问记录",
+        "相容性分区"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "样品归档与访问记录培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "标签与批次",
+        "访问记录",
+        "柜体/托盘检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1062,10 +1261,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1079,15 +1278,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "UHPLC 分析系统的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "复杂样品的超高效液相高分辨分离节点。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：复杂样品的超高效液相高分辨分离节点；审查锚点：超高压、方法版本、柱压联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "超高效液相色谱 UPLC",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "UPLC",
+        "UHPLC"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 复杂样品的超高效液相高分辨分离节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "超高压",
         "有机溶剂"
@@ -1095,16 +1297,21 @@
       "controlTags": [
         "方法版本",
         "柱压联锁",
-        "废液容量"
+        "废液容量",
+        "超高压"
       ],
       "utilityRequirements": [
         "电源",
         "废液"
       ],
       "requiredTraining": [
+        "UPLC 超高压与方法版本培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "超高压联锁",
+        "柱温与方法版本",
+        "废液容量",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1116,9 +1323,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1133,15 +1341,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "实验室管理员",
-      "description": "三重四极杆质谱仪的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 共享仪器中心 · 实验室管理员",
+      "description": "目标化合物的定量质谱与离子源节点。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：目标化合物的定量质谱与离子源节点；审查锚点：真空状态、氮气质量、校准液。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 2,
       "maintenance": [],
       "family": "mass_analysis",
       "subtype": "三重四极杆 / 高分辨质谱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "triple quadrupole MS",
+        "LC-MS/MS"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 目标化合物的定量质谱与离子源节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "高压电",
         "真空",
@@ -1150,7 +1361,9 @@
       "controlTags": [
         "真空状态",
         "离子源",
-        "校准液与方法版本"
+        "校准液与方法版本",
+        "氮气质量",
+        "校准液"
       ],
       "utilityRequirements": [
         "氮气",
@@ -1158,9 +1371,13 @@
         "排风"
       ],
       "requiredTraining": [
+        "质谱离子源、真空与氮气培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "真空与氮气",
+        "校准液有效性",
+        "离子源状态",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1172,9 +1389,9 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1189,15 +1406,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "离子色谱分析系统的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "阴阳离子分离和淋洗液管理节点。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：阴阳离子分离和淋洗液管理节点；审查锚点：抑制器状态、淋洗液记录、废液分类。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "离子色谱 IC",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "IC",
+        "ion chromatography"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 阴阳离子分离和淋洗液管理节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "高压",
         "酸碱淋洗液"
@@ -1213,9 +1433,13 @@
         "废液"
       ],
       "requiredTraining": [
+        "离子色谱淋洗液与抑制器培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "抑制器",
+        "淋洗液批次",
+        "废液分类",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1227,9 +1451,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1244,31 +1469,39 @@
       "rotation": 0,
       "capacity": 2,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "质谱样品制备台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "低尘、低污染样品制备节点。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：低尘、低污染样品制备节点；审查锚点：HEPA 状态、洁净度记录、禁限用物料。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "洁净工作台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "clean bench",
+        "HEPA workstation"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 低尘、低污染样品制备节点；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "交叉污染"
       ],
       "controlTags": [
         "HEPA 状态",
         "洁净度记录",
-        "禁止处理挥发性危险物"
+        "禁止处理挥发性危险物",
+        "禁限用物料"
       ],
       "utilityRequirements": [
         "电源",
         "排风"
       ],
       "requiredTraining": [
+        "洁净台 HEPA 与交叉污染培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "HEPA/洁净度",
+        "紫外灯状态",
+        "禁限用物料",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1280,10 +1513,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1297,26 +1530,38 @@
       "rotation": 0,
       "capacity": 2,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "标准曲线配制台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "样品接收、配液与原始记录的防腐蚀工作面。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：样品接收、配液与原始记录的防腐蚀工作面；审查锚点：台面相容性、溢洒控制、紧急通道。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "防腐蚀化学操作台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "aliases": [
+        "chemical bench",
+        "wet lab bench"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 样品接收、配液与原始记录的防腐蚀工作面；覆盖共享分析区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "台面材质",
         "溢洒盘",
-        "动线与应急通道"
+        "动线与应急通道",
+        "台面相容性",
+        "溢洒控制",
+        "紧急通道"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "化学品相容性与溢洒响应培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "台面材质与溢洒盘",
+        "通道无遮挡",
+        "清场记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1327,9 +1572,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1344,26 +1591,38 @@
       "rotation": 0,
       "capacity": 2,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "数据复核工作台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "样品接收、配液与原始记录的防腐蚀工作面。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：样品接收、配液与原始记录的防腐蚀工作面；审查锚点：台面相容性、溢洒控制、紧急通道。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "防腐蚀化学操作台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "aliases": [
+        "chemical bench",
+        "wet lab bench"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 样品接收、配液与原始记录的防腐蚀工作面；覆盖共享分析区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "台面材质",
         "溢洒盘",
-        "动线与应急通道"
+        "动线与应急通道",
+        "台面相容性",
+        "溢洒控制",
+        "紧急通道"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "化学品相容性与溢洒响应培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "台面材质与溢洒盘",
+        "通道无遮挡",
+        "清场记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1374,9 +1633,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1391,25 +1652,37 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "仪器清洗与冲洗台的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "器皿清洗、冲洗登记和废液预分流节点。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：器皿清洗、冲洗登记和废液预分流节点；审查锚点：水路状态、废液分流、破碎物收集。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "utility",
-      "subtype": "sink",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
-      "hazardTags": [],
+      "subtype": "器皿清洗与废液预冲洗站",
+      "aliases": [
+        "wash station",
+        "清洗站"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 器皿清洗、冲洗登记和废液预分流节点；覆盖前处理与洁净区的当前设备点位",
+      "hazardTags": [
+        "交叉污染"
+      ],
       "controlTags": [
         "关联当前 SOP",
-        "核对设备状态与适用范围"
+        "核对设备状态与适用范围",
+        "水路状态",
+        "废液分流",
+        "破碎物收集"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "器皿清洗与废液分流培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "水路与排水",
+        "废液标签",
+        "破碎物容器",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1420,10 +1693,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1437,15 +1710,15 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "实验室管理员",
-      "description": "质谱废液暂存柜的样例台账；设备能力、状态和适用范围需由实际记录确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准；审查锚点：。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "waste_environment",
       "subtype": "有机废液柜",
       "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "typicalUse": "仪器分析与材料表征平台 · 高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准；覆盖环境与应急区的当前设备点位",
       "hazardTags": [
         "易燃废液",
         "有毒蒸气"
@@ -1473,10 +1746,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1490,15 +1764,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于样品分离与低温前处理；转子、最高转速和校准记录需按设备台账确认。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "用于样品分离与低温前处理；转子、最高转速和校准记录需按设备台账确认。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：样品沉降、分层和低温分离节点；审查锚点：转子寿命、配平、密封杯。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "冷冻离心机",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "refrigerated centrifuge",
+        "低温离心"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 样品沉降、分层和低温分离节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "高速旋转",
         "气溶胶"
@@ -1512,9 +1789,13 @@
         "电源"
       ],
       "requiredTraining": [
+        "转子配平与气溶胶防护培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "转子寿命",
+        "配平记录",
+        "密封杯检查",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1526,9 +1807,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1543,15 +1825,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于有机溶剂浓缩；真空、冷凝和水浴联锁属于使用前核对条件。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "用于有机溶剂浓缩；真空、冷凝和水浴联锁属于使用前核对条件。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：溶剂浓缩和回收节点；审查锚点：真空破坏、冷凝水、溶剂尾气。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "旋转蒸发仪",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "rotavap",
+        "rotary evaporator"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 溶剂浓缩和回收节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "真空",
         "玻璃破裂",
@@ -1560,7 +1845,9 @@
       "controlTags": [
         "冷却水",
         "真空破坏",
-        "冷阱与尾气"
+        "冷阱与尾气",
+        "冷凝水",
+        "溶剂尾气"
       ],
       "utilityRequirements": [
         "冷却水",
@@ -1568,9 +1855,13 @@
         "排风"
       ],
       "requiredTraining": [
+        "旋蒸真空、冷凝与防破裂培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "真空破坏",
+        "冷凝循环",
+        "玻璃部件完整性",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1582,9 +1873,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1599,15 +1891,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "为旋蒸和抽滤提供真空；油雾过滤、排气去向与维护状态需要证据。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "为旋蒸和抽滤提供真空；油雾过滤、排气去向与维护状态需要证据。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：旋蒸、抽滤和仪器真空的动力节点；审查锚点：回流防护、尾气去向、隔离阀。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "gas_vacuum",
       "subtype": "干式 / 油式真空泵",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "dry vacuum",
+        "oil vacuum"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 旋蒸、抽滤和仪器真空的动力节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "真空",
         "尾气",
@@ -1616,16 +1911,21 @@
       "controlTags": [
         "回流防护",
         "尾气导出",
-        "隔离阀"
+        "隔离阀",
+        "尾气去向"
       ],
       "utilityRequirements": [
         "电源",
         "排风"
       ],
       "requiredTraining": [
+        "真空泵回流和尾气管理培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "回流防护",
+        "油/隔膜状态",
+        "尾气去向",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1637,10 +1937,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1654,15 +1955,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于挥发性样品浓缩；氮气来源、针位和通风控制需要和SOP绑定。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "用于挥发性样品浓缩；氮气来源、针位和通风控制需要和SOP绑定。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：平行样品氮吹浓缩节点；审查锚点：氮气压力、针位高度、局部排风。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "氮吹浓缩仪",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "N2 blowdown",
+        "氮吹浓缩"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 平行样品氮吹浓缩节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "氮气窒息",
         "溶剂蒸气",
@@ -1671,16 +1975,21 @@
       "controlTags": [
         "氮气压力",
         "局部排风",
-        "温度上限"
+        "温度上限",
+        "针位高度"
       ],
       "utilityRequirements": [
         "氮气",
         "排风"
       ],
       "requiredTraining": [
+        "氮吹针位、温控与通风培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "氮气压力",
+        "针位/温度",
+        "局部排风",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1692,9 +2001,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -1709,31 +2019,39 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "可燃/有毒气体监测点；报警设定、校验日期和覆盖区域来自设施台账。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "可燃/有毒气体监测点；报警设定、校验日期和覆盖区域来自设施台账。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：可燃或有毒气体的连续监测与联动节点；审查锚点：传感器校准、报警记录、排风联动。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "safety_response",
       "subtype": "可燃/有毒气体探测器",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "LEL/toxic detector",
+        "gas alarm"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 可燃或有毒气体的连续监测与联动节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "气体泄漏"
       ],
       "controlTags": [
         "传感器校准",
         "报警联动排风",
-        "报警记录"
+        "报警记录",
+        "排风联动"
       ],
       "utilityRequirements": [
         "电源",
         "联动排风"
       ],
       "requiredTraining": [
+        "气体探测器报警处置培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "传感器校准",
+        "报警记录",
+        "联动测试",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1744,10 +2062,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1761,31 +2080,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "记录实验室环境和挥发性有机物趋势；数据源和采样周期需要明确。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "记录实验室环境和挥发性有机物趋势；数据源和采样周期需要明确。空间标签：201 / 清洗与公用工程区；共享平台：有机分析与前处理平台。运行画像：温湿度、压差和 VOC 趋势的环境监测节点；审查锚点：采样周期、阈值配置、数据完整性。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "waste_environment",
       "subtype": "温湿度 / 压差 / VOC 监测点",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "VOC monitor",
+        "environment IoT"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 温湿度、压差和 VOC 趋势的环境监测节点；覆盖清洗与公用工程区的当前设备点位",
       "hazardTags": [
         "环境偏离"
       ],
       "controlTags": [
         "阈值",
         "校准",
-        "数据完整性"
+        "数据完整性",
+        "采样周期",
+        "阈值配置"
       ],
       "utilityRequirements": [
         "电源",
         "网络"
       ],
       "requiredTraining": [
+        "环境监测点与报警阈值培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "采样周期",
+        "阈值配置",
+        "数据完整性",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1796,10 +2124,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1813,31 +2142,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "紧急冲洗设施；可达性、流量和月度点检记录属于安全前置条件。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "紧急冲洗设施；可达性、流量和月度点检记录属于安全前置条件。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：化学品飞溅后的眼部冲洗应急节点；审查锚点：可达距离、流量水质、周检记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "safety_response",
       "subtype": "洗眼器",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "emergency eyewash",
+        "冲眼器"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 化学品飞溅后的眼部冲洗应急节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "化学暴露应急"
       ],
       "controlTags": [
         "可达距离",
         "周检",
-        "水质与水压"
+        "水质与水压",
+        "流量水质",
+        "周检记录"
       ],
       "utilityRequirements": [
         "给水",
         "排水"
       ],
       "requiredTraining": [
+        "洗眼器应急冲洗培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "流量与水质",
+        "可达性",
+        "周检记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1848,10 +2186,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1865,31 +2204,41 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "紧急冲淋设施；可达性、排水和点检记录需要保持有效。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "紧急冲淋设施；可达性、排水和点检记录需要保持有效。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：腐蚀性暴露后的全身冲淋应急节点；审查锚点：30 m 可达、常开阀、月检记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "safety_response",
       "subtype": "紧急喷淋",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "emergency shower",
+        "冲淋器"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 腐蚀性暴露后的全身冲淋应急节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "化学暴露应急"
       ],
       "controlTags": [
         "30 m 内可达",
         "月检",
-        "常开阀与无遮挡"
+        "常开阀与无遮挡",
+        "30 m 可达",
+        "常开阀",
+        "月检记录"
       ],
       "utilityRequirements": [
         "给水",
         "排水"
       ],
       "requiredTraining": [
+        "紧急喷淋与暴露响应培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "喷淋流量",
+        "无遮挡/可达",
+        "月检记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1900,10 +2249,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1917,31 +2267,39 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "为低尘样品制备提供局部洁净环境；洁净级别与过滤器维护需要证据。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "为低尘样品制备提供局部洁净环境；洁净级别与过滤器维护需要证据。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：低尘、低污染样品制备节点；审查锚点：HEPA 状态、洁净度记录、禁限用物料。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "洁净工作台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "clean bench",
+        "HEPA workstation"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 低尘、低污染样品制备节点；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "交叉污染"
       ],
       "controlTags": [
         "HEPA 状态",
         "洁净度记录",
-        "禁止处理挥发性危险物"
+        "禁止处理挥发性危险物",
+        "禁限用物料"
       ],
       "utilityRequirements": [
         "电源",
         "排风"
       ],
       "requiredTraining": [
+        "洁净台 HEPA 与交叉污染培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "HEPA/洁净度",
+        "紫外灯状态",
+        "禁限用物料",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -1953,10 +2311,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -1970,30 +2328,38 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于需要定向防护的样品操作；本项目仅登记设备依赖，不替代生物安全认证。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于需要定向防护的样品操作；本项目仅登记设备依赖，不替代生物安全认证。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：化学与生物交叉样品的定向防护节点；审查锚点：HEPA 年检、消毒记录、生物边界。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "生物安全柜 II 级",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "BSC-II",
+        "生物安全柜"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 化学与生物交叉样品的定向防护节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "生物气溶胶"
       ],
       "controlTags": [
         "HEPA 年检",
         "消毒记录",
-        "生物安全边界"
+        "生物安全边界",
+        "生物边界"
       ],
       "utilityRequirements": [
         "排风"
       ],
       "requiredTraining": [
+        "生物安全柜操作与消毒培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "HEPA 年检",
+        "消毒记录",
+        "气流/报警",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2005,10 +2371,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2022,25 +2388,35 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于核酸扩增检测；运行程序、校准和样品区分区要求绑定到计划。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于核酸扩增检测；运行程序、校准和样品区分区要求绑定到计划。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：核酸扩增与阴阳性对照的分区检测节点；审查锚点：前后区分离、扩增产物污染、热循环记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "utility",
-      "subtype": "pcr",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "subtype": "实时荧光定量 PCR",
+      "aliases": [
+        "qPCR",
+        "real-time PCR"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 核酸扩增与阴阳性对照的分区检测节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [],
       "controlTags": [
         "关联当前 SOP",
-        "核对设备状态与适用范围"
+        "核对设备状态与适用范围",
+        "前后区分离",
+        "扩增产物污染",
+        "热循环记录"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "PCR 分区与污染控制培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "热循环校准",
+        "前后区分离",
+        "污染监测",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2051,10 +2427,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2068,15 +2444,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于标准品与样品称量；量程、分度值和校准证书需要按对象核验。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于标准品与样品称量；量程、分度值和校准证书需要按对象核验。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：标准品、样品和校准物的定量称量节点；审查锚点：防风罩、环境振动、砝码校准。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "workstation",
       "subtype": "分析天平 / 微量称量台",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "analytical balance",
+        "微量天平"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 标准品、样品和校准物的定量称量节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "粉尘暴露",
         "静电"
@@ -2084,13 +2463,19 @@
       "controlTags": [
         "校准砝码",
         "防风罩",
-        "称量环境"
+        "称量环境",
+        "环境振动",
+        "砝码校准"
       ],
       "utilityRequirements": [],
       "requiredTraining": [
+        "分析天平与称量记录培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "砝码校准证书",
+        "水平与防风罩",
+        "温湿度与振动记录",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2102,9 +2487,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2119,15 +2506,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于标准品和样品低温保存；温度范围、报警和维护窗口需要记录。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于标准品和样品低温保存；温度范围、报警和维护窗口需要记录。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：标准品、生物样品和长期留样的低温节点；审查锚点：温度曲线、报警联动、断电预案。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "cold_chain",
       "subtype": "-20℃ / -80℃ 低温冰箱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "-80 freezer",
+        "低温保存"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 标准品、生物样品和长期留样的低温节点；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "低温",
         "断电风险"
@@ -2135,16 +2525,22 @@
       "controlTags": [
         "温度报警",
         "断电预案",
-        "样品台账"
+        "样品台账",
+        "温度曲线",
+        "报警联动"
       ],
       "utilityRequirements": [
         "电源",
         "温度监测"
       ],
       "requiredTraining": [
+        "低温设备与断电应急培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "温度报警",
+        "探头校准",
+        "备用电源/断电预案",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2156,9 +2552,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2173,15 +2570,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于器皿和样品干燥；温度上限、校准和与挥发性物质的适用范围需确认。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于器皿和样品干燥；温度上限、校准和与挥发性物质的适用范围需确认。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：器皿、样品和前处理固体的受控干燥节点；审查锚点：超温保护、挥发物禁限用、温度校准。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "鼓风 / 真空干燥箱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "vacuum oven",
+        "drying oven"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 器皿、样品和前处理固体的受控干燥节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "高温",
         "挥发性物料"
@@ -2189,16 +2589,22 @@
       "controlTags": [
         "超温保护",
         "禁限用物料",
-        "通风"
+        "通风",
+        "挥发物禁限用",
+        "温度校准"
       ],
       "utilityRequirements": [
         "电源",
         "排风"
       ],
       "requiredTraining": [
+        "干燥箱温控与物料相容性培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "温度校准",
+        "超温保护",
+        "物料相容性",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2210,10 +2616,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2227,15 +2633,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于高温灰化；高温隔离、排气和冷却条件需要在计划中显式声明。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于高温灰化；高温隔离、排气和冷却条件需要在计划中显式声明。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：灰化、烧结和高温气氛处理节点；审查锚点：炉管状态、防烫隔离、气氛排放。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "马弗炉 / 管式炉",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "tube furnace",
+        "muffle furnace"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 灰化、烧结和高温气氛处理节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "高温",
         "气氛",
@@ -2244,16 +2653,23 @@
       "controlTags": [
         "温控联锁",
         "炉管检查",
-        "防烫"
+        "防烫",
+        "炉管状态",
+        "防烫隔离",
+        "气氛排放"
       ],
       "utilityRequirements": [
         "电源",
         "排风"
       ],
       "requiredTraining": [
+        "高温炉与防烫/气氛培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "温控联锁",
+        "炉管状态",
+        "气氛/排气",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2265,10 +2681,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2282,15 +2698,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "用于受控存放气瓶；气体种类、减压器、固定和通风证据需要关联。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "用于受控存放气瓶；气体种类、减压器、固定和通风证据需要关联。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：可燃、惰性或有毒气瓶的受控存放节点；审查锚点：瓶体固定、泄漏检测、分区双阀。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "gas_vacuum",
       "subtype": "气瓶柜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "gas cylinder cabinet",
+        "气瓶间"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 可燃、惰性或有毒气瓶的受控存放节点；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "可燃/有毒气体",
         "泄漏"
@@ -2298,16 +2717,22 @@
       "controlTags": [
         "固定",
         "泄漏检测",
-        "分区与双阀"
+        "分区与双阀",
+        "瓶体固定",
+        "分区双阀"
       ],
       "utilityRequirements": [
         "排风",
         "气体报警"
       ],
       "requiredTraining": [
+        "气瓶固定、减压和泄漏应急培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "瓶体固定",
+        "泄漏检测",
+        "减压器状态",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2319,10 +2744,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2336,31 +2762,39 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "实验室管理员",
-      "description": "记录受控区域进出；此对象只表示设施关联，不把门禁状态当作实验批准。",
+      "owner": "301 交叉研究平台 · 实验室管理员",
+      "description": "记录受控区域进出；此对象只表示设施关联，不把门禁状态当作实验批准。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：共享仪器区域的培训授权与进出记录节点；审查锚点：授权状态、访问日志、紧急解锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": false,
       "specVersion": 1,
       "maintenance": [],
       "family": "safety_response",
       "subtype": "门禁 / 访客终端",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，能力与适用范围以本机台账和 SOP 为准",
+      "aliases": [
+        "lab access",
+        "badge reader"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 共享仪器区域的培训授权与进出记录节点；覆盖环境与应急区的当前设备点位",
       "hazardTags": [
         "未授权进入"
       ],
       "controlTags": [
         "培训授权",
         "访问日志",
-        "紧急解锁"
+        "紧急解锁",
+        "授权状态"
       ],
       "utilityRequirements": [
         "电源",
         "网络"
       ],
       "requiredTraining": [
+        "共享平台授权与门禁培训",
         "设备使用培训"
       ],
       "calibrationOrInspection": [
+        "授权清单",
+        "门禁日志",
+        "紧急解锁",
         "检查记录与规格版本"
       ],
       "evidenceKinds": [
@@ -2371,10 +2805,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2388,15 +2823,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "手套箱 / 惰性气氛箱；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "手套箱 / 惰性气氛箱；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：无水无氧合成和敏感材料装配节点；审查锚点：O₂/H₂O 指标、气密性、再生记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "containment",
       "subtype": "手套箱 / 惰性气氛箱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "inert atmosphere box",
+        "O2/H2O glovebox"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 无水无氧合成和敏感材料装配节点；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "缺氧窒息",
         "可燃溶剂蒸气"
@@ -2411,10 +2849,14 @@
         "排风"
       ],
       "requiredTraining": [
+        "惰性气氛箱 O2/H2O 与再生培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "O2/H2O 指标",
+        "气密性",
+        "再生记录",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2427,10 +2869,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2444,15 +2886,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "液体 / 固体核磁 NMR；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "液体 / 固体核磁 NMR；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 气体与联用区；共享平台：仪器分析与材料表征平台。运行画像：溶液或固体样品的磁共振结构表征节点；审查锚点：禁带区、铁磁物品、样品管/转子。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "spectroscopy",
       "subtype": "液体 / 固体核磁 NMR",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "500 MHz NMR",
+        "magnetic resonance"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 溶液或固体样品的磁共振结构表征节点；覆盖气体与联用区的当前设备点位",
       "hazardTags": [
         "强磁场",
         "液氮/液氦",
@@ -2461,17 +2906,23 @@
       "controlTags": [
         "禁带区",
         "铁磁物品检查",
-        "样品管与转子"
+        "样品管与转子",
+        "铁磁物品",
+        "样品管/转子"
       ],
       "utilityRequirements": [
         "冷却水",
         "液氮/液氦"
       ],
       "requiredTraining": [
+        "NMR 磁场禁带区与样品管培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "磁体禁带区",
+        "液氮/液氦状态",
+        "样品管/转子",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2485,9 +2936,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2502,32 +2955,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "傅里叶变换红外 FTIR；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "傅里叶变换红外 FTIR；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 气体与联用区；共享平台：仪器分析与材料表征平台。运行画像：官能团、材料表面和反应前后的红外指纹节点；审查锚点：附件互锁、样品制备、光源状态。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "spectroscopy",
       "subtype": "傅里叶变换红外 FTIR",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "FT-IR",
+        "infrared spectroscopy"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 官能团、材料表面和反应前后的红外指纹节点；覆盖气体与联用区的当前设备点位",
       "hazardTags": [
         "红外光源",
         "激光附件"
       ],
       "controlTags": [
         "附件互锁",
-        "样品制备"
+        "样品制备",
+        "光源状态"
       ],
       "utilityRequirements": [
         "电源",
         "氮气"
       ],
       "requiredTraining": [
+        "FTIR 附件与样品制备培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "波数校准",
+        "附件互锁",
+        "样品仓清洁",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2540,9 +3001,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2557,15 +3020,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "拉曼 / 显微拉曼；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "拉曼 / 显微拉曼；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 气体与联用区；共享平台：仪器分析与材料表征平台。运行画像：分子振动、晶体和材料缺陷的激光表征节点；审查锚点：激光等级、护目镜、样品热损伤。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "spectroscopy",
       "subtype": "拉曼 / 显微拉曼",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "micro-Raman",
+        "Raman spectroscopy"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 分子振动、晶体和材料缺陷的激光表征节点；覆盖气体与联用区的当前设备点位",
       "hazardTags": [
         "激光"
       ],
@@ -2579,10 +3045,14 @@
         "冷却"
       ],
       "requiredTraining": [
+        "激光安全与拉曼操作培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "激光等级",
+        "护罩/护目镜",
+        "光路与样品热损伤",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2595,9 +3065,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2612,15 +3084,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "单晶 / 粉末 X 射线衍射 XRD；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "单晶 / 粉末 X 射线衍射 XRD；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：粉末或单晶的晶相与结构表征节点；审查锚点：X 射线联锁、辐射指示、样品腔。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "单晶 / 粉末 X 射线衍射 XRD",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "PXRD",
+        "single-crystal XRD"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 粉末或单晶的晶相与结构表征节点；覆盖环境与应急区的当前设备点位",
       "hazardTags": [
         "X 射线辐射",
         "粉尘"
@@ -2628,17 +3103,23 @@
       "controlTags": [
         "辐射联锁",
         "指示灯",
-        "样品腔"
+        "样品腔",
+        "X 射线联锁",
+        "辐射指示"
       ],
       "utilityRequirements": [
         "电源",
         "排风"
       ],
       "requiredTraining": [
+        "X 射线衍射联锁与辐射培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "X 射线联锁",
+        "辐射指示灯",
+        "样品腔",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2652,9 +3133,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2669,15 +3151,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "X 射线光电子能谱 XPS；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "X 射线光电子能谱 XPS；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：表面元素化学态的超高真空表征节点；审查锚点：样品放气、真空状态、辐射联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "X 射线光电子能谱 XPS",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "X-ray photoelectron",
+        "surface analysis"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 表面元素化学态的超高真空表征节点；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "X 射线辐射",
         "超高真空"
@@ -2685,17 +3170,22 @@
       "controlTags": [
         "样品放气",
         "真空状态",
-        "联锁"
+        "联锁",
+        "辐射联锁"
       ],
       "utilityRequirements": [
         "真空",
         "电源"
       ],
       "requiredTraining": [
+        "XPS 超高真空与辐射培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "真空曲线",
+        "辐射联锁",
+        "样品放气记录",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2709,9 +3199,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2726,15 +3217,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "扫描电子显微镜 SEM；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "扫描电子显微镜 SEM；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 材料表征区；共享平台：仪器分析与材料表征平台。运行画像：微纳形貌和微区成分的电子束表征节点；审查锚点：高压联锁、样品导电性、真空记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "扫描电子显微镜 SEM",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "FE-SEM",
+        "scanning electron"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 微纳形貌和微区成分的电子束表征节点；覆盖材料表征区的当前设备点位",
       "hazardTags": [
         "高压",
         "电子束",
@@ -2750,10 +3244,14 @@
         "电源"
       ],
       "requiredTraining": [
+        "SEM 高压、真空与导电处理培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "高压联锁",
+        "真空曲线",
+        "样品导电处理",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2766,9 +3264,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2783,15 +3282,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "电感耦合等离子体质谱 ICP-MS；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "电感耦合等离子体质谱 ICP-MS；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 材料表征区；共享平台：仪器分析与材料表征平台。运行画像：痕量元素和同位素比值的等离子体质谱节点；审查锚点：氩气纯度、酸消解、尾气排放。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "mass_analysis",
       "subtype": "电感耦合等离子体质谱 ICP-MS",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "ICP-MS",
+        "trace metals"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 痕量元素和同位素比值的等离子体质谱节点；覆盖材料表征区的当前设备点位",
       "hazardTags": [
         "高温等离子体",
         "酸雾",
@@ -2808,10 +3310,14 @@
         "冷却水"
       ],
       "requiredTraining": [
+        "ICP-MS 酸消解、氩气与等离子体培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "氩气纯度",
+        "酸消解前处理",
+        "尾气排放",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2824,9 +3330,9 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2841,15 +3347,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "电感耦合等离子体发射光谱 ICP-OES；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "电感耦合等离子体发射光谱 ICP-OES；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 材料表征区；共享平台：仪器分析与材料表征平台。运行画像：多元素发射光谱和消解样品分析节点；审查锚点：等离子体、酸雾、氩气供应。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "mass_analysis",
       "subtype": "电感耦合等离子体发射光谱 ICP-OES",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "ICP-OES",
+        "ICP-AES"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 多元素发射光谱和消解样品分析节点；覆盖材料表征区的当前设备点位",
       "hazardTags": [
         "高温等离子体",
         "酸雾"
@@ -2857,17 +3366,24 @@
       "controlTags": [
         "氩气",
         "样品引入",
-        "尾气"
+        "尾气",
+        "等离子体",
+        "酸雾",
+        "氩气供应"
       ],
       "utilityRequirements": [
         "氩气",
         "排风"
       ],
       "requiredTraining": [
+        "ICP-OES 等离子体与尾气培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "等离子体状态",
+        "氩气流量",
+        "排气/酸雾",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2880,9 +3396,9 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -2897,15 +3413,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "热重分析 TGA；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "热重分析 TGA；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：失重、分解和热稳定性的联用表征节点；审查锚点：气氛流量、样品放气、尾气导出。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "热重分析 TGA",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "TGA",
+        "thermogravimetric"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 失重、分解和热稳定性的联用表征节点；覆盖环境与应急区的当前设备点位",
       "hazardTags": [
         "高温",
         "样品放气"
@@ -2913,17 +3432,22 @@
       "controlTags": [
         "气氛流量",
         "尾气导出",
-        "坩埚兼容性"
+        "坩埚兼容性",
+        "样品放气"
       ],
       "utilityRequirements": [
         "载气",
         "排风"
       ],
       "requiredTraining": [
+        "热分析气氛与样品放气培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "气氛流量",
+        "温程校准",
+        "尾气导出",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2936,10 +3460,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -2953,15 +3477,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "气体汇流排 / 气路面板；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "气体汇流排 / 气路面板；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：共享仪器高纯气体的减压与分配节点；审查锚点：减压器、材料兼容、气路标识。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "gas_vacuum",
       "subtype": "气体汇流排 / 气路面板",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "gas panel",
+        "manifold"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 共享仪器高纯气体的减压与分配节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "高压气体",
         "回火",
@@ -2977,10 +3504,14 @@
         "排风"
       ],
       "requiredTraining": [
+        "高纯气体减压与气路培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "减压器检定",
+        "气路标识",
+        "泄漏测试",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -2993,10 +3524,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -3010,15 +3542,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "液氮罐 / 低温供给；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "液氮罐 / 低温供给；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 清洗与公用工程区；共享平台：有机分析与前处理平台。运行画像：低温保存、冷阱和磁共振配套的低温节点；审查锚点：缺氧风险、冻伤防护、压力释放。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "cold_chain",
       "subtype": "液氮罐 / 低温供给",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "LN2",
+        "cryogenic supply"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 低温保存、冷阱和磁共振配套的低温节点；覆盖清洗与公用工程区的当前设备点位",
       "hazardTags": [
         "缺氧",
         "冻伤",
@@ -3027,17 +3562,23 @@
       "controlTags": [
         "通风",
         "液位",
-        "压力释放"
+        "压力释放",
+        "缺氧风险",
+        "冻伤防护"
       ],
       "utilityRequirements": [
         "通风",
         "氧浓度监测"
       ],
       "requiredTraining": [
+        "液氮转运、缺氧与冻伤培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "液位与通风",
+        "压力释放",
+        "转运容器",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3050,9 +3591,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3067,32 +3609,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "尾气吸收 / 净化装置；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "尾气吸收 / 净化装置；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 清洗与公用工程区；共享平台：有机分析与前处理平台。运行画像：酸碱、有机和有毒尾气的末端净化节点；审查锚点：吸收液、压降、饱和更换。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "gas_vacuum",
       "subtype": "尾气吸收 / 净化装置",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "scrubber",
+        "tail-gas treatment"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 酸碱、有机和有毒尾气的末端净化节点；覆盖清洗与公用工程区的当前设备点位",
       "hazardTags": [
         "有毒/腐蚀性尾气"
       ],
       "controlTags": [
         "吸收液",
         "压降",
-        "饱和更换记录"
+        "饱和更换记录",
+        "饱和更换"
       ],
       "utilityRequirements": [
         "排风",
         "废液"
       ],
       "requiredTraining": [
+        "尾气吸收液与压降巡检培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "吸收液状态",
+        "压降",
+        "更换记录",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3105,10 +3655,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -3122,15 +3673,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "反应釜 / 流动反应器；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "反应釜 / 流动反应器；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 清洗与公用工程区；共享平台：有机分析与前处理平台。运行画像：高压连续反应和工艺条件验证节点；审查锚点：压力等级、泄压路径、温控联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "反应釜 / 流动反应器",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "flow reactor",
+        "high-pressure reactor"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 高压连续反应和工艺条件验证节点；覆盖清洗与公用工程区的当前设备点位",
       "hazardTags": [
         "高温高压",
         "反应失控"
@@ -3146,10 +3700,14 @@
         "排风"
       ],
       "requiredTraining": [
+        "高压反应器与泄压联锁培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "压力等级",
+        "泄压路径",
+        "温控联锁",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3162,10 +3720,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -3179,15 +3737,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "制备液相色谱；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "制备液相色谱；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：克级样品的制备分离与馏分收集节点；审查锚点：流动相库存、柱压、废液容量。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "制备液相色谱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "prep-HPLC",
+        "fraction collection"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 克级样品的制备分离与馏分收集节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "高压",
         "大体积有机溶剂"
@@ -3203,10 +3764,14 @@
         "排风"
       ],
       "requiredTraining": [
+        "制备液相流路、收集和废液培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "柱压上限",
+        "馏分收集",
+        "废液容量",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3219,9 +3784,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3236,15 +3802,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "固相萃取系统 SPE；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 前处理平台 · 实验室管理员",
+      "description": "固相萃取系统 SPE；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：固相富集、净化和真空样品前处理节点；审查锚点：真空等级、柱型相容性、交叉污染。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "separation",
       "subtype": "固相萃取系统 SPE",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "SPE",
+        "vacuum manifold"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 固相富集、净化和真空样品前处理节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "有机溶剂",
         "真空"
@@ -3252,17 +3821,23 @@
       "controlTags": [
         "真空等级",
         "柱型兼容性",
-        "交叉污染控制"
+        "交叉污染控制",
+        "柱型相容性",
+        "交叉污染"
       ],
       "utilityRequirements": [
         "真空",
         "排风"
       ],
       "requiredTraining": [
+        "SPE 真空和柱型相容性培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "真空等级",
+        "柱型/溶剂相容性",
+        "交叉污染控制",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3274,9 +3849,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3291,15 +3867,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "冷冻干燥机；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "冷冻干燥机；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：热敏样品和生物样品的真空冷冻干燥节点；审查锚点：冷阱温度、真空等级、玻璃破裂。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "utility",
       "subtype": "冷冻干燥机",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "freeze dryer",
+        "lyophilisation"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 热敏样品和生物样品的真空冷冻干燥节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "低温",
         "真空",
@@ -3308,7 +3887,8 @@
       "controlTags": [
         "冷阱温度",
         "真空等级",
-        "样品兼容性"
+        "样品兼容性",
+        "玻璃破裂"
       ],
       "utilityRequirements": [
         "电源",
@@ -3316,10 +3896,14 @@
         "冷却"
       ],
       "requiredTraining": [
+        "冻干机冷阱与真空培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "冷阱温度",
+        "真空曲线",
+        "玻璃容器",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3332,10 +3916,10 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
-        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+        "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm"
       ]
     },
     {
@@ -3349,15 +3933,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "二氧化碳培养箱；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "二氧化碳培养箱；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：细胞与交叉研究样品的恒温恒 CO₂ 培养节点；审查锚点：CO₂ 报警、消毒记录、温湿度。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "bio_molecular",
       "subtype": "二氧化碳培养箱",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "CO2 incubator",
+        "cell culture"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 细胞与交叉研究样品的恒温恒 CO₂ 培养节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "CO₂ 缺氧",
         "生物污染"
@@ -3372,10 +3959,14 @@
         "电源"
       ],
       "requiredTraining": [
+        "CO2 培养箱消毒与气体报警培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "CO2 报警",
+        "温湿度",
+        "消毒记录",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3388,9 +3979,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3405,31 +3998,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "电泳系统；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "电泳系统；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 分离与浓缩区；共享平台：有机分析与前处理平台。运行画像：核酸或蛋白样品的电泳分离与转膜节点；审查锚点：电源隔离、缓冲液、染料废物。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "bio_molecular",
       "subtype": "电泳系统",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "gel electrophoresis",
+        "transfer system"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 核酸或蛋白样品的电泳分离与转膜节点；覆盖分离与浓缩区的当前设备点位",
       "hazardTags": [
         "高压电",
         "染料/缓冲液"
       ],
       "controlTags": [
         "电源隔离",
-        "缓冲液与废液"
+        "缓冲液与废液",
+        "缓冲液",
+        "染料废物"
       ],
       "utilityRequirements": [
         "电源"
       ],
       "requiredTraining": [
+        "电泳高压与染料废物培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "电源隔离",
+        "缓冲液批次",
+        "染料废物",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3441,9 +4043,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3458,15 +4062,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "流式细胞仪；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "流式细胞仪；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 储存与废物区；共享平台：有机分析与前处理平台。运行画像：细胞群体和颗粒分布的流式检测节点；审查锚点：生物气溶胶、鞘液、废液消毒。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "bio_molecular",
       "subtype": "流式细胞仪",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "flow cytometry",
+        "cell analyzer"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 细胞群体和颗粒分布的流式检测节点；覆盖储存与废物区的当前设备点位",
       "hazardTags": [
         "生物气溶胶",
         "高压液路"
@@ -3474,7 +4081,8 @@
       "controlTags": [
         "样品边界",
         "鞘液",
-        "废液消毒"
+        "废液消毒",
+        "生物气溶胶"
       ],
       "utilityRequirements": [
         "电源",
@@ -3482,10 +4090,14 @@
         "废液"
       ],
       "requiredTraining": [
+        "流式样品边界、鞘液与废液培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "样品边界",
+        "鞘液状态",
+        "废液消毒",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3498,9 +4110,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3515,32 +4129,41 @@
       "rotation": 0,
       "capacity": 1,
       "status": "available",
-      "owner": "共享仪器平台负责人",
-      "description": "荧光 / 共聚焦显微镜；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。",
+      "owner": "201 实验室运行平台 · 实验室管理员",
+      "description": "荧光 / 共聚焦显微镜；设备能力、状态和适用范围以当前台账、厂家说明书与实验室 SOP 为准。空间标签：201 / 前处理与应急区；共享平台：有机分析与前处理平台。运行画像：荧光、共聚焦和材料微区的光学成像节点；审查锚点：激光/汞灯、样品固定、光源联锁。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "bio_molecular",
       "subtype": "荧光 / 共聚焦显微镜",
-      "aliases": [],
-      "typicalUse": "高校分析测试中心共享设备，用于跨学科样品表征或实验流程中的关键节点",
+      "aliases": [
+        "confocal",
+        "fluorescence imaging"
+      ],
+      "typicalUse": "有机分析与前处理平台 · 荧光、共聚焦和材料微区的光学成像节点；覆盖前处理与应急区的当前设备点位",
       "hazardTags": [
         "激光/汞灯",
         "生物样品"
       ],
       "controlTags": [
         "光源联锁",
-        "样品固定与废弃"
+        "样品固定与废弃",
+        "激光/汞灯",
+        "样品固定"
       ],
       "utilityRequirements": [
         "电源",
         "冷却"
       ],
       "requiredTraining": [
+        "荧光/共聚焦光源与样品固定培训",
         "设备使用培训",
         "实验室安全准入"
       ],
       "calibrationOrInspection": [
+        "光源寿命",
+        "激光/汞灯联锁",
+        "样品固定",
         "检查记录与规格版本",
         "周期校准/点检"
       ],
@@ -3553,9 +4176,11 @@
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
         "https://www.lab.pku.edu.cn/info/3151/45321.htm",
-        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
+        "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3570,15 +4195,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；自由基与顺磁中心表征。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "自由基与顺磁中心表征。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：自由基和顺磁中心的电子顺磁共振节点；审查锚点：强磁场、微波腔体、低温附件。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "spectroscopy",
       "subtype": "电子顺磁共振 EPR/ESR",
-      "aliases": [],
-      "typicalUse": "自由基与顺磁中心表征",
+      "aliases": [
+        "ESR",
+        "electron paramagnetic resonance"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 自由基与顺磁中心表征；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "强磁场",
         "微波",
@@ -3587,17 +4215,24 @@
       "controlTags": [
         "禁带区",
         "波导与腔体",
-        "样品兼容性"
+        "样品兼容性",
+        "强磁场",
+        "微波腔体",
+        "低温附件"
       ],
       "utilityRequirements": [
         "微波源",
         "液氮/液氦"
       ],
       "requiredTraining": [
+        "EPR 磁场、微波和低温培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "磁场与微波",
+        "低温附件",
+        "腔体/样品兼容性",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3609,8 +4244,11 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3625,15 +4263,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；纳米表面形貌与力学表征。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "纳米表面形貌与力学表征。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：纳米表面形貌和力学响应的探针成像节点；审查锚点：防振、探针登记、样品洁净。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "原子力显微镜 AFM",
-      "aliases": [],
-      "typicalUse": "纳米表面形貌与力学表征",
+      "aliases": [
+        "atomic force microscopy",
+        "nano-probe"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 纳米表面形貌与力学表征；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "探针破损",
         "振动"
@@ -3647,10 +4288,14 @@
         "防振台"
       ],
       "requiredTraining": [
+        "AFM 防振、探针与样品洁净培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "防振状态",
+        "探针登记",
+        "样品洁净",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3662,8 +4307,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3678,15 +4325,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；比表面积、孔径和气体吸附。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "比表面积、孔径和气体吸附。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：比表面积、孔径和吸附等温线表征节点；审查锚点：高温脱气、真空完整性、液氮供给。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "惰性气体吸附与孔结构分析仪 BET",
-      "aliases": [],
-      "typicalUse": "比表面积、孔径和气体吸附",
+      "aliases": [
+        "gas adsorption",
+        "porosimetry"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 比表面积、孔径和气体吸附；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "高温脱气",
         "液氮",
@@ -3695,17 +4345,23 @@
       "controlTags": [
         "脱气温度",
         "真空完整性",
-        "低温供给"
+        "低温供给",
+        "高温脱气",
+        "液氮供给"
       ],
       "utilityRequirements": [
         "氮气",
         "真空"
       ],
       "requiredTraining": [
+        "BET 脱气、真空和液氮培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "脱气温度",
+        "真空完整性",
+        "液氮供给",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3717,8 +4373,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3733,15 +4391,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；相变、热焓与材料稳定性。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "相变、热焓与材料稳定性。空间标签：301 / 共享分析区；共享平台：仪器分析与材料表征平台。运行画像：相变、玻璃化转变和热焓的热分析节点；审查锚点：温程、密封坩埚、样品质量。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "差示扫描量热仪 DSC",
-      "aliases": [],
-      "typicalUse": "相变、热焓与材料稳定性",
+      "aliases": [
+        "DSC",
+        "differential scanning calorimetry"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 相变、热焓与材料稳定性；覆盖共享分析区的当前设备点位",
       "hazardTags": [
         "高温",
         "密封坩埚"
@@ -3749,16 +4410,21 @@
       "controlTags": [
         "样品质量",
         "温程",
-        "密封检查"
+        "密封检查",
+        "密封坩埚"
       ],
       "utilityRequirements": [
         "氮气"
       ],
       "requiredTraining": [
+        "DSC 温程、密封坩埚与样品质量培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "温程校准",
+        "密封坩埚",
+        "样品质量记录",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3770,6 +4436,7 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
@@ -3786,31 +4453,40 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；无损元素分析。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "无损元素分析。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：固体样品无损元素组成的 X 射线分析节点；审查锚点：辐射联锁、样品腔、指示灯状态。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "X射线荧光光谱仪 XRF",
-      "aliases": [],
-      "typicalUse": "无损元素分析",
+      "aliases": [
+        "XRF",
+        "X-ray fluorescence"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 无损元素分析；覆盖环境与应急区的当前设备点位",
       "hazardTags": [
         "X射线辐射"
       ],
       "controlTags": [
         "辐射联锁",
         "辐射指示",
-        "样品腔完整性"
+        "样品腔完整性",
+        "样品腔",
+        "指示灯状态"
       ],
       "utilityRequirements": [
         "电源"
       ],
       "requiredTraining": [
+        "XRF 辐射联锁与样品腔培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "辐射联锁",
+        "样品腔完整性",
+        "指示灯",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3822,8 +4498,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3838,15 +4516,15 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；纳米结构与晶格表征。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "纳米结构与晶格表征。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：纳米结构和晶格的透射电子表征节点；审查锚点：高压联锁、样品制备、真空记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "透射电子显微镜 TEM",
       "aliases": [],
-      "typicalUse": "纳米结构与晶格表征",
+      "typicalUse": "仪器分析与材料表征平台 · 纳米结构与晶格表征；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "高压",
         "电子束",
@@ -3877,8 +4555,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -3893,15 +4573,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；火焰/石墨炉元素定量。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "火焰/石墨炉元素定量。空间标签：301 / 交叉研究区；共享平台：仪器分析与材料表征平台。运行画像：火焰或石墨炉元素定量的光谱分析节点；审查锚点：燃气联锁、火焰状态、排风。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "mass_analysis",
       "subtype": "原子吸收光谱仪 AAS",
-      "aliases": [],
-      "typicalUse": "火焰/石墨炉元素定量",
+      "aliases": [
+        "AAS",
+        "atomic absorption"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 火焰/石墨炉元素定量；覆盖交叉研究区的当前设备点位",
       "hazardTags": [
         "火焰",
         "乙炔",
@@ -3910,7 +4593,8 @@
       "controlTags": [
         "燃气联锁",
         "火焰检查",
-        "排风"
+        "排风",
+        "火焰状态"
       ],
       "utilityRequirements": [
         "乙炔",
@@ -3918,10 +4602,14 @@
         "排风"
       ],
       "requiredTraining": [
+        "AAS 火焰/石墨炉与燃气培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "燃气联锁",
+        "火焰状态",
+        "排风",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3933,6 +4621,7 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
@@ -3949,15 +4638,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；分子结合动力学与微流控分析。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "分子结合动力学与微流控分析。空间标签：301 / 交叉研究区；共享平台：仪器分析与材料表征平台。运行画像：分子结合动力学和微流控芯片测试节点；审查锚点：芯片相容性、流路清洗、废液。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "表面等离子共振 SPR",
-      "aliases": [],
-      "typicalUse": "分子结合动力学与微流控分析",
+      "aliases": [
+        "surface plasmon resonance",
+        "microfluidic binding"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 分子结合动力学与微流控分析；覆盖交叉研究区的当前设备点位",
       "hazardTags": [
         "微流控泄漏",
         "生物样品"
@@ -3965,17 +4657,22 @@
       "controlTags": [
         "芯片兼容性",
         "流路清洗",
-        "废液"
+        "废液",
+        "芯片相容性"
       ],
       "utilityRequirements": [
         "电源",
         "废液"
       ],
       "requiredTraining": [
+        "SPR 芯片、微流路和废液培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "芯片相容性",
+        "流路清洗",
+        "废液容器",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -3987,8 +4684,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -4003,31 +4702,39 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；粒径、聚集态与分散稳定性。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 共享仪器中心 · 共享仪器平台负责人",
+      "description": "粒径、聚集态与分散稳定性。空间标签：301 / 交叉研究区；共享平台：仪器分析与材料表征平台。运行画像：粒径、聚集态和分散稳定性的光散射节点；审查锚点：激光联锁、样品池洁净、气泡排除。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "structure_material",
       "subtype": "动态光散射 DLS",
-      "aliases": [],
-      "typicalUse": "粒径、聚集态与分散稳定性",
+      "aliases": [
+        "dynamic light scattering",
+        "particle sizing"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 粒径、聚集态与分散稳定性；覆盖交叉研究区的当前设备点位",
       "hazardTags": [
         "激光",
         "样品污染"
       ],
       "controlTags": [
         "激光联锁",
-        "样品池洁净"
+        "样品池洁净",
+        "气泡排除"
       ],
       "utilityRequirements": [
         "电源"
       ],
       "requiredTraining": [
+        "DLS 激光、样品池和气泡控制培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "激光联锁",
+        "样品池洁净",
+        "气泡排除",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -4039,8 +4746,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -4055,15 +4764,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；UV/可见光驱动反应。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "UV/可见光驱动反应。空间标签：301 / 环境与应急区；共享平台：仪器分析与材料表征平台。运行画像：UV/可见光驱动反应和光源条件筛选节点；审查锚点：光源屏蔽、门禁联锁、冷却回路。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "光化学反应器",
-      "aliases": [],
-      "typicalUse": "UV/可见光驱动反应",
+      "aliases": [
+        "photo reactor",
+        "UV photochemistry"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · UV/可见光驱动反应；覆盖环境与应急区的当前设备点位",
       "hazardTags": [
         "UV",
         "高温",
@@ -4072,17 +4784,22 @@
       "controlTags": [
         "光源屏蔽",
         "门禁联锁",
-        "冷却"
+        "冷却",
+        "冷却回路"
       ],
       "utilityRequirements": [
         "冷却水",
         "排风"
       ],
       "requiredTraining": [
+        "光化学屏蔽、联锁与冷却培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "光源屏蔽",
+        "门禁联锁",
+        "冷却回路",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -4094,6 +4811,7 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
@@ -4110,15 +4828,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；快速合成和密闭消解。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "快速合成和密闭消解。空间标签：301 / 前处理与洁净区；共享平台：仪器分析与材料表征平台。运行画像：密闭微波合成和样品消解节点；审查锚点：压力联锁、溶剂适配、腔体完整性。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "微波合成与消解仪",
-      "aliases": [],
-      "typicalUse": "快速合成和密闭消解",
+      "aliases": [
+        "microwave digestion",
+        "microwave synthesis"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 快速合成和密闭消解；覆盖前处理与洁净区的当前设备点位",
       "hazardTags": [
         "压力",
         "微波",
@@ -4134,10 +4855,14 @@
         "排风"
       ],
       "requiredTraining": [
+        "微波密闭腔体、压力和溶剂培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "压力联锁",
+        "溶剂适配",
+        "腔体完整性",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -4149,6 +4874,7 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
@@ -4165,15 +4891,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；真空蒸馏和挥发物捕集。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "真空蒸馏和挥发物捕集。空间标签：301 / 气体与联用区；共享平台：仪器分析与材料表征平台。运行画像：蒸馏、旋蒸和真空系统的挥发物捕集节点；审查锚点：冷凝物相容性、真空破坏、防冻。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "cold_chain",
       "subtype": "低温冷阱",
-      "aliases": [],
-      "typicalUse": "真空蒸馏和挥发物捕集",
+      "aliases": [
+        "cryotrap",
+        "low-temperature trap"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 真空蒸馏和挥发物捕集；覆盖气体与联用区的当前设备点位",
       "hazardTags": [
         "冻伤",
         "真空",
@@ -4182,17 +4911,22 @@
       "controlTags": [
         "冷凝物兼容性",
         "真空破坏",
-        "防冻"
+        "防冻",
+        "冷凝物相容性"
       ],
       "utilityRequirements": [
         "液氮",
         "真空"
       ],
       "requiredTraining": [
+        "冷阱冷凝物相容性与真空培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "冷凝物相容性",
+        "真空破坏",
+        "防冻",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -4204,8 +4938,10 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     },
@@ -4220,15 +4956,18 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；溶液制粉和颗粒制备。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "溶液制粉和颗粒制备。空间标签：301 / 气体与联用区；共享平台：仪器分析与材料表征平台。运行画像：溶液制粉、颗粒制备和粉体收集节点；审查锚点：粉尘收集、进出口温度、清洗记录。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "thermal_process",
       "subtype": "喷雾干燥机",
-      "aliases": [],
-      "typicalUse": "溶液制粉和颗粒制备",
+      "aliases": [
+        "spray drying",
+        "particle engineering"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 溶液制粉和颗粒制备；覆盖气体与联用区的当前设备点位",
       "hazardTags": [
         "高温",
         "粉尘",
@@ -4237,17 +4976,22 @@
       "controlTags": [
         "粉尘收集",
         "温度",
-        "清洗记录"
+        "清洗记录",
+        "进出口温度"
       ],
       "utilityRequirements": [
         "压缩空气",
         "排风"
       ],
       "requiredTraining": [
+        "喷雾干燥粉尘与进出口温度培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "粉尘收集",
+        "进出口温度",
+        "清洗记录",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -4259,6 +5003,7 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
@@ -4275,31 +5020,41 @@
       "rotation": 0,
       "capacity": 1,
       "status": "unknown",
-      "owner": "仪器平台管理员",
-      "description": "公开高校/研究院平台常见设备类别映射；核酸/蛋白电泳成像。本条为示例资产，型号、校准和适用范围需以本校台账与厂家资料核验。",
+      "owner": "301 交叉研究平台 · 共享仪器平台负责人",
+      "description": "核酸/蛋白电泳成像。空间标签：301 / 气体与联用区；共享平台：仪器分析与材料表征平台。运行画像：核酸或蛋白凝胶的可视化和图像留证节点；审查锚点：UV/蓝光屏蔽、染料废液、图像归档。该条目是公开平台类别映射的示例资产，型号、校准记录与房间许可以本机构台账和现行 SOP 复核。",
       "requiresEvidence": true,
       "specVersion": 1,
       "maintenance": [],
       "family": "bio_molecular",
       "subtype": "凝胶成像系统",
-      "aliases": [],
-      "typicalUse": "核酸/蛋白电泳成像",
+      "aliases": [
+        "gel imager",
+        "gel documentation"
+      ],
+      "typicalUse": "仪器分析与材料表征平台 · 核酸/蛋白电泳成像；覆盖气体与联用区的当前设备点位",
       "hazardTags": [
         "UV/蓝光",
         "染料废物"
       ],
       "controlTags": [
         "光源屏蔽",
-        "染料废液分类"
+        "染料废液分类",
+        "UV/蓝光屏蔽",
+        "染料废液",
+        "图像归档"
       ],
       "utilityRequirements": [
         "电源"
       ],
       "requiredTraining": [
+        "凝胶成像光源、染料废物与归档培训",
         "设备使用培训",
         "平台预约与样品边界确认"
       ],
       "calibrationOrInspection": [
+        "光源屏蔽",
+        "染料废液",
+        "图像归档",
         "设备状态检查",
         "校准/性能确认记录"
       ],
@@ -4311,8 +5066,11 @@
       ],
       "sourceRefs": [
         "docs/equipment-taxonomy-research.md",
+        "https://www.lab.pku.edu.cn/info/3151/45321.htm",
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
+        "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
+        "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
       ]
     }
@@ -4325,19 +5083,19 @@
       "name": "挥发性有机物样品前处理与 GC 复核",
       "owner": "陈同学",
       "revision": 1,
-      "source": "确认实验计划、样品批次与当前 SOP 版本。\n在 C-01 核对易燃溶剂标签、批号与储存状态。\n在 B-01 完成样品接收、称量与编号。\n在 F-01 内完成第一次液液萃取前的装置检查。\n在 F-01 内进行分液操作，并记录相界面变化。\n在 S-01 完成玻璃器皿初步清洗与冲洗登记。\n在 B-02 配制待测样品的稀释系列。\n在 A-01 上机前核对方法文件、灯源状态与序列。\n在 A-01 完成样品序列采集并记录异常峰。\n在 A-02 对关键样品执行复测与积分复核。\n在 C-02 暂存已完成分析的留样与原始记录。\n在 W-01 分流收集有机废液并完成容器标签。\n在 F-02 完成台面清场、断电确认与照片留证。\n由负责人核对原始数据、检查证据和放行意见。",
+      "source": "确认实验计划、样品批次与当前 SOP 版本；本次示例涉及甲苯、乙酸乙酯、正己烷、甲醇和乙腈，先核对 SDS、PPE（护目镜、实验服、丁腈手套）与废液分类。\n在 C-01 核对甲苯、乙酸乙酯、正己烷、甲醇和乙腈容器标签、批号、相容性与储存状态，保持易燃溶剂远离点火源。\n在 B-01 完成样品接收、称量与编号；称量和开盖动作按 SOP 在 F-01 局部排风覆盖范围内执行。\n在 F-01 内完成液液萃取前的装置检查，确认面风速、视窗高度、排风联锁和玻璃分液器皿完整。\n在 F-01 内进行分液操作并记录相界面变化；甲苯、乙酸乙酯和正己烷操作保持通风柜运行，禁止将未知混合物直接倒入下水。\n在 S-01 完成玻璃器皿初步清洗与冲洗登记，含有机溶剂的冲洗液按 W-01 有机废液链交接。\n在 B-02 配制待测样品的甲醇/乙腈稀释系列，记录标准品批次、稀释溶剂和操作人员 PPE 状态。\n在 A-01 上机前核对 GC 方法文件、载气压力、进样口/检测器状态与序列，确认样品中挥发性组分的适用范围。\n在 A-01 完成样品序列采集并记录异常峰、载气报警和尾气导出状态，不把模型候选当作检测结论。\n在 A-02 对关键样品执行复测与积分复核，核对乙腈/甲醇流动相、柱压上限和有机废液容量。\n在 C-02 暂存已完成分析的留样与原始记录，按批次标签和温度记录隔离甲苯/乙酸乙酯样品。\n在 W-01 分流收集甲苯、乙酸乙酯、正己烷、甲醇和乙腈有机废液，完成相容性核对、容器标签和交接记录。\n在 F-02 完成台面清场、断电确认、PPE 脱卸和照片留证；由负责人确认 F-01 排风、洗眼器和应急通道可用。\n由负责人核对原始数据、SDS/SOP、PPE、通风、废液与设备证据，记录 AI 预审的待确认项后再决定是否放行。",
       "sourceName": "EXP-001-挥发性有机物样品前处理与 GC 复核.md",
       "steps": [
         {
           "id": "EXP-001-s1",
-          "text": "确认实验计划、样品批次与当前 SOP 版本。",
+          "text": "确认实验计划、样品批次与当前 SOP 版本；本次示例涉及甲苯、乙酸乙酯、正己烷、甲醇和乙腈，先核对 SDS、PPE（护目镜、实验服、丁腈手套）与废液分类。",
           "line": 1,
           "equipmentIds": [],
           "confirmed": true
         },
         {
           "id": "EXP-001-s2",
-          "text": "在 C-01 核对易燃溶剂标签、批号与储存状态。",
+          "text": "在 C-01 核对甲苯、乙酸乙酯、正己烷、甲醇和乙腈容器标签、批号、相容性与储存状态，保持易燃溶剂远离点火源。",
           "line": 2,
           "equipmentIds": [
             "C-01"
@@ -4346,7 +5104,7 @@
         },
         {
           "id": "EXP-001-s3",
-          "text": "在 B-01 完成样品接收、称量与编号。",
+          "text": "在 B-01 完成样品接收、称量与编号；称量和开盖动作按 SOP 在 F-01 局部排风覆盖范围内执行。",
           "line": 3,
           "equipmentIds": [
             "B-01"
@@ -4355,7 +5113,7 @@
         },
         {
           "id": "EXP-001-s4",
-          "text": "在 F-01 内完成第一次液液萃取前的装置检查。",
+          "text": "在 F-01 内完成液液萃取前的装置检查，确认面风速、视窗高度、排风联锁和玻璃分液器皿完整。",
           "line": 4,
           "equipmentIds": [
             "F-01"
@@ -4364,7 +5122,7 @@
         },
         {
           "id": "EXP-001-s5",
-          "text": "在 F-01 内进行分液操作，并记录相界面变化。",
+          "text": "在 F-01 内进行分液操作并记录相界面变化；甲苯、乙酸乙酯和正己烷操作保持通风柜运行，禁止将未知混合物直接倒入下水。",
           "line": 5,
           "equipmentIds": [
             "F-01"
@@ -4373,7 +5131,7 @@
         },
         {
           "id": "EXP-001-s6",
-          "text": "在 S-01 完成玻璃器皿初步清洗与冲洗登记。",
+          "text": "在 S-01 完成玻璃器皿初步清洗与冲洗登记，含有机溶剂的冲洗液按 W-01 有机废液链交接。",
           "line": 6,
           "equipmentIds": [
             "S-01"
@@ -4382,7 +5140,7 @@
         },
         {
           "id": "EXP-001-s7",
-          "text": "在 B-02 配制待测样品的稀释系列。",
+          "text": "在 B-02 配制待测样品的甲醇/乙腈稀释系列，记录标准品批次、稀释溶剂和操作人员 PPE 状态。",
           "line": 7,
           "equipmentIds": [
             "B-02"
@@ -4391,7 +5149,7 @@
         },
         {
           "id": "EXP-001-s8",
-          "text": "在 A-01 上机前核对方法文件、灯源状态与序列。",
+          "text": "在 A-01 上机前核对 GC 方法文件、载气压力、进样口/检测器状态与序列，确认样品中挥发性组分的适用范围。",
           "line": 8,
           "equipmentIds": [
             "A-01"
@@ -4400,7 +5158,7 @@
         },
         {
           "id": "EXP-001-s9",
-          "text": "在 A-01 完成样品序列采集并记录异常峰。",
+          "text": "在 A-01 完成样品序列采集并记录异常峰、载气报警和尾气导出状态，不把模型候选当作检测结论。",
           "line": 9,
           "equipmentIds": [
             "A-01"
@@ -4409,7 +5167,7 @@
         },
         {
           "id": "EXP-001-s10",
-          "text": "在 A-02 对关键样品执行复测与积分复核。",
+          "text": "在 A-02 对关键样品执行复测与积分复核，核对乙腈/甲醇流动相、柱压上限和有机废液容量。",
           "line": 10,
           "equipmentIds": [
             "A-02"
@@ -4418,7 +5176,7 @@
         },
         {
           "id": "EXP-001-s11",
-          "text": "在 C-02 暂存已完成分析的留样与原始记录。",
+          "text": "在 C-02 暂存已完成分析的留样与原始记录，按批次标签和温度记录隔离甲苯/乙酸乙酯样品。",
           "line": 11,
           "equipmentIds": [
             "C-02"
@@ -4427,7 +5185,7 @@
         },
         {
           "id": "EXP-001-s12",
-          "text": "在 W-01 分流收集有机废液并完成容器标签。",
+          "text": "在 W-01 分流收集甲苯、乙酸乙酯、正己烷、甲醇和乙腈有机废液，完成相容性核对、容器标签和交接记录。",
           "line": 12,
           "equipmentIds": [
             "W-01"
@@ -4436,7 +5194,7 @@
         },
         {
           "id": "EXP-001-s13",
-          "text": "在 F-02 完成台面清场、断电确认与照片留证。",
+          "text": "在 F-02 完成台面清场、断电确认、PPE 脱卸和照片留证；由负责人确认 F-01 排风、洗眼器和应急通道可用。",
           "line": 13,
           "equipmentIds": [
             "F-02"
@@ -4445,7 +5203,7 @@
         },
         {
           "id": "EXP-001-s14",
-          "text": "由负责人核对原始数据、检查证据和放行意见。",
+          "text": "由负责人核对原始数据、SDS/SOP、PPE、通风、废液与设备证据，记录 AI 预审的待确认项后再决定是否放行。",
           "line": 14,
           "equipmentIds": [],
           "confirmed": true
@@ -4522,19 +5280,19 @@
       "name": "色谱分析准备与共享通风柜预约",
       "owner": "林同学",
       "revision": 1,
-      "source": "核对样品、设备与当前 SOP 版本。\n按已审核计划预约 F-01 与 B-02。\n确认本次使用时段的检查证据。\n在 A-03 完成标准曲线复核。",
+      "source": "核对甲醇/乙腈标准系列、样品标签与当前 SOP；确认 PPE（护目镜、实验服、丁腈手套）和有机溶剂 SDS 已可追溯。\n按已审核计划预约 F-01 与 B-02，确认通风柜面风速、称量环境和设备使用培训状态。\n确认本次使用时段的检查证据，并将甲醇/乙腈冲洗液按有机废液 W-01 分类；未知相容性不得合并。\n在 A-03 完成标准曲线复核，记录比色皿状态、空白、波长/光源状态和稀释溶剂，异常结果转人工复核。",
       "sourceName": "EXP-002-色谱分析准备与共享通风柜预约.md",
       "steps": [
         {
           "id": "EXP-002-s1",
-          "text": "核对样品、设备与当前 SOP 版本。",
+          "text": "核对甲醇/乙腈标准系列、样品标签与当前 SOP；确认 PPE（护目镜、实验服、丁腈手套）和有机溶剂 SDS 已可追溯。",
           "line": 1,
           "equipmentIds": [],
           "confirmed": true
         },
         {
           "id": "EXP-002-s2",
-          "text": "按已审核计划预约 F-01 与 B-02。",
+          "text": "按已审核计划预约 F-01 与 B-02，确认通风柜面风速、称量环境和设备使用培训状态。",
           "line": 2,
           "equipmentIds": [
             "F-01",
@@ -4544,14 +5302,16 @@
         },
         {
           "id": "EXP-002-s3",
-          "text": "确认本次使用时段的检查证据。",
+          "text": "确认本次使用时段的检查证据，并将甲醇/乙腈冲洗液按有机废液 W-01 分类；未知相容性不得合并。",
           "line": 3,
-          "equipmentIds": [],
+          "equipmentIds": [
+            "W-01"
+          ],
           "confirmed": true
         },
         {
           "id": "EXP-002-s4",
-          "text": "在 A-03 完成标准曲线复核。",
+          "text": "在 A-03 完成标准曲线复核，记录比色皿状态、空白、波长/光源状态和稀释溶剂，异常结果转人工复核。",
           "line": 4,
           "equipmentIds": [
             "A-03"
@@ -4684,21 +5444,22 @@
       "name": "低温浓缩与溶剂回收复核",
       "owner": "何同学",
       "revision": 1,
-      "source": "在 F-02 完成旋蒸前的冷却水和密封检查。\n在 A-02 采集回收溶剂的纯度复测数据。\n在 W-02 完成酸碱废液分流登记。\n提交回收批次的原始记录和设备照片。",
+      "source": "在 P-02 旋转蒸发仪和 P-03 真空泵组完成浓缩前检查；涉及甲醇、乙酸乙酯和甲苯时确认冷凝、真空破坏、尾气去向与 PPE。\n在 A-02 采集回收溶剂的纯度复测数据，核对 HPLC 流动相、柱压、样品瓶标签和有机废液容量。\n在 W-02 完成浓硫酸等酸性/碱性水相废液分流登记；甲醇、乙酸乙酯、甲苯等有机废液另行交接至 W-01，禁止混桶。\n提交回收批次的原始记录、设备状态和通风柜照片；负责人确认冷阱 G-05、尾气吸收和洗眼器证据后再复核。",
       "sourceName": "EXP-005-低温浓缩与溶剂回收复核.md",
       "steps": [
         {
           "id": "EXP-005-s1",
-          "text": "在 F-02 完成旋蒸前的冷却水和密封检查。",
+          "text": "在 P-02 旋转蒸发仪和 P-03 真空泵组完成浓缩前检查；涉及甲醇、乙酸乙酯和甲苯时确认冷凝、真空破坏、尾气去向与 PPE。",
           "line": 1,
           "equipmentIds": [
-            "F-02"
+            "P-02",
+            "P-03"
           ],
           "confirmed": true
         },
         {
           "id": "EXP-005-s2",
-          "text": "在 A-02 采集回收溶剂的纯度复测数据。",
+          "text": "在 A-02 采集回收溶剂的纯度复测数据，核对 HPLC 流动相、柱压、样品瓶标签和有机废液容量。",
           "line": 2,
           "equipmentIds": [
             "A-02"
@@ -4707,16 +5468,17 @@
         },
         {
           "id": "EXP-005-s3",
-          "text": "在 W-02 完成酸碱废液分流登记。",
+          "text": "在 W-02 完成浓硫酸等酸性/碱性水相废液分流登记；甲醇、乙酸乙酯、甲苯等有机废液另行交接至 W-01，禁止混桶。",
           "line": 3,
           "equipmentIds": [
-            "W-02"
+            "W-02",
+            "W-01"
           ],
           "confirmed": true
         },
         {
           "id": "EXP-005-s4",
-          "text": "提交回收批次的原始记录和设备照片。",
+          "text": "提交回收批次的原始记录、设备状态和通风柜照片；负责人确认冷阱 G-05、尾气吸收和洗眼器证据后再复核。",
           "line": 4,
           "equipmentIds": [],
           "confirmed": true
@@ -4751,12 +5513,12 @@
       "name": "酸碱衍生化样品复测",
       "owner": "吴同学",
       "revision": 1,
-      "source": "在 F-03 内确认衍生化反应器皿与局部排风状态。\n在 B-03 完成样品和批次关系登记。\n在 A-03 执行复测序列并核对空白样。\n在 S-02 完成器皿冲洗和去离子水记录。",
+      "source": "在 F-03 内确认含浓硫酸（硫酸）的酸碱衍生化步骤、反应器皿相容性和局部通风排风状态；完成 PPE（护目镜、面屏、实验服和耐化学手套）检查。\n在 B-03 完成样品和批次关系登记，记录浓硫酸、甲醇等试剂的 SDS、开封状态、加入顺序由 SOP 与人工负责人确认。\n在 A-03 执行复测序列并核对空白样，注明衍生化后样品与甲醇/乙腈稀释溶剂的关系，不把 AI 预测峰当作结果。\n在 S-02 完成器皿冲洗和去离子水记录；酸性废液进入 W-02，含有机溶剂的冲洗液进入 W-01，并保存废液交接证据。",
       "sourceName": "EXP-006-酸碱衍生化样品复测.md",
       "steps": [
         {
           "id": "EXP-006-s1",
-          "text": "在 F-03 内确认衍生化反应器皿与局部排风状态。",
+          "text": "在 F-03 内确认含浓硫酸（硫酸）的酸碱衍生化步骤、反应器皿相容性和局部通风排风状态；完成 PPE（护目镜、面屏、实验服和耐化学手套）检查。",
           "line": 1,
           "equipmentIds": [
             "F-03"
@@ -4765,7 +5527,7 @@
         },
         {
           "id": "EXP-006-s2",
-          "text": "在 B-03 完成样品和批次关系登记。",
+          "text": "在 B-03 完成样品和批次关系登记，记录浓硫酸、甲醇等试剂的 SDS、开封状态、加入顺序由 SOP 与人工负责人确认。",
           "line": 2,
           "equipmentIds": [
             "B-03"
@@ -4774,7 +5536,7 @@
         },
         {
           "id": "EXP-006-s3",
-          "text": "在 A-03 执行复测序列并核对空白样。",
+          "text": "在 A-03 执行复测序列并核对空白样，注明衍生化后样品与甲醇/乙腈稀释溶剂的关系，不把 AI 预测峰当作结果。",
           "line": 3,
           "equipmentIds": [
             "A-03"
@@ -4783,10 +5545,12 @@
         },
         {
           "id": "EXP-006-s4",
-          "text": "在 S-02 完成器皿冲洗和去离子水记录。",
+          "text": "在 S-02 完成器皿冲洗和去离子水记录；酸性废液进入 W-02，含有机溶剂的冲洗液进入 W-01，并保存废液交接证据。",
           "line": 4,
           "equipmentIds": [
-            "S-02"
+            "S-02",
+            "W-02",
+            "W-01"
           ],
           "confirmed": true
         }
@@ -4826,12 +5590,12 @@
       "name": "UHPLC 序列准备与标准曲线核查",
       "owner": "孙同学",
       "revision": 1,
-      "source": "在 C-03 核对标准品批号、有效期和低温储存记录。\n在 B-04 完成质谱样品前处理和编号。\n在 F-05 内完成流动相脱气与上机前检查。\n在 A-04 建立 UHPLC 序列并记录方法版本。\n在 B-05 复核标准曲线浓度梯度与稀释记录。",
+      "source": "在 C-03 核对含甲醇/乙腈标准品的批号、有效期、低温储存记录和 SDS；确认 PPE（护目镜、实验服、丁腈手套）已配备。\n在 B-04 完成质谱样品前处理和编号，记录乙腈/甲醇稀释剂、过滤耗材和样品交叉污染控制。\n在 F-05 内完成流动相脱气与上机前检查，确认通风、氮气/排风、UHPLC 高压流路和 W-03 有机废液容量。\n在 A-04 建立 UHPLC 序列并记录方法版本、柱压上限、进样针清洗和甲醇/乙腈流动相的处置。\n在 B-05 复核标准曲线浓度梯度与稀释记录；异常曲线、缺失 PPE/SDS 或未核验证据转入 AI 待办，不自动放行。",
       "sourceName": "EXP-007-UHPLC 序列准备与标准曲线核查.md",
       "steps": [
         {
           "id": "EXP-007-s1",
-          "text": "在 C-03 核对标准品批号、有效期和低温储存记录。",
+          "text": "在 C-03 核对含甲醇/乙腈标准品的批号、有效期、低温储存记录和 SDS；确认 PPE（护目镜、实验服、丁腈手套）已配备。",
           "line": 1,
           "equipmentIds": [
             "C-03"
@@ -4840,7 +5604,7 @@
         },
         {
           "id": "EXP-007-s2",
-          "text": "在 B-04 完成质谱样品前处理和编号。",
+          "text": "在 B-04 完成质谱样品前处理和编号，记录乙腈/甲醇稀释剂、过滤耗材和样品交叉污染控制。",
           "line": 2,
           "equipmentIds": [
             "B-04"
@@ -4849,16 +5613,17 @@
         },
         {
           "id": "EXP-007-s3",
-          "text": "在 F-05 内完成流动相脱气与上机前检查。",
+          "text": "在 F-05 内完成流动相脱气与上机前检查，确认通风、氮气/排风、UHPLC 高压流路和 W-03 有机废液容量。",
           "line": 3,
           "equipmentIds": [
-            "F-05"
+            "F-05",
+            "W-03"
           ],
           "confirmed": true
         },
         {
           "id": "EXP-007-s4",
-          "text": "在 A-04 建立 UHPLC 序列并记录方法版本。",
+          "text": "在 A-04 建立 UHPLC 序列并记录方法版本、柱压上限、进样针清洗和甲醇/乙腈流动相的处置。",
           "line": 4,
           "equipmentIds": [
             "A-04"
@@ -4867,7 +5632,7 @@
         },
         {
           "id": "EXP-007-s5",
-          "text": "在 B-05 复核标准曲线浓度梯度与稀释记录。",
+          "text": "在 B-05 复核标准曲线浓度梯度与稀释记录；异常曲线、缺失 PPE/SDS 或未核验证据转入 AI 待办，不自动放行。",
           "line": 5,
           "equipmentIds": [
             "B-05"
@@ -4916,12 +5681,12 @@
       "name": "LC-MS 维护后验证与离子抑制检查",
       "owner": "高同学",
       "revision": 1,
-      "source": "确认 A-05 维护记录、校准文件和当前仪器规格版本。\n在 F-06 内配制离子抑制检查样品。\n在 A-05 完成维护后空白、校准和样品序列。\n在 A-06 对关键离子进行交叉复核。\n在 S-03 完成流路冲洗和废液交接记录。",
+      "source": "确认 A-05 维护记录、校准文件和当前仪器规格版本；LC-MS 使用氮气、真空和高压电，先核对培训、PPE、通风/排风与联锁证据。\n在 F-06 内配制含甲醇、乙腈和少量酸性改性剂的离子抑制检查样品，保持局部排风并按 SDS 核对相容性。\n在 A-05 完成维护后空白、校准和样品序列，记录离子源清洁、真空状态、氮气质量和有机废液去向。\n在 A-06 对关键离子进行交叉复核，比较离子色谱保留时间、淋洗液批次和异常峰，不把 AI 建议当成定量结论。\n在 S-03 完成流路冲洗和 W-03 有机废液交接记录，负责人复核甲醇/乙腈废液标签、设备状态与维护后证据。",
       "sourceName": "EXP-008-LC-MS 维护后验证与离子抑制检查.md",
       "steps": [
         {
           "id": "EXP-008-s1",
-          "text": "确认 A-05 维护记录、校准文件和当前仪器规格版本。",
+          "text": "确认 A-05 维护记录、校准文件和当前仪器规格版本；LC-MS 使用氮气、真空和高压电，先核对培训、PPE、通风/排风与联锁证据。",
           "line": 1,
           "equipmentIds": [
             "A-05"
@@ -4930,7 +5695,7 @@
         },
         {
           "id": "EXP-008-s2",
-          "text": "在 F-06 内配制离子抑制检查样品。",
+          "text": "在 F-06 内配制含甲醇、乙腈和少量酸性改性剂的离子抑制检查样品，保持局部排风并按 SDS 核对相容性。",
           "line": 2,
           "equipmentIds": [
             "F-06"
@@ -4939,7 +5704,7 @@
         },
         {
           "id": "EXP-008-s3",
-          "text": "在 A-05 完成维护后空白、校准和样品序列。",
+          "text": "在 A-05 完成维护后空白、校准和样品序列，记录离子源清洁、真空状态、氮气质量和有机废液去向。",
           "line": 3,
           "equipmentIds": [
             "A-05"
@@ -4948,7 +5713,7 @@
         },
         {
           "id": "EXP-008-s4",
-          "text": "在 A-06 对关键离子进行交叉复核。",
+          "text": "在 A-06 对关键离子进行交叉复核，比较离子色谱保留时间、淋洗液批次和异常峰，不把 AI 建议当成定量结论。",
           "line": 4,
           "equipmentIds": [
             "A-06"
@@ -4957,10 +5722,11 @@
         },
         {
           "id": "EXP-008-s5",
-          "text": "在 S-03 完成流路冲洗和废液交接记录。",
+          "text": "在 S-03 完成流路冲洗和 W-03 有机废液交接记录，负责人复核甲醇/乙腈废液标签、设备状态与维护后证据。",
           "line": 5,
           "equipmentIds": [
-            "S-03"
+            "S-03",
+            "W-03"
           ],
           "confirmed": true
         }

@@ -5,7 +5,7 @@ import os
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from .spatial import local_owner
+from .spatial import _merge_model_parse, local_owner
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -99,39 +99,28 @@ def ai_preview_sop(payload: SOPParseRequest) -> Dict[str, Any]:
     """
     parsed = parse_sop(payload.sop_text)
     llm_fields = service.llm.extract_sop(payload.sop_text)
-    llm_used = False
-    if llm_fields:
-        try:
-            llm_steps = [
-                LabStep(**item)
-                for item in llm_fields.get("steps", [])
-                if isinstance(item, dict) and str(item.get("instruction", "")).strip()
-            ]
-            for index, step in enumerate(llm_steps):
-                if not step.evidence_refs and index < len(parsed["steps"]):
-                    step.evidence_refs = parsed["steps"][index].evidence_refs
-            if llm_steps:
-                parsed["steps"] = llm_steps
-                llm_used = True
-            llm_substances = [
-                Substance(**item)
-                for item in llm_fields.get("substances", [])
-                if isinstance(item, dict) and str(item.get("name", "")).strip()
-            ]
-            if llm_substances:
-                parsed["substances"] = llm_substances
-                llm_used = True
-            for key in ("ppe", "equipment", "waste_streams"):
-                values = llm_fields.get(key)
-                if isinstance(values, list) and values:
-                    parsed[key] = sorted({str(value).strip() for value in values if str(value).strip()})
-                    llm_used = True
-            if isinstance(llm_fields.get("ventilation"), str) and llm_fields["ventilation"].strip():
-                parsed["ventilation"] = llm_fields["ventilation"].strip()
-                llm_used = True
-        except (TypeError, ValueError):
-            # Keep the deterministic parse if the remote response is incomplete.
-            llm_used = False
+    parsed, llm_used = _merge_model_parse(parsed, llm_fields)
+
+    # Build a compact decision trace for the form.  It makes the model's role
+    # observable even when it is unavailable: the UI can distinguish model
+    # enrichment, deterministic extraction and the pending human decision.
+    relations: list[dict[str, str]] = []
+    actions: list[dict[str, str]] = []
+    for index, step in enumerate(parsed["steps"], 1):
+        item = step.model_dump(mode="json") if hasattr(step, "model_dump") else step
+        source = f"SOP L{index}"
+        for substance in parsed["substances"]:
+            substance_name = getattr(substance, "name", substance.get("name") if isinstance(substance, dict) else "")
+            if substance_name and substance_name in str(item.get("instruction", "")):
+                relations.append({"from": f"步骤 {item.get('order', index)}", "to": substance_name, "kind": "化学品", "source": source})
+        for control in item.get("controls", []):
+            relations.append({"from": f"步骤 {item.get('order', index)}", "to": control, "kind": "控制措施", "source": source})
+        for equipment in item.get("equipment", []):
+            relations.append({"from": f"步骤 {item.get('order', index)}", "to": equipment, "kind": "设备", "source": source})
+        if item.get("hazard") or item.get("controls") or item.get("requires_ppe"):
+            actions.append({"title": f"确认步骤 {item.get('order', index)} 的控制与 PPE", "detail": "将候选结构与原文逐条比对后再写入计划。", "source": source, "status": "待人工确认"})
+    if not actions:
+        actions.append({"title": "核对模型未识别出的实验条件", "detail": "没有候选风险信号不代表全面安全通过，仍需人工复核。", "source": "SOP 原文", "status": "待人工确认"})
 
     status = service.llm.status()
     return {
@@ -144,6 +133,11 @@ def ai_preview_sop(payload: SOPParseRequest) -> Dict[str, Any]:
         "ventilation": parsed["ventilation"],
         "waste_streams": parsed["waste_streams"],
         "evidence": parsed["evidence"],
+        "trace": {"stages": [
+            {"id": "understand", "label": "结构化理解", "status": "model" if llm_used else "deterministic", "detail": f"识别 {len(parsed['steps'])} 个步骤与 {len(parsed['substances'])} 个化学品"},
+            {"id": "link", "label": "关系绑定", "status": "derived", "detail": f"建立 {len(relations)} 条步骤—对象关系"},
+            {"id": "action", "label": "动作建议", "status": "human-required", "detail": f"生成 {len(actions)} 个待确认动作"},
+        ], "relations": relations[:40], "actions": actions[:12]},
         "ai": {
             "provider": status["provider"],
             "model": status["model"],

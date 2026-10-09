@@ -110,14 +110,37 @@ class LLMAdapter:
             with urllib.request.urlopen(request, timeout=12) as response:
                 data = json.loads(response.read().decode("utf-8"))
             text = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
-            if text.startswith("```"):
-                text = text.strip("`").replace("json\n", "", 1).strip()
-            parsed = json.loads(text)
+            parsed = self._decode_json_object(text)
             if not isinstance(parsed, dict):
                 return {}
             return parsed
         except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError, KeyError, IndexError, TypeError):
             return {}
+
+    @staticmethod
+    def _decode_json_object(text: str) -> Dict[str, Any]:
+        """Decode a model JSON envelope without trusting markdown wrappers.
+
+        Providers commonly wrap JSON in a fenced block or add one sentence
+        before/after it.  The extractor must stay reviewable in those cases:
+        only the first balanced object is accepted and malformed output still
+        degrades to the deterministic parser at the call site.
+        """
+        candidate = text.strip()
+        if candidate.startswith("```"):
+            candidate = candidate.split("\n", 1)[1] if "\n" in candidate else candidate.strip("`")
+            if candidate.endswith("```"):
+                candidate = candidate[:-3].rstrip()
+        try:
+            value = json.loads(candidate)
+        except json.JSONDecodeError:
+            start, end = candidate.find("{"), candidate.rfind("}")
+            if start < 0 or end <= start:
+                raise
+            value = json.loads(candidate[start:end + 1])
+        if not isinstance(value, dict):
+            raise ValueError("model response must be a JSON object")
+        return value
 
     @staticmethod
     def _offline_summary(review: Dict[str, Any], evaluation: Dict[str, Any]) -> str:
