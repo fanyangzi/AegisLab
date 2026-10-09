@@ -24,6 +24,21 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 RULE_PACK = "resource-prerequisites/1.0"
 ROOT = Path(__file__).resolve().parents[2]
 
+# The browser scene uses a deliberately small set of semantic resource kinds.
+# Keeping their approximate footprint here gives the server enough information
+# to place a newly-created resource without making the scene layout part of the
+# approval basis.  These are placement hints, not a claim about certified
+# equipment dimensions.
+EQUIPMENT_FOOTPRINTS: dict[str, tuple[float, float]] = {
+    "hood": (3.0, 1.5),
+    "bench": (2.4, 1.4),
+    "storage": (1.8, 1.2),
+    "analyzer": (2.2, 1.8),
+    "sink": (1.8, 1.3),
+    "waste": (1.4, 1.2),
+}
+PLACEMENT_GAP = 0.35
+
 def now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
@@ -227,6 +242,75 @@ def validate_workspace(w: dict) -> dict:
     return w
 
 
+def equipment_footprint(kind: str) -> tuple[float, float]:
+    """Return a conservative placement footprint for a resource kind.
+
+    The footprint is only used for collision-free default placement.  It is
+    intentionally kept outside ``Equipment`` so changing a visual placement
+    cannot alter a resource's capability or review basis.
+    """
+    return EQUIPMENT_FOOTPRINTS.get(kind, (1.5, 1.2))
+
+
+def equipment_overlaps(a: dict, b: dict, *, x: float | None = None, z: float | None = None) -> bool:
+    """Whether two resources would occupy the same scene slot.
+
+    Rotation is ignored for the conservative default layout.  The scene can
+    still rotate a resource after it has been created; this check only prevents
+    the common failure where every new resource is saved at ``(0, 0)``.
+    """
+    ax = a["x"] if x is None else x
+    az = a["z"] if z is None else z
+    aw, ad = equipment_footprint(a["kind"])
+    bw, bd = equipment_footprint(b["kind"])
+    return (
+        abs(ax - b["x"]) < (aw + bw) / 2 + PLACEMENT_GAP
+        and abs(az - b["z"]) < (ad + bd) / 2 + PLACEMENT_GAP
+    )
+
+
+def find_equipment_position(w: dict, equipment: dict) -> tuple[float, float]:
+    """Find a deterministic free position inside the owning laboratory.
+
+    The center is preferred for the first resource.  Subsequent candidates are
+    sampled on a stable grid from the back-left toward the front-right so a
+    retry produces the same workspace.  An explicit position is never changed
+    by this helper; callers opt into it only for newly-created resources that
+    requested automatic placement.
+    """
+    lab = next((item for item in w["laboratories"] if item["id"] == equipment["labId"]), None)
+    if lab is None:
+        raise ValueError("资源所属实验室不存在。")
+    width, depth = equipment_footprint(equipment["kind"])
+    half_w, half_d = width / 2, depth / 2
+    x_min, x_max = -lab["width"] / 2 + half_w, lab["width"] / 2 - half_w
+    z_min, z_max = -lab["depth"] / 2 + half_d, lab["depth"] / 2 - half_d
+    if x_min > x_max or z_min > z_max:
+        raise ValueError("实验室空间不足，无法自动放置该资源。")
+
+    existing = [item for item in w["equipment"] if item["labId"] == equipment["labId"] and item["id"] != equipment["id"]]
+    # Start at the visual center, then use a fixed lattice.  Rounding avoids
+    # accumulating floating-point noise in exported workspace JSON.
+    candidates: list[tuple[float, float]] = [(0.0, 0.0)]
+    step_x = max(1.0, min(width + PLACEMENT_GAP, 2.4))
+    step_z = max(1.0, min(depth + PLACEMENT_GAP, 2.0))
+    x = x_min
+    while x <= x_max + 1e-6:
+        z = z_min
+        while z <= z_max + 1e-6:
+            candidates.append((round(x, 2), round(z, 2)))
+            z += step_z
+        x += step_x
+    # Prefer candidates closest to the center after the explicit center entry.
+    candidates[1:] = sorted(candidates[1:], key=lambda point: (point[0] ** 2 + point[1] ** 2, point[1], point[0]))
+    for candidate_x, candidate_z in candidates:
+        if not (x_min - 1e-6 <= candidate_x <= x_max + 1e-6 and z_min - 1e-6 <= candidate_z <= z_max + 1e-6):
+            continue
+        if not any(equipment_overlaps(equipment, other, x=candidate_x, z=candidate_z) for other in existing):
+            return candidate_x, candidate_z
+    raise ValueError("实验室没有可用的自动放置位置，请扩大空间或调整已有资源。")
+
+
 def basis(w: dict, p: dict) -> str:
     ids = {r["equipmentId"] for r in p["reservations"]}
     excluded = {"x", "z", "rotation", "name", "owner", "description"}
@@ -324,11 +408,26 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         next_w["decisions"], next_w["events"], next_w["branches"] = [], [], []
         summary = "导入明确标记的样例工作区" if next_w["provenance"] == "example" else "建立空白工作区"
     elif action == "save_lab":
+        # Validate the submitted object before touching the workspace.  The
+        # final workspace validation below remains authoritative, while this
+        # gives callers a useful error when a malformed lab is submitted by a
+        # browser form.
+        Lab.model_validate(x["lab"])
         upsert("laboratories", x["lab"])
         object_id, summary = x["lab"]["id"], "保存实验室资料"
     elif action == "save_equipment":
         e = copy.deepcopy(x["equipment"])
         previous = next((a for a in w["equipment"] if a["id"] == e["id"]), None)
+        if not any(lab["id"] == e["labId"] for lab in next_w["laboratories"]):
+            raise ValueError("资源所属实验室不存在。")
+        # The form starts a new resource at (0, 0).  Treat that untouched
+        # default as a request for server-side placement so repeated saves do
+        # not pile models on top of one another.  Callers that intentionally
+        # want (0, 0) may pass ``autoPlace: false`` at the operation level.
+        at_origin = abs(float(e["x"])) < 1e-9 and abs(float(e["z"])) < 1e-9
+        auto_place = at_origin and x.get("autoPlace", True) is not False
+        if previous is None and auto_place:
+            e["x"], e["z"] = find_equipment_position(next_w, e)
         e["specVersion"] = previous["specVersion"] + int(any(e[k] != previous[k] for k in ("kind", "capacity", "requiresEvidence"))) if previous else 1
         upsert("equipment", e)
         object_id, summary = e["id"], f"更新资源 {e['code']}，核验依赖同步重算"

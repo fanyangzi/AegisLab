@@ -24,7 +24,7 @@ function readRoute():Route {
 type Form={type:'lab'|'plan'|'equipment'|'document'|'task'|'branch'|'verify'|'approve';id?:string;planId?:string;equipmentId?:string}|null
 export function WebWorkspace(){
  const api=useWorkspace(),{snapshot,busy,booting}=api,w=snapshot.workspace
- const [route,setRoute]=useState<Route>(readRoute),[form,setForm]=useState<Form>(null),[query,setQuery]=useState(''),[searchOpen,setSearchOpen]=useState(false),[expanded,setExpanded]=useState(false),[flat,setFlat]=useState(false),[reduced,setReduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),[listOpen,setListOpen]=useState(false),[planFilter,setPlanFilter]=useState(''),[notice,setNotice]=useState('')
+ const [route,setRoute]=useState<Route>(readRoute),[form,setForm]=useState<Form>(null),[query,setQuery]=useState(''),[searchOpen,setSearchOpen]=useState(false),[expanded,setExpanded]=useState(true),[flat,setFlat]=useState(false),[reduced,setReduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),[listOpen,setListOpen]=useState(false),[planFilter,setPlanFilter]=useState(''),[notice,setNotice]=useState('')
  const lab=w.laboratories.find(l=>l.id===route.labId)||w.laboratories[0],labId=lab?.id||''
  const plans=w.plans.filter(p=>p.labId===labId),equipment=w.equipment.filter(e=>e.labId===labId),checks=snapshot.checks.filter(c=>plans.some(p=>p.id===c.planId)),unresolved=checks.filter(c=>c.state!=='pass')
  const navigate=useCallback((change:Partial<Route>)=>{setRoute(prev=>{const next={...prev,...change},q=new URLSearchParams();q.set('page',next.page);q.set('view',next.view);if(next.labId)q.set('lab',next.labId);if(next.planId)q.set('plan',next.planId);if(next.selection)q.set('object',`${next.selection.type}:${next.selection.id}`);q.set('date',next.date);history.pushState(null,'',`${location.pathname}?${q}`);return next})},[])
@@ -35,7 +35,7 @@ export function WebWorkspace(){
  useEffect(()=>{if(!notice)return;const t=setTimeout(()=>setNotice(''),3500);return()=>clearTimeout(t)},[notice])
  useEffect(()=>{const key=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setSearchOpen(true)}};addEventListener('keydown',key);return()=>removeEventListener('keydown',key)},[])
  const initialize=async()=>{try{await act({type:'initialize',payload:{workspace:prepareExample(example as Workspace,route.date)}});navigate({labId:'lab-201',selection:{type:'equipment',id:'F-01'},page:'space',view:'space'})}catch{}}
- const common={w,labId,mutate:act,onClose:close}
+ const common={w,labId,mutate:act,onClose:close,onLabCreated:(id:string)=>{setListOpen(true);navigate({page:'space',view:'space',labId:id,planId:'',selection:null});setNotice('实验室已建立，已切换到新空间。')},onEquipmentCreated:(id:string)=>{navigate({page:'space',view:'space',labId,planId:'',selection:{type:'equipment',id}});setListOpen(false);setNotice('资源已加入空间并自动定位。')}}
  const inspector=<Inspector key={`${route.selection?.type}:${route.selection?.id}`} snapshot={snapshot} selection={route.selection} onSelect={select} onOpenPlan={openPlan} onTask={(planId,equipmentId)=>setForm({type:'task',planId,equipmentId})} onDocument={()=>setForm({type:'document',equipmentId:route.selection?.type==='equipment'?route.selection.id:undefined})} onEditEquipment={id=>setForm({type:'equipment',id})} onBranch={id=>setForm({type:'branch',id})} onReviewDocument={id=>setForm({type:'verify',id})}/>
  const currentPlan=w.plans.find(p=>p.id===route.planId)
  return <div className={`al-shell ${expanded?'nav-expanded':''}`}>

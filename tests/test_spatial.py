@@ -52,6 +52,35 @@ class DomainTests(unittest.TestCase):
         e=copy.deepcopy(next(e for e in w['equipment'] if e['id']=='A-01'));e['status']='unavailable'
         w=s.apply_operation(w,'save_equipment',{'equipment':e},'负责人')
         self.assertEqual(s.envelope(w)['statuses']['EXP-003'],'recheck')
+    def test_new_equipment_is_automatically_placed(self):
+        w=fixture()
+        created=[]
+        for index in range(3):
+            e={'id':f'new-{index}','labId':'lab-201','code':f'N-{index:02d}','name':f'新资源 {index}',
+               'kind':'bench','x':0,'z':0,'rotation':0,'capacity':1,'status':'unknown','owner':'',
+               'description':'由工作区负责人添加','requiresEvidence':True,'specVersion':1,'maintenance':[]}
+            w=s.apply_operation(w,'save_equipment',{'equipment':e},'负责人')
+            created.append(next(item for item in w['equipment'] if item['id']==e['id']))
+        self.assertEqual(len({(item['x'],item['z']) for item in created}),3)
+        for item in created:
+            self.assertTrue(all(not s.equipment_overlaps(item, other) for other in w['equipment'] if other['id'] != item['id']))
+
+    def test_explicit_origin_can_disable_automatic_placement(self):
+        w=fixture()
+        e={'id':'origin-1','labId':'lab-201','code':'N-ORIGIN','name':'原点资源',
+           'kind':'waste','x':0,'z':0,'rotation':0,'capacity':1,'status':'unknown','owner':'',
+           'description':'测试显式坐标','requiresEvidence':False,'specVersion':1,'maintenance':[]}
+        w=s.apply_operation(w,'save_equipment',{'equipment':e,'autoPlace':False},'负责人')
+        saved=next(item for item in w['equipment'] if item['id']==e['id'])
+        self.assertEqual((saved['x'],saved['z']),(0,0))
+
+    def test_new_equipment_requires_existing_lab(self):
+        w=fixture()
+        e={'id':'missing-lab','labId':'does-not-exist','code':'N-MISSING','name':'孤立资源',
+           'kind':'bench','x':0,'z':0,'rotation':0,'capacity':1,'status':'unknown','owner':'',
+           'description':'测试错误','requiresEvidence':False,'specVersion':1,'maintenance':[]}
+        with self.assertRaises(ValueError):
+            s.apply_operation(w,'save_equipment',{'equipment':e},'负责人')
     def test_visual_change_preserves_basis(self):
         w=fixture();p=w['plans'][2];before=s.basis(w,p);next(e for e in w['equipment'] if e['id']=='A-01')['x']-=.2
         self.assertEqual(before,s.basis(w,p))
@@ -116,6 +145,18 @@ class ApiTests(unittest.TestCase):
     def tearDown(self):
         self.env.stop();self.client.close();s._store=None;self.temp.cleanup()
     def test_empty_api(self):self.assertEqual(self.client.get('/api/spatial').status_code,200)
+    def test_save_lab_roundtrip_and_auto_place_resource(self):
+        lab={'id':'lab-api','name':'API 测试实验室','description':'浏览器创建','width':10,'depth':8}
+        response=self.client.post('/api/spatial/actions',json={'expectedRevision':0,'requestId':'api-lab-0001','type':'save_lab','payload':{'lab':lab}})
+        self.assertEqual(response.status_code,200)
+        snapshot=response.json();self.assertEqual(snapshot['workspace']['revision'],1)
+        self.assertEqual(snapshot['workspace']['laboratories'][0]['id'],'lab-api')
+        equipment={'id':'equipment-api','labId':'lab-api','code':'API-01','name':'测试操作台','kind':'bench','x':0,'z':0,'rotation':0,'capacity':1,'status':'unknown','owner':'','description':'','requiresEvidence':False,'specVersion':1,'maintenance':[]}
+        response=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'api-eq-0001','type':'save_equipment','payload':{'equipment':equipment}})
+        self.assertEqual(response.status_code,200)
+        saved=response.json()['workspace']['equipment'][0]
+        self.assertEqual(saved['labId'],'lab-api')
+        self.assertEqual((saved['x'],saved['z']),(0.0,0.0))
     def test_other_origin_denied(self):self.assertEqual(self.client.get('/api/spatial',headers={'Origin':'https://evil.example'}).status_code,403)
     def test_token_mode(self):
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_TOKEN':'test-owner-token'}):

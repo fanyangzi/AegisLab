@@ -15,6 +15,14 @@ function tube(g:THREE.Group,points:number[][],radius:number,color:number) {const
 function bottle(g:THREE.Group,x:number,y:number,z:number,scale=1,color=0xa9d9d3) {const h=.28*scale;cylinder(g,x,y+h/2,z,.075*scale,h,color);cylinder(g,x,y+h+.015*scale,z,.04*scale,.06*scale,C.ink);box(g,x,y+h/2,z+.075*scale,.09*scale,.11*scale,.004,C.white,0)}
 function flask(g:THREE.Group,x:number,y:number,z:number,scale=1) {const bulb=new THREE.Mesh(new THREE.SphereGeometry(.12*scale,14,10),material(C.glass,{transparent:true,opacity:.7,roughness:.12}));bulb.position.set(x,y+.13*scale,z);g.add(bulb);cylinder(g,x,y+.30*scale,z,.035*scale,.23*scale,C.glass);cylinder(g,x,y+.42*scale,z,.05*scale,.03*scale,C.white)}
 function label(g:THREE.Group,text:string,x:number,y:number,z:number,width=1.0){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=80;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#346bea';ctx.fillRect(0,0,256,80);ctx.fillStyle='white';ctx.font='600 40px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,42);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,width*80/256),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);g.add(mesh)}
+type ZoneSpec={id:string;name:string;x:number;z:number;width:number;depth:number;color:number}
+function zonesFor(lab:Laboratory):ZoneSpec[]{const w=lab.width,d=lab.depth;return [
+ {id:'prep',name:'前处理区',x:-w*.27,z:-d*.22,width:w*.42,depth:d*.38,color:0x8eb7ef},
+ {id:'analysis',name:'分析检测区',x:w*.22,z:-d*.22,width:w*.42,depth:d*.38,color:0x9bc8d7},
+ {id:'wash',name:'清洗与废物',x:-w*.26,z:d*.27,width:w*.44,depth:d*.25,color:0xb4c8e7},
+ {id:'storage',name:'化学品暂存',x:w*.26,z:d*.27,width:w*.38,depth:d*.25,color:0xe6c98d},
+]}
+function zoneFloor(g:THREE.Group,z:ZoneSpec){const plate=box(g,z.x,.045,z.z,z.width,.035,z.depth,z.color,.08);const mat=plate.material as THREE.MeshStandardMaterial;mat.transparent=true;mat.opacity=.16;mat.depthWrite=false;const edge=material(z.color,{transparent:true,opacity:.48,roughness:.8});for(const x of [z.x-z.width/2,z.x+z.width/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(.025,.018,z.depth),edge);bar.position.set(x,.07,z.z);g.add(bar)}for(const zz of [z.z-z.depth/2,z.z+z.depth/2]){const bar=new THREE.Mesh(new THREE.BoxGeometry(z.width,.018,.025),edge);bar.position.set(z.x,.07,zz);g.add(bar)}const canvas=document.createElement('canvas');canvas.width=320;canvas.height=64;const ctx=canvas.getContext('2d')!;ctx.fillStyle='#ffffffc8';ctx.roundRect(2,2,316,60,12);ctx.fill();ctx.fillStyle='#58769c';ctx.font='600 28px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(z.name,160,33);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const sign=new THREE.Mesh(new THREE.PlaneGeometry(Math.min(2.4,z.width*.65),.42),new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false}));sign.rotation.x=-Math.PI/2;sign.position.set(z.x,.09,z.z);g.add(sign)}
 function cabinetBase(g:THREE.Group,w:number,d:number) {box(g,0,.47,0,w,.9,d,C.body);box(g,0,.08,0,w-.12,.12,d-.04,C.ink);for(const side of [-1,1]){box(g,side*w/4,.5,d/2+.018,w/2-.045,.74,.035,C.white);box(g,side*.11,.67,d/2+.055,.035,.23,.035,C.metal)}}
 function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
  if(e.kind==='hood') {w=2.5;d=1.35;h=2.85;cabinetBase(g,w,d);box(g,0,1.01,0,w+.10,.12,d+.1,C.ink);box(g,0,1.87,-.60,w,1.65,.10,C.body);for(const s of [-1,1])box(g,s*1.18,1.89,0,.14,1.7,d,C.white);box(g,0,2.7,0,w,.3,d,C.white);box(g,0,2.54,.66,w-.32,.035,.045,C.metal);const glass=box(g,0,2.1,.58,w-.35,.8,.035,C.glass);(glass.material as THREE.MeshStandardMaterial).transparent=true;(glass.material as THREE.MeshStandardMaterial).opacity=.28;box(g,0,1.69,.61,w-.32,.04,.07,C.metal);box(g,0,2.53,-.3,1.7,.035,.16,0xe3f6ff);cylinder(g,0,2.99,-.28,.25,.35,C.metal);label(g,e.code,0,2.72,.687,.67);box(g,1.18,1.46,.72,.12,.32,.03,C.ink);box(g,1.18,1.54,.74,.07,.06,.01,0x89d3be);bottle(g,-.72,1.10,-.27,.95);bottle(g,-.48,1.10,-.28,.8,0xc3ceea);flask(g,.37,1.10,-.13,1.25);box(g,-.1,1.08,.06,.55,.04,.5,C.metal)}
@@ -28,6 +36,7 @@ function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
 }
 function room(lab:Laboratory) {const g=new THREE.Group(),w=lab.width,d=lab.depth
  box(g,0,-.16,0,w,.28,d,0xe1e9f2,.1);box(g,0,-.005,0,w-.08,.03,d-.08,0xf1f5f9,.01)
+ zonesFor(lab).forEach(z=>zoneFloor(g,z))
  const lines=new THREE.Group();for(let i=-Math.floor(w/2);i<=w/2;i++)box(lines,i,.015,0,.009,.006,d-.15,0xdce4ed,0);for(let i=-Math.floor(d/2);i<=d/2;i++)box(lines,0,.015,i,w-.15,.006,.009,0xdce4ed,0);g.add(lines)
  box(g,0,1.65,-d/2,w,3.3,.16,0xe7edf3);box(g,w/2,1.65,0,.16,3.3,d,0xe7edf3)
  box(g,0,.22,-d/2+.09,w,.35,.04,0xcfddeb);box(g,w/2-.09,.22,0,.04,.35,d,0xcfddeb)
@@ -56,10 +65,10 @@ export default function LabScene(props:Props) {
   scene.add(room(props.lab))
   const camera=new THREE.OrthographicCamera(-10,10,8,-8,.1,200)
   const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.minZoom=.5;controls.maxZoom=3;controls.minPolarAngle=.30;controls.maxPolarAngle=Math.PI*.45;controls.enablePan=true;controls.target.set(0,.6,0)
-  const reset=()=>{camera.position.set(16,14,19);camera.zoom=1;controls.target.set(0,.5,0);camera.updateProjectionMatrix();controls.update()};reset()
+  const reset=()=>{const w=props.lab.width,d=props.lab.depth;camera.position.set(w*1.08,Math.max(10,d*1.06),d*1.32);camera.zoom=1.08;controls.target.set(0,.55,0);camera.updateProjectionMatrix();controls.update()};reset()
   const models=props.equipment.map(e=>{const m=model(e);scene.add(m.group);const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.width+.12,m.height+.1,m.depth+.12)),new THREE.LineBasicMaterial({color:C.blue,transparent:true,opacity:.8}));outline.position.set(e.x,m.height/2,e.z);outline.rotation.y=e.rotation*Math.PI/180;scene.add(outline);return {...m,e,outline}})
-  const pointers=new Map<string,HTMLButtonElement>()
-  if(overlay.current){overlay.current.replaceChildren();models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)})}
+  const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
+  if(overlay.current){overlay.current.replaceChildren();models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
   let width=1,height=1
   const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);const base=Math.max(props.lab.width*.46,props.lab.depth*.64,6.1);camera.top=base;camera.bottom=-base;camera.left=-base*width/height;camera.right=base*width/height;camera.updateProjectionMatrix()}
   const ro=new ResizeObserver(resize);ro.observe(el);resize()
@@ -73,7 +82,7 @@ export default function LabScene(props:Props) {
   let raf=0, previousSelection='',previousStamp='';const points=new Map<string,{x:number;y:number}>()
   const draw=()=>{
     const p=live.current;const selectionKey=JSON.stringify(p.selection)
-    if(previousSelection!==selectionKey){previousSelection=selectionKey;focusTarget=null}
+    if(previousSelection!==selectionKey){previousSelection=selectionKey;const selected=live.current.selection;const selectedEquipment=live.current.equipment.find(e=>selected?.type==='equipment'&&e.id===selected.id);if(selectedEquipment)focusTarget=new THREE.Vector3(selectedEquipment.x,.8,selectedEquipment.z);else if(selected?.type==='plan'){const plan=live.current.plans.find(p=>p.id===selected.id),items=live.current.equipment.filter(e=>plan?.reservations.some(r=>r.equipmentId===e.id));if(items.length)focusTarget=new THREE.Vector3(items.reduce((sum,e)=>sum+e.x,0)/items.length,.7,items.reduce((sum,e)=>sum+e.z,0)/items.length)}else focusTarget=null}
     if(focusTarget){const before=controls.target.clone();controls.target.lerp(focusTarget,p.reduced?1:.10);camera.position.add(controls.target.clone().sub(before));if(controls.target.distanceTo(focusTarget)<.015)focusTarget=null}
     controls.update();points.clear()
     const currentPlan=p.plans.find(q=>q.id===p.planId),planEq=new Set(currentPlan?.reservations.map(r=>r.equipmentId)||[])
@@ -89,6 +98,7 @@ export default function LabScene(props:Props) {
       b.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-100%)`;b.className=`al-scene-label ${selected?'selected':''} ${bad?'red':unknown?'amber':'blue'}`
       b.querySelector('small')!.textContent=bad?'预约约束冲突':unknown?'有待核验事项':`${p.plans.filter(q=>q.reservations.some(r=>r.equipmentId===e.id)).length} 项关联计划`
     })
+    zonesFor(p.lab).forEach(z=>{const node=zonePointers.get(z.id);if(!node)return;const world=new THREE.Vector3(z.x,.12,z.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};node.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-50%)`;node.hidden=v.x<20||v.x>width-20||v.y<20||v.y>height-20})
     if(lines.current){const center=new THREE.Vector3(0,1.75,1.0).project(camera),cx=(center.x+1)*width/2,cy=(-center.y+1)*height/2
       const selectedEq=p.selection?.type==='equipment'?p.selection.id:null
       const relevant=p.planId?currentPlan:p.plans.find(q=>q.reservations.some(r=>r.equipmentId===selectedEq))
