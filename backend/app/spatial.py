@@ -23,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 RULE_PACK = "resource-prerequisites/1.0"
 ROOT = Path(__file__).resolve().parents[2]
+SOURCE_REGISTRY_PATH = ROOT / "data" / "knowledge_sources.json"
 
 # The browser scene uses a deliberately small set of semantic resource kinds.
 # Keeping their approximate footprint here gives the server enough information
@@ -87,6 +88,17 @@ class Maintenance(StrictModel):
     end: str
     reason: str = Field(max_length=2000)
 
+class EquipmentSourceCitation(StrictModel):
+    """A reviewable pointer from an example asset to a public source record.
+
+    The citation proves only that a public page is relevant to a category or
+    control topic. It never asserts that the page is an institutional asset
+    register or that the example resource is currently installed there.
+    """
+    sourceId: str = Field(min_length=1, max_length=120)
+    relation: Literal["category-or-control-reference"]
+    note: str = Field(min_length=1, max_length=500)
+
 
 EquipmentFamily = Literal[
     "containment", "workstation", "separation", "spectroscopy", "mass_analysis",
@@ -133,6 +145,7 @@ class Equipment(StrictModel):
     calibrationOrInspection: list[str] = Field(default_factory=list, max_length=30)
     evidenceKinds: list[EvidenceKind] = Field(default_factory=list, max_length=20)
     sourceRefs: list[str] = Field(default_factory=list, max_length=20)
+    sourceCitations: list[EquipmentSourceCitation] = Field(default_factory=list, max_length=20)
 
 class Step(StrictModel):
     id: str
@@ -227,6 +240,16 @@ class Workspace(StrictModel):
 
 def empty_workspace() -> dict:
     return dict(schemaVersion=1, revision=0, name="我的实验工作区", provenance="user", laboratories=[], equipment=[], plans=[], documents=[], tasks=[], decisions=[], events=[], branches=[])
+
+def read_source_registry() -> list[dict]:
+    """Read the public source directory without treating it as workspace fact."""
+    try:
+        raw = json.loads(SOURCE_REGISTRY_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise HTTPException(503, "公开来源目录暂时不可用。") from error
+    if not isinstance(raw, list):
+        raise HTTPException(503, "公开来源目录格式无效。")
+    return raw
 
 
 def validate_workspace(w: dict) -> dict:
@@ -860,6 +883,12 @@ router = APIRouter(prefix="/api/spatial", tags=["web-workspace"])
 @router.get("")
 def get_workspace(actor: str = Depends(local_owner)):
     return envelope(store().read())
+
+@router.get("/sources")
+def get_source_registry(actor: str = Depends(local_owner)):
+    """Return public source metadata used by equipment category citations."""
+    sources = read_source_registry()
+    return {"sources": sources, "scope": "公开类别与管理机制参考，不是机构资产台账"}
 
 @router.post("/actions")
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):

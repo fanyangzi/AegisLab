@@ -80,6 +80,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -149,6 +181,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -211,6 +275,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -273,6 +369,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -335,6 +473,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -398,6 +573,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -465,6 +677,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -529,6 +778,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -592,6 +878,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "mit-dcif",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -653,6 +981,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -715,6 +1085,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -776,6 +1188,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -834,6 +1288,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -897,6 +1383,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -951,6 +1469,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1019,6 +1574,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1081,6 +1673,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1143,6 +1767,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1207,6 +1863,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1265,6 +1958,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1328,6 +2053,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1393,6 +2155,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1456,6 +2250,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1517,6 +2348,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1578,6 +2441,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1639,6 +2544,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1697,6 +2644,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1751,6 +2730,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1812,6 +2828,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1878,6 +2931,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -1942,6 +3032,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2006,6 +3133,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2067,6 +3231,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2129,6 +3330,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2191,6 +3429,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2254,6 +3529,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2315,6 +3627,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2375,6 +3719,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2431,6 +3807,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2493,6 +3901,48 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2557,6 +4007,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2620,6 +4107,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2685,6 +4204,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2749,6 +4300,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2810,6 +4398,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2873,6 +4498,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -2942,6 +4599,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "mit-dcif",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3007,6 +4706,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "mit-dcif",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3071,6 +4812,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "mit-dcif",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3138,6 +4921,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3204,6 +5024,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3269,6 +5126,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3334,6 +5228,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3400,6 +5326,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3464,6 +5422,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3529,6 +5519,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3596,6 +5623,43 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3660,6 +5724,43 @@
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "https://geoscience.lzu.edu.cn/info/1174/2676.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "lzu-chemical-lab-safety-standard",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3724,6 +5825,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3789,6 +5922,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3854,6 +6024,43 @@
         "https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sysu-chemistry-teaching-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3920,6 +6127,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm",
         "http://ac.tsinghua.edu.cn/yqsb1.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -3985,6 +6224,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4049,6 +6330,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4116,6 +6439,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4182,6 +6547,48 @@
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "http://ac.tsinghua.edu.cn/yqsb1.htm",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-analytical-instruments",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4250,6 +6657,43 @@
         "https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "mit-dcif",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4312,6 +6756,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4378,6 +6854,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4440,6 +6948,33 @@
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4503,6 +7038,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4560,6 +7127,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4625,6 +7224,33 @@
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4689,6 +7315,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4751,6 +7409,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4815,6 +7505,33 @@
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4878,6 +7595,33 @@
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -4943,6 +7687,38 @@
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -5007,6 +7783,33 @@
         "https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm",
         "https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     },
     {
@@ -5072,6 +7875,43 @@
         "https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm",
         "https://www.cmu.edu/chemistry/research/facilities/index.html",
         "https://lab.env.tsinghua.edu.cn/info/1567/2795.htm"
+      ],
+      "sourceCitations": [
+        {
+          "sourceId": "aegislab-taxonomy-survey",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "pku-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "sdu-modern-analysis-center",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cas-ipc-chemical-analysis",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "muc-shared-instrument-platform",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "cmu-chemistry-facilities",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        },
+        {
+          "sourceId": "tsinghua-lab-chemical-safety",
+          "relation": "category-or-control-reference",
+          "note": "公开来源用于支持设备类别或管理机制；不代表本机构真实资产、型号、数量或现场状态。"
+        }
       ]
     }
   ],
