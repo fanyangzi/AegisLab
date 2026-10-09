@@ -24,13 +24,13 @@ class LLMResult:
 
 class LLMAdapter:
     def __init__(self) -> None:
-        self.base_url = os.getenv("LABSAFETY_LLM_BASE_URL", "https://hk.getelucid.com/v1").rstrip("/")
-        self.model = os.getenv("LABSAFETY_LLM_MODEL", "gpt-6.1-sol")
+        self.base_url = os.getenv("LABSAFETY_LLM_BASE_URL", "").rstrip("/")
+        self.model = os.getenv("LABSAFETY_LLM_MODEL", "")
         self.api_key = os.getenv("LABSAFETY_LLM_API_KEY", "")
-        self.enabled = bool(self.api_key) and os.getenv("LABSAFETY_LLM_ENABLED", "1").lower() not in {"0", "false", "no"}
+        self.enabled = bool(self.api_key and self.base_url and self.model) and os.getenv("LABSAFETY_LLM_ENABLED", "1").lower() not in {"0", "false", "no"}
 
     def status(self) -> Dict[str, Any]:
-        configured = bool(self.api_key)
+        configured = bool(self.api_key and self.base_url and self.model)
         return {
             "provider": "openai-compatible",
             "model": self.model or None,
@@ -124,5 +124,5 @@ class LLMAdapter:
         findings = review.get("findings", [])
         failed = [item.get("message", "policy failed") for item in evaluation.get("results", []) if not item.get("passed")]
         if failed:
-            return f"Offline assessment: {len(findings)} finding(s); review is blocked by " + "; ".join(failed) + "."
-        return f"Offline assessment: {len(findings)} finding(s), risk score {evaluation.get('risk_score', 0)}, all policy gates passed."
+            return f"当前未使用模型。确定性文本检查发现 {len(failed)} 项需要进一步核对的条件；请查看下方规则、补齐对应依据并由负责人复核。该结果仅用于辅助预审。"
+        return "当前未使用模型。在已有文本规则范围内未发现未满足项；这不等于全面安全检查通过，也不构成开工许可。请继续核对资源、证据和机构审批要求。"
