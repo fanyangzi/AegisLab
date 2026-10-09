@@ -458,6 +458,11 @@ def envelope(w: dict) -> dict:
     return dict(workspace=w, checks=checks, statuses={p["id"]: plan_status(w, p, checks) for p in w["plans"]}, mode="server", rulePack=RULE_PACK, scope="资源时段、台账可用性、检查证据适用性与原文确认；不构成全域化学安全评估或开工许可。")
 
 
+COPILOT_ACTION_KINDS = {
+    "source_line", "equipment", "evidence", "rule", "relationship", "task", "scenario",
+}
+
+
 def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
     """Build the reviewable, structured part of the AI copilot response.
 
@@ -469,6 +474,45 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
     """
     plan_checks = [c for c in check_workspace(w) if c["planId"] == plan["id"]]
     failed_rules = [r for r in evaluation.results if not r.passed]
+
+    def action(kind: str, target: dict[str, Any]) -> dict[str, Any]:
+        """Attach a review-only navigation target to an AI item.
+
+        These targets are deliberately declarative.  The browser uses them to
+        focus an existing source, resource, evidence record, rule or graph;
+        they never approve a plan or mutate the workspace by themselves.
+        """
+        if kind not in COPILOT_ACTION_KINDS:
+            raise ValueError(f"未知的 Copilot 动作类型：{kind}")
+        # Keep the target's discriminator aligned with the typed action.  The
+        # browser treats this as a navigation hint only; it never mutates a
+        # plan or bypasses a revision/approval check.
+        target = dict(target)
+        target.setdefault("type", kind)
+        return {"actionKind": kind, "actionTarget": target}
+
+    def task_draft(item: dict[str, Any], title: str, note: str, owner: str, kind: str, target: dict[str, Any]) -> dict[str, Any]:
+        """Carry the exact source item into a review-only task draft.
+
+        A task form may be opened from several lists (evidence, conflicts, or
+        a manual review fallback).  Capturing the source id and typed target
+        prevents the form from silently falling back to the plan's first
+        unresolved check.
+        """
+        draft_target = dict(target)
+        draft_target.setdefault("type", kind)
+        return {
+            "itemId": item.get("id"),
+            "sourceId": item.get("sourceId") or item.get("id"),
+            "title": title,
+            "note": note,
+            "owner": owner,
+            "line": item.get("line"),
+            "equipmentId": item.get("equipmentId"),
+            "documentIds": list(item.get("documentIds") or []),
+            "actionKind": kind,
+            "actionTarget": draft_target,
+        }
     steps = [step.model_dump(mode="json") if hasattr(step, "model_dump") else step for step in parsed.get("steps", [])]
     substances = [substance.model_dump(mode="json") if hasattr(substance, "model_dump") else substance for substance in parsed.get("substances", [])]
     for index, step in enumerate(steps):
@@ -494,15 +538,19 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
                 "severity": "high" if hazard else "medium",
                 "source": source,
                 "origin": "source-anchored",
+                **(action("source_line", {"planId": plan["id"], "line": step.get("line")}) if step.get("line") else action("rule", {"planId": plan["id"], "ruleId": "step-controls"})),
             })
         for substance in substances:
             substance_name = str(substance.get("name", "")).strip()
             if substance_name and substance_name in str(step.get("instruction", "")):
-                relations.append({"from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "kind": "uses", "label": "使用化学品", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文"})
+                relation_id = f"step-{step.get('order', index)}:substance-{substance_name}:uses"
+                relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "kind": "uses", "label": "使用化学品", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "relation": "uses"})})
         for equipment in step.get("equipment", []):
-            relations.append({"from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "kind": "requires", "label": "需要设备", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文"})
+            relation_id = f"step-{step.get('order', index)}:equipment-{equipment}:requires"
+            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "kind": "requires", "label": "需要设备", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "relation": "requires"})})
         for control in step.get("controls", []):
-            relations.append({"from": f"step-{step.get('order', index)}", "to": f"control-{control}", "kind": "controlled-by", "label": "控制措施", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文"})
+            relation_id = f"step-{step.get('order', index)}:control-{control}:controlled-by"
+            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"control-{control}", "kind": "controlled-by", "label": "控制措施", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"control-{control}", "relation": "controlled-by"})})
     # If a plan uses generic wording rather than a known substance, retain a
     # signal from the deterministic rule engine instead of pretending the
     # parser identified a chemical that was not present in the source.
@@ -513,6 +561,7 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
                 "title": result.message, "detail": result.recommended_control or result.message,
                 "controls": [], "ppe": [], "evidence": list(result.evidence_refs),
                 "severity": result.severity.value, "source": result.source or f"规则包 {result.rule_version}", "origin": "deterministic-rule",
+                **action("rule", {"type": "rule", "planId": plan["id"], "ruleId": result.rule_id}),
             })
     # Keep the graph compact and stable when a long SOP contains repeated
     # mentions of the same control.
@@ -533,6 +582,7 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
                 "detail": check["detail"], "equipmentId": check.get("equipmentId"),
                 "relatedPlanIds": check.get("relatedPlanIds", []),
                 "line": check.get("line"), "severity": "critical",
+                **(action("equipment", {"planId": plan["id"], "equipmentId": check.get("equipmentId")}) if check.get("equipmentId") else action("source_line", {"planId": plan["id"], "line": check.get("line")}) if check.get("line") else action("rule", {"planId": plan["id"], "ruleId": check.get("code")})),
             })
         elif check["state"] == "unknown":
             evidence_gaps.append({
@@ -540,6 +590,7 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
                 "detail": check["detail"], "equipmentId": check.get("equipmentId"),
                 "line": check.get("line"), "documentIds": check.get("documentIds", []),
                 "priority": "high" if check["code"] in {"EVIDENCE", "SCHEDULE", "BINDING"} else "medium",
+                **(action("evidence", {"planId": plan["id"], "documentId": check["documentIds"][0], "equipmentId": check.get("equipmentId")}) if check.get("documentIds") else action("source_line", {"planId": plan["id"], "line": check.get("line")}) if check.get("line") else action("rule", {"planId": plan["id"], "ruleId": check.get("code")})),
             })
 
     next_actions = []
@@ -558,17 +609,24 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
             detail = "不能只替换画面中的关系线；需要修订计划。"
         else:
             title, detail = gap["title"], gap["detail"]
-        next_actions.append({"id": f"action-{gap['id']}", "title": title, "detail": detail, "sourceId": gap["id"], "owner": "实验负责人", "status": "suggested", "taskDraft": {"title": title, "note": detail, "equipmentId": gap.get("equipmentId"), "line": gap.get("line")}})
+        target = gap.get("actionTarget") or {"type": "rule", "planId": plan["id"], "ruleId": gap.get("code")}
+        kind = gap.get("actionKind") or "rule"
+        owner = "实验负责人"
+        next_actions.append({"id": f"action-{gap['id']}", "title": title, "detail": detail, "sourceId": gap["id"], "owner": owner, "status": "suggested", "line": gap.get("line"), "equipmentId": gap.get("equipmentId"), "documentIds": list(gap.get("documentIds") or []), "taskDraft": task_draft(gap, title, detail, owner, kind, target), **action(kind, target)})
     for conflict in conflicts[:4]:
-        next_actions.append({"id": f"action-{conflict['id']}", "title": "打开方案推演，比较可行资源或时段", "detail": "候选方案先在隔离副本中核验，正式计划不会被自动覆盖。", "sourceId": conflict["id"], "owner": "计划负责人", "status": "suggested", "taskDraft": {"title": "复核资源或时段冲突", "note": conflict["detail"], "equipmentId": conflict.get("equipmentId")}})
+        target = {"planId": plan["id"], "scenarioId": "resource-alternative"}
+        owner = "计划负责人"
+        next_actions.append({"id": f"action-{conflict['id']}", "title": "打开方案推演，比较可行资源或时段", "detail": "候选方案先在隔离副本中核验，正式计划不会被自动覆盖。", "sourceId": conflict["id"], "owner": owner, "status": "suggested", "line": conflict.get("line"), "equipmentId": conflict.get("equipmentId"), "taskDraft": task_draft(conflict, "复核资源或时段冲突", conflict["detail"], owner, "scenario", target), **action("scenario", target)})
     if not next_actions:
-        next_actions.append({"id": "action-review", "title": "由安全负责人复核当前版本", "detail": "AI 解释和规则结果不能替代机构审批或现场确认。", "sourceId": plan["id"], "owner": "安全负责人", "status": "required", "taskDraft": {"title": "复核实验计划当前版本", "note": "请核对 AI 解释、原文来源、资源约束和机构流程。"}})
+        target = {"planId": plan["id"], "ruleId": "HUMAN_REVIEW"}
+        fallback = {"id": "action-review", "title": "由安全负责人复核当前版本", "detail": "AI 解释和规则结果不能替代机构审批或现场确认。", "sourceId": plan["id"], "owner": "安全负责人", "status": "required"}
+        next_actions.append({**fallback, "taskDraft": task_draft(fallback, fallback["title"], fallback["detail"], fallback["owner"], "task", {"planId": plan["id"], "taskId": "draft-human-review"}), **action("task", {"planId": plan["id"], "taskId": "draft-human-review"})})
 
     # Produce two deterministic candidates for the scenario comparison.  They
     # are suggestions only; applying one still requires the existing branch
     # workflow and creates a new plan revision.
     baseline_counts = {"blocked": sum(c["state"] == "blocked" for c in plan_checks), "unknown": sum(c["state"] == "unknown" for c in plan_checks), "pass": sum(c["state"] == "pass" for c in plan_checks)}
-    scenarios = [{"id": "baseline", "name": "当前正式安排", "kind": "baseline", "status": "current", "summary": "以当前计划和已登记资源为基线。", "counts": baseline_counts, "changes": [], "reasoning": ["保留正式计划作为比较基准", "不会因为 AI 结果自动修改"], "actionability": "reference"}]
+    scenarios = [{"id": "baseline", "name": "当前正式安排", "kind": "baseline", "status": "current", "summary": "以当前计划和已登记资源为基线。", "counts": baseline_counts, "changes": [], "reasoning": ["保留正式计划作为比较基准", "不会因为 AI 结果自动修改"], "actionability": "reference", **action("scenario", {"planId": plan["id"], "scenarioId": "baseline"})}]
     # Alternate resource candidate: use the first available same-kind resource
     # for a conflicted/unknown reservation, if one exists.
     candidate_reservations = [dict(r) for r in plan["reservations"]]
@@ -589,8 +647,8 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
         candidate_plan = next(q for q in candidate["plans"] if q["id"] == plan["id"])
         candidate_plan["reservations"] = candidate_reservations
         candidate_checks = [c for c in check_workspace(candidate) if c["planId"] == plan["id"]]
-        scenarios.append({"id": "resource-alternative", "name": "AI 资源替代候选", "kind": "alternative", "status": "suggested", "summary": "用同类别且当前可用资源替代受约束对象，结果仍需人工确认。", "counts": {"blocked": sum(c["state"] == "blocked" for c in candidate_checks), "unknown": sum(c["state"] == "unknown" for c in candidate_checks), "pass": sum(c["state"] == "pass" for c in candidate_checks)}, "changes": changes, "reasoning": ["同类别资源保持设备能力语义", "避开已登记维护窗口和停用状态", "替代结果将在隔离副本中重新核验"], "actionability": "branch"})
-    scenarios.append({"id": "evidence-first", "name": "先补证再放行", "kind": "workflow", "status": "suggested", "summary": "不改变排程，优先处理证据缺口和原文确认。", "counts": baseline_counts, "changes": [{"action": "complete-evidence", "count": len(evidence_gaps)}], "reasoning": ["不改变正式资源预约", f"先闭环 {len(evidence_gaps)} 个证据或确认缺口", "由负责人完成复核后再形成新修订"], "actionability": "task"})
+        scenarios.append({"id": "resource-alternative", "name": "AI 资源替代候选", "kind": "alternative", "status": "suggested", "summary": "用同类别且当前可用资源替代受约束对象，结果仍需人工确认。", "counts": {"blocked": sum(c["state"] == "blocked" for c in candidate_checks), "unknown": sum(c["state"] == "unknown" for c in candidate_checks), "pass": sum(c["state"] == "pass" for c in candidate_checks)}, "changes": changes, "reasoning": ["同类别资源保持设备能力语义", "避开已登记维护窗口和停用状态", "替代结果将在隔离副本中重新核验"], "actionability": "branch", **action("scenario", {"planId": plan["id"], "scenarioId": "resource-alternative"})})
+    scenarios.append({"id": "evidence-first", "name": "先补证再放行", "kind": "workflow", "status": "suggested", "summary": "不改变排程，优先处理证据缺口和原文确认。", "counts": baseline_counts, "changes": [{"action": "complete-evidence", "count": len(evidence_gaps)}], "reasoning": ["不改变正式资源预约", f"先闭环 {len(evidence_gaps)} 个证据或确认缺口", "由负责人完成复核后再形成新修订"], "actionability": "task", **action("scenario", {"planId": plan["id"], "scenarioId": "evidence-first"})})
 
     return {
         "entities": {"steps": len(steps), "hazards": unique_hazards, "substances": substances, "ppe": parsed.get("ppe", []), "equipment": parsed.get("equipment", []), "wasteStreams": parsed.get("waste_streams", []), "ventilation": parsed.get("ventilation")},
