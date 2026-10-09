@@ -17,3 +17,7 @@ docs/competition/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+.qa/
+*.db-*
+*.sqlite-*
+tests/web-parity.json

@@ -1,6 +1,11 @@
 """FastAPI entry point for the AegisLab offline review console."""
 
 from typing import Any, Dict, List
+import os
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from .spatial import local_owner
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,14 +22,26 @@ from .models import (
 from .service import AegisService
 
 
-app = FastAPI(title="AegisLab Chemical Safety API", version="0.1.0", description="Offline-first chemical experiment safety review workflow")
+app = FastAPI(title="AegisLab Chemical Safety API", version="0.2.0", description="Browser-based laboratory review and resource workspace")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[o.strip() for o in os.getenv("AEGIS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173").split(",") if o.strip()],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.middleware("http")
+async def guard_browser_workspace(request: Request, call_next):
+    # Static assets and preflight are handled normally; all API/legacy data routes
+    # share the same owner guard. Local mode is not public multi-user auth.
+    public = request.url.path in {"/", "/health", "/api/health"} or request.url.path.startswith("/assets/")
+    if request.method != "OPTIONS" and not public:
+        try:
+            local_owner(request)
+        except HTTPException as error:
+            return JSONResponse({"detail": error.detail}, status_code=error.status_code)
+    return await call_next(request)
+
 service = AegisService()
 harness = SafeHarness()
 
@@ -276,3 +293,20 @@ def run_incident(incident_id: str, request: IncidentRunRequest | None = None) ->
         return service.run_incident(incident_id, request)
     except KeyError as error:
         raise _not_found(error)
+
+# Browser spatial workspace; separate versioned store preserves legacy records.
+from .spatial import router as spatial_router
+app.include_router(spatial_router)
+
+
+# Optional same-origin production website. Serve only built public assets.
+if os.getenv("AEGIS_SERVE_WEB") == "1":
+    from pathlib import Path
+    from fastapi.staticfiles import StaticFiles
+    dist = Path(__file__).resolve().parents[2] / "dist"
+    if not dist.exists():
+        dist = Path(__file__).resolve().parents[3] / "dist"
+    if dist.exists():
+        # Override the root JSON response only in website-serving mode.
+        app.router.routes = [r for r in app.router.routes if getattr(r, "path", None) != "/"]
+        app.mount("/", StaticFiles(directory=str(dist), html=True), name="website")
