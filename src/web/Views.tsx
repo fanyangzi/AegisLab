@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Workspace, Equipment, Selection, Check, Plan, Snapshot } from './types'
 import { kindNames,statusNames,taskStatusNames } from './types'
 import { Button, Icon, Badge, Empty, dateText, timeText, toneFor } from './ui'
 import { overlaps } from './domain'
 import { profileForKind } from './equipmentTaxonomy'
 import sourceRegistry from '../../data/knowledge_sources.json'
-import { SafetyChainGraph } from './SafetyChainGraph'
+import { SafetyChainGraph, type ServerGraph } from './SafetyChainGraph'
+import { request } from './store'
 
 type PublicSource = { id?: string; name: string; source_url: string; organization?: string; retrieved_at?: string; scope?: string; claim_scope?: string }
 const publicSources = new Map((sourceRegistry as PublicSource[]).filter(item => item.id).map(item => [item.id!, item]))
@@ -38,9 +39,21 @@ export function Timeline({workspace:w,labId,date,selection,onSelect,compact=fals
   <div className="al-time-legend"><span><i/>计划使用</span><span><i className="red"/>容量需核对</span><span><i className="striped"/>维护窗口</span><small>计划安排，非实时遥测 · 浏览器本地时区</small></div>
  </div>
 }
-export function RelationshipGraph({snapshot,labId,selection,onSelect,planId}: {snapshot:Snapshot;labId:string;selection:Selection;onSelect:(s:Selection)=>void;planId?:string}) {
+export function RelationshipGraph({snapshot,labId,selection,onSelect,planId,date}: {snapshot:Snapshot;labId:string;selection:Selection;onSelect:(s:Selection)=>void;planId?:string;date?:string}) {
  const [all,setAll]=useState(false)
- return <div className="al-graph-page"><div className="al-view-toolbar"><div><span className="al-eyebrow">DEPENDENCY & EVIDENCE</span><h2>关系与依据</h2><p>把计划、原文步骤、物料线索、空间资源、规则证据和人工动作放到同一条可回溯链路中。线条表达业务依赖，不代表物质流动或安全结论。</p></div><div className="al-actions"><Button icon="filter" onClick={()=>setAll(!all)}>{all?'查看局部':'展开全图'}</Button></div></div><SafetyChainGraph snapshot={snapshot} labId={labId} planId={planId} selection={selection} onSelect={onSelect} all={all}/></div>
+ const [serverGraph,setServerGraph]=useState<ServerGraph|null>(null),[graphError,setGraphError]=useState('')
+ useEffect(()=>{
+  if(snapshot.mode!=='server'){setServerGraph(null);setGraphError('');return}
+  const query=new URLSearchParams({labId});if(planId)query.set('planId',planId)
+  if(date && /^\d{4}-\d{2}-\d{2}$/.test(date)){
+   const start=new Date(`${date}T00:00:00+08:00`),end=new Date(start.getTime()+24*60*60*1000)
+   query.set('dateFrom',start.toISOString());query.set('dateTo',end.toISOString())
+  }
+  let live=true;setServerGraph(null);setGraphError('')
+  request<ServerGraph>(`/api/spatial/graph?${query.toString()}`).then(graph=>{if(live)setServerGraph(graph)}).catch(error=>{if(live){setServerGraph(null);setGraphError(error instanceof Error?error.message:'服务端关系快照暂时不可用。')}})
+  return()=>{live=false}
+ },[snapshot.mode,labId,planId,date,snapshot.workspace.revision])
+ return <div className="al-graph-page"><div className="al-view-toolbar"><div><span className="al-eyebrow">DEPENDENCY & EVIDENCE</span><h2>关系与依据</h2><p>把计划、原文步骤、物料线索、空间资源、规则证据和人工动作放到同一条可回溯链路中。线条表达业务依赖，不代表物质流动或安全结论。</p></div><div className="al-actions"><Button icon="filter" onClick={()=>setAll(!all)}>{all?'查看局部':'展开全图'}</Button></div></div>{snapshot.mode==='server'&&<div className="al-note"><Icon name="link" size={16}/><p>{serverGraph?`已同步服务端关系快照 · v${serverGraph.revision} · ${serverGraph.nodes.length} 个对象 / ${serverGraph.edges.length} 条关系${planId?' · 当前计划范围':''}`:graphError||'正在同步服务端关系快照…'}</p></div>}<SafetyChainGraph snapshot={snapshot} labId={labId} planId={planId} selection={selection} onSelect={onSelect} all={all} serverGraph={serverGraph}/></div>
 }
 export function EquipmentPicture({equipment:e}:{equipment:Equipment}) {
  const family=e.family||'utility'

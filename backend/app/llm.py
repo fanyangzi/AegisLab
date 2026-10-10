@@ -137,7 +137,12 @@ class LLMAdapter:
         responses_payload = {
             "model": self.model,
             "instructions": system,
-            "input": user,
+            # Keep untrusted review/SOP data in a typed user content block.
+            # ``instructions`` remains the higher-priority application policy;
+            # the document itself is never placed there.  Legacy gateways may
+            # reject this Responses shape and are handled by the chat fallback
+            # below, which keeps the original string content contract.
+            "input": [{"role": "user", "content": [{"type": "input_text", "text": user}]}],
             "max_output_tokens": max_output_tokens,
             "reasoning": {"effort": self.reasoning_effort},
         }

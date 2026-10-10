@@ -6,6 +6,16 @@ import { Icon, dateText, toneFor } from './ui'
 import { profileForKind } from './equipmentTaxonomy'
 import './safetyChainGraph.css'
 
+/** Query result returned by the persisted relationship-graph endpoint. */
+export type ServerGraphNode = {
+  id: string; type: 'plan' | 'step' | 'equipment' | 'document' | 'task' | 'check'; label: string
+  state?: string; code?: string; sourceLine?: number; source?: string; provenance?: string
+  planId?: string; equipmentId?: string; documentId?: string; taskId?: string; labId?: string
+  detail?: string; [key: string]: unknown
+}
+export type ServerGraphEdge = { id: string; from: string; to: string; relation: string; state?: string; provenance?: string; [key: string]: unknown }
+export type ServerGraph = { revision: number; planId?: string | null; labId?: string | null; nodes: ServerGraphNode[]; edges: ServerGraphEdge[]; filters?: Record<string, unknown> }
+
 export type ChainNodeType = 'plan' | 'step' | 'chemical' | 'equipment' | 'control' | 'rule' | 'document' | 'task' | 'approval'
 export const CHAIN_NODE_TYPES: ChainNodeType[] = ['plan', 'step', 'chemical', 'equipment', 'control', 'rule', 'document', 'task', 'approval']
 export const CHAIN_NODE_NAMES: Record<ChainNodeType, string> = {
@@ -213,15 +223,40 @@ export function localGraphIds(nodes: ChainNode[], edges: ChainEdge[], anchors: s
   return visible
 }
 
-export interface SafetyChainGraphProps { snapshot: Snapshot; labId: string; selection: Selection; onSelect: (selection: Selection) => void; all?: boolean; planId?: string }
+const serverState = (value: unknown): ChainEdge['state'] => value === 'pass' || value === 'blocked' || value === 'unknown' ? value : value === 'verified' || value === 'done' || value === 'available' || value === 'approved' || value === 'archived' ? 'pass' : 'unknown'
+const serverNodeType = (type: ServerGraphNode['type']): ChainNodeType => type === 'check' ? 'rule' : type
+const serverNodeLane: Record<ChainNodeType, number> = { plan: 0, step: 1, chemical: 2, equipment: 3, control: 4, rule: 5, document: 6, task: 7, approval: 8 }
+
+/** Adapt persisted graph facts to the same render model used by the local projection. */
+export function buildServerSafetyChainGraph(graph: ServerGraph): SafetyChainGraphModel {
+  const nodes: ChainNode[] = graph.nodes.map((node, index) => {
+    const type = serverNodeType(node.type)
+    const selection: Selection = node.type === 'plan' && node.planId ? { type: 'plan', id: node.planId }
+      : node.type === 'equipment' && node.equipmentId ? { type: 'equipment', id: node.equipmentId }
+        : node.type === 'document' && node.documentId ? { type: 'document', id: node.documentId }
+          : node.type === 'task' && node.taskId ? { type: 'task', id: node.taskId } : null
+    const detail = node.detail || [node.provenance || node.source, node.sourceLine ? `原文 L${node.sourceLine}` : '', node.state ? `状态 ${node.state}` : ''].filter(Boolean).join(' · ') || '来自服务端工作区关系快照。'
+    return {
+      id: node.id, label: node.label, code: node.code || node.id, type, icon: type === 'rule' ? 'alert' : type === 'document' ? 'file' : type === 'task' ? 'tasks' : type === 'equipment' ? 'resources' : type === 'step' ? 'plans' : 'flask', state: serverState(node.state), lane: serverNodeLane[type], index,
+      detail, ...(selection ? { selection } : {}),
+    }
+  })
+  const valid = new Set(nodes.map(node => node.id))
+  const edges: ChainEdge[] = graph.edges.filter(edge => valid.has(edge.from) && valid.has(edge.to)).map(edge => ({
+    id: edge.id, from: edge.from, to: edge.to, label: edge.relation, state: serverState(edge.state), description: `${edge.relation} · ${edge.provenance || '服务端工作区关系快照'}`,
+  }))
+  return { nodes, edges }
+}
+
+export interface SafetyChainGraphProps { snapshot: Snapshot; labId: string; selection: Selection; onSelect: (selection: Selection) => void; all?: boolean; planId?: string; serverGraph?: ServerGraph | null }
 const laneNames = ['实验计划', '步骤', '化学品 / 物料', '设备', '控制措施', '规则', '证据', '协同任务', '人工审批']
 
-export function SafetyChainGraph({ snapshot, labId, selection, onSelect, all = false, planId }: SafetyChainGraphProps) {
+export function SafetyChainGraph({ snapshot, labId, selection, onSelect, all = false, planId, serverGraph = null }: SafetyChainGraphProps) {
   const [insight, setInsight] = useState('点击节点或关系线，查看这条安全链路的含义。')
   const [hops, setHops] = useState<1 | 2>(2)
   const [enabledTypes, setEnabledTypes] = useState<Set<ChainNodeType>>(() => new Set(CHAIN_NODE_TYPES))
   const [pinned, setPinned] = useState<Set<string>>(() => new Set())
-  const model = useMemo(() => buildSafetyChainGraph(snapshot, labId, planId), [snapshot, labId, planId])
+  const model = useMemo(() => serverGraph?.nodes.length ? buildServerSafetyChainGraph(serverGraph) : buildSafetyChainGraph(snapshot, labId, planId), [snapshot, labId, planId, serverGraph])
   const selectedNodeIds = useMemo(() => model.nodes.filter(node => node.selection && selection && node.selection.type === selection.type && node.selection.id === selection.id).map(node => node.id), [model.nodes, selection])
   const fallbackAnchor = model.nodes.find(node => node.type === 'plan')?.id || model.nodes[0]?.id
   const anchors = unique([...selectedNodeIds, ...pinned, ...(selectedNodeIds.length || pinned.size ? [] : fallbackAnchor ? [fallbackAnchor] : [])])

@@ -1865,6 +1865,7 @@ def get_plan_approval(plan_id: str, actor: str = Depends(local_owner)):
 @router.get("/graph")
 def get_relationship_graph(
     planId: str | None = None,
+    labId: str | None = None,
     types: str | None = None,
     nodeId: str | None = None,
     dateFrom: str | None = None,
@@ -1885,8 +1886,18 @@ def get_relationship_graph(
     if hops < 0 or hops > 2:
         raise HTTPException(422, "hops 必须在 0 到 2 之间。")
     w = store().read()
-    plans = [p for p in w.get("plans", []) if not planId or p.get("id") == planId]
+    # Keep the query scoped to the active laboratory as well as the optional
+    # plan.  The browser already applies this scope to its local projection,
+    # but direct graph consumers must not accidentally receive relationships
+    # from another laboratory in the same workspace.
+    plans = [
+        p for p in w.get("plans", [])
+        if (not planId or p.get("id") == planId)
+        and (not labId or p.get("labId") == labId)
+    ]
     if planId and not plans:
+        if labId and any(p.get("id") == planId for p in w.get("plans", [])):
+            raise HTTPException(404, "计划不属于当前实验室。")
         raise HTTPException(404, "计划不存在。")
     allowed_types = {item.strip() for item in (types or "").split(",") if item.strip()}
     unknown_types = sorted(allowed_types - GRAPH_NODE_TYPES)
@@ -1932,12 +1943,15 @@ def get_relationship_graph(
     equipment_by_id = {e["id"]: e for e in w.get("equipment", [])}
     documents = w.get("documents", [])
     tasks = w.get("tasks", [])
+    all_checks = check_workspace(w)
     for plan in plans:
         pid = plan["id"]
         window_reservations = [r for r in plan.get("reservations", []) if in_window(r)]
+        plan_checks = [check for check in all_checks if check.get("planId") == pid]
+        current_status = plan_status(w, plan, plan_checks)
         add_node(
             f"plan:{pid}", "plan", plan.get("name", pid), planId=pid, labId=plan.get("labId"),
-            revision=plan.get("revision"), state=plan.get("status", "current"),
+            revision=plan.get("revision"), state=current_status, status=current_status,
             source=plan.get("sourceName") or plan.get("source"),
             reservationCount=len(window_reservations),
             timeFiltered=bool(start_bound or end_bound),
@@ -1982,7 +1996,7 @@ def get_relationship_graph(
             add_edge(f"{pid}:task:{task['id']}", f"plan:{pid}", tid, "action", state=task.get("status"), provenance="工作区任务")
             if task.get("equipmentId"):
                 add_edge(f"{task['id']}:equipment", tid, f"equipment:{task['equipmentId']}", "targets", state="pass", provenance="任务关联字段")
-        for check in check_workspace(w):
+        for check in all_checks:
             if check.get("planId") != pid:
                 continue
             cid = f"check:{check['id']}"
@@ -2008,7 +2022,7 @@ def get_relationship_graph(
         nodes = {key: value for key, value in nodes.items() if value["type"] in allowed_types}
     visible_ids = set(nodes)
     edges = [edge for edge in edges if edge["from"] in visible_ids and edge["to"] in visible_ids]
-    return {"revision": w.get("revision", 0), "planId": planId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops}}
+    return {"revision": w.get("revision", 0), "planId": planId, "labId": labId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops, "labId": labId}}
 
 @router.post("/actions")
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):

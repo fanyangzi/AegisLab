@@ -432,6 +432,9 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(calls[0][0],'https://example.invalid/v1/responses')
         self.assertIn('instructions',calls[0][1])
         self.assertIn('input',calls[0][1])
+        self.assertEqual(calls[0][1]['input'][0]['role'],'user')
+        self.assertEqual(calls[0][1]['input'][0]['content'][0]['type'],'input_text')
+        self.assertIn('untrusted_review_data',calls[0][1]['input'][0]['content'][0]['text'])
         self.assertEqual(calls[0][1]['reasoning'],{'effort':'low'})
         self.assertNotIn('messages',calls[0][1])
         self.assertNotIn('temperature',calls[0][1])
@@ -456,7 +459,10 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(len(calls),1)
         self.assertEqual(calls[0][0],'https://example.invalid/v1/responses')
         request=calls[0][1]
-        prompt=json.loads(request['input'])
+        self.assertEqual(request['input'][0]['role'],'user')
+        content=request['input'][0]['content']
+        self.assertEqual(content[0]['type'],'input_text')
+        prompt=json.loads(content[0]['text'])
         self.assertIn('untrusted_document_data',prompt)
         ledger=prompt['untrusted_document_data']['source_ledger']
         self.assertEqual(ledger[0]['instruction'],source)
@@ -479,7 +485,7 @@ class DomainTests(unittest.TestCase):
             def __exit__(self, *args): return False
             def read(self): return '{"choices":[{"message":{"content":"兼容网关总结"}}]}'.encode('utf-8')
         def fake_urlopen(request, timeout=0):
-            calls.append(request.full_url)
+            calls.append((request.full_url, json.loads(request.data.decode('utf-8'))))
             if request.full_url.endswith('/responses'):
                 raise urllib.error.HTTPError(request.full_url, 404, 'unsupported', {}, None)
             return Response()
@@ -492,10 +498,13 @@ class DomainTests(unittest.TestCase):
             result=LLMAdapter().summarize({'title':'测试计划'}, {'results':[]})
         self.assertFalse(result.degraded)
         self.assertEqual(result.text,'兼容网关总结')
-        self.assertEqual(calls,[
+        self.assertEqual([item[0] for item in calls],[
             'https://example.invalid/v1/responses',
             'https://example.invalid/v1/chat/completions',
         ])
+        fallback=calls[1][1]
+        self.assertEqual(fallback['messages'][1]['role'],'user')
+        self.assertIsInstance(fallback['messages'][1]['content'],str)
 
 class StoreTests(unittest.TestCase):
     def setUp(self):
@@ -689,21 +698,88 @@ class ApiTests(unittest.TestCase):
         applied_plan=next(item for item in applied.json()['workspace']['plans'] if item['id']==plan['id'])
         self.assertEqual(applied_plan['reservations'][0]['equipmentId'],'F-02');self.assertEqual(applied_plan['reservations'][0]['start'],candidate[0]['start'])
     def test_clean_workspace_can_complete_web_lifecycle_without_examples(self):
+        """Run the complete browser lifecycle against a fresh, example-free DB.
+
+        This is intentionally an API-level browser contract test: it uses the
+        same mutation endpoints as the UI, imports the plan text through the
+        upload endpoint, and never calls ``initialize`` or reads the example
+        fixture.  The temporary SQLite path is removed in ``tearDown``.
+        """
         def act(revision, request_id, action, payload):
             response=self.client.post('/api/spatial/actions',json={'expectedRevision':revision,'requestId':request_id,'type':action,'payload':payload})
             self.assertEqual(response.status_code,200,response.text);return response.json()
+
+        # The API must really start empty, rather than silently loading the
+        # browser's example workspace.
+        empty=self.client.get('/api/spatial').json()['workspace']
+        self.assertEqual(empty['revision'],0)
+        self.assertEqual((empty['laboratories'],empty['equipment'],empty['plans'],empty['documents'],empty['tasks'],empty['decisions'],empty['branches']),([],[],[],[],[],[],[]))
+        self.assertEqual(empty['provenance'],'user')
+
         lab={'id':'lab-clean','name':'空白验证实验室','description':'clean acceptance','width':12,'depth':10}
         act(0,'clean-lab-01','save_lab',{'lab':lab})
         equipment={'id':'eq-clean-01','labId':'lab-clean','code':'C-01','name':'清洁操作台','kind':'bench','x':0,'z':0,'rotation':0,'capacity':1,'status':'available','owner':'验证负责人','description':'新工作区录入','requiresEvidence':False,'specVersion':1,'maintenance':[]}
         act(1,'clean-eq-01','save_equipment',{'equipment':equipment})
-        source='第一步：准备样品\n第二步：完成记录'
-        plan={'id':'plan-clean-01','code':'CLEAN-001','labId':'lab-clean','name':'清洁环境新计划','owner':'验证负责人','revision':1,'source':source,'sourceName':'clean-source.txt','steps':[{'id':'clean-step-1','text':'第一步：准备样品','line':1,'equipmentIds':['eq-clean-01'],'confirmed':False},{'id':'clean-step-2','text':'第二步：完成记录','line':2,'equipmentIds':[],'confirmed':False}],'reservations':[{'id':'clean-res-1','equipmentId':'eq-clean-01','start':'2026-10-09T09:00:00+08:00','end':'2026-10-09T10:00:00+08:00'}],'archived':False}
-        state=act(2,'clean-plan-01','save_plan',{'plan':plan});state=act(3,'clean-confirm','confirm_steps',{'planId':'plan-clean-01'});self.assertEqual(state['statuses']['plan-clean-01'],'ready')
+
+        # Import text through the same endpoint used by the web plan form.  It
+        # is deliberately a new source string absent from data/spatial-example.
+        source_response=self.client.post('/api/spatial/import-text?filename=clean-new-plan.txt',content='第一步：准备洁净样品\n第二步：完成记录\n'.encode())
+        self.assertEqual(source_response.status_code,200,source_response.text)
+        source=source_response.json()['text']
+        self.assertIn('准备洁净样品',source)
+        self.assertNotIn('EXP-001',source)
+        plan={'id':'plan-clean-01','code':'CLEAN-001','labId':'lab-clean','name':'清洁环境新计划','owner':'验证负责人','revision':1,'source':source,'sourceName':'clean-new-plan.txt','steps':[{'id':'clean-step-1','text':'第一步：准备洁净样品','line':1,'equipmentIds':['eq-clean-01'],'confirmed':False},{'id':'clean-step-2','text':'第二步：完成记录','line':2,'equipmentIds':[],'confirmed':False}],'reservations':[{'id':'clean-res-1','equipmentId':'eq-clean-01','start':'2026-10-09T09:00:00+08:00','end':'2026-10-09T10:00:00+08:00'}],'archived':False}
+        state=act(2,'clean-plan-01','save_plan',{'plan':plan})
+        state=act(3,'clean-confirm','confirm_steps',{'planId':'plan-clean-01'})
+        self.assertEqual(state['statuses']['plan-clean-01'],'ready')
+
+        # Explicitly inspect the deterministic checks before any approval.
+        checks=self.client.get('/api/spatial').json()['checks']
+        clean_checks=[item for item in checks if item['planId']=='plan-clean-01']
+        self.assertTrue(clean_checks)
+        self.assertTrue(all(item['state']=='pass' for item in clean_checks),clean_checks)
+
+        # Create and apply an isolated reservation change.  The formal plan is
+        # untouched until the explicit apply operation, then its revision must
+        # move forward and the candidate time must be observable in the UI API.
+        workspace=self.client.get('/api/spatial').json()['workspace']
+        current_plan=next(item for item in workspace['plans'] if item['id']=='plan-clean-01')
+        candidate=copy.deepcopy(current_plan['reservations'])
+        candidate[0]['start']='2026-10-09T10:00:00+08:00';candidate[0]['end']='2026-10-09T11:00:00+08:00'
+        branch={'id':'clean-branch-01','name':'调整洁净样品时段','planId':current_plan['id'],'baseRevision':current_plan['revision'],'baseBasis':s.basis(workspace,current_plan),'reservations':candidate,'createdAt':s.now(),'patches':[{'path':'reservation.start','targetId':candidate[0]['id'],'before':'2026-10-09T09:00:00+08:00','after':candidate[0]['start'],'reason':'避开现场准备窗口'},{'path':'reservation.end','targetId':candidate[0]['id'],'before':'2026-10-09T10:00:00+08:00','after':candidate[0]['end'],'reason':'同步调整结束时间'}]}
+        state=act(4,'clean-branch-save','save_branch',{'branch':branch})
+        self.assertEqual(next(item for item in state['workspace']['plans'] if item['id']=='plan-clean-01')['reservations'][0]['start'],'2026-10-09T09:00:00+08:00')
+        state=act(5,'clean-branch-apply','apply_branch',{'id':'clean-branch-01'})
+        changed_plan=next(item for item in state['workspace']['plans'] if item['id']=='plan-clean-01')
+        self.assertEqual(changed_plan['reservations'][0]['start'],'2026-10-09T10:00:00+08:00')
+        self.assertEqual(changed_plan['revision'],3)
+        self.assertTrue(any('字段变更' in event['summary'] for event in state['workspace']['events']))
+
+        # Collaboration uses one atomic status + ownership hand-off request.
         task={'id':'clean-task-01','title':'完成清洁环境记录','planId':'plan-clean-01','equipmentId':'eq-clean-01','owner':'验证负责人','dueAt':'2026-10-09T18:00:00+08:00','status':'open','note':'来自清洁环境验收'}
-        state=act(4,'clean-task-01','save_task',{'task':task});state=act(5,'clean-approve','approve',{'planId':'plan-clean-01','expectedPlanRevision':2,'comment':'已核对清洁环境工作流'})
+        state=act(6,'clean-task-01','save_task',{'task':task})
+        state=act(7,'clean-handoff','update_task',{'id':'clean-task-01','status':'submitted','note':'接收人已确认。','newOwner':'复核负责人','expectedOwner':'验证负责人','handoffNote':'请复核洁净操作记录'})
+        clean_task=next(item for item in state['workspace']['tasks'] if item['id']=='clean-task-01')
+        self.assertEqual((clean_task['status'],clean_task['owner']),('submitted','复核负责人'))
+        self.assertIn('转交',state['workspace']['events'][-1]['summary'])
+
+        # Record a server-authorized approval decision, not a client-supplied
+        # role.  The decision carries a check snapshot for later audit.
+        state=act(8,'clean-approval','approval_decision',{'planId':'plan-clean-01','expectedPlanRevision':3,'disposition':'approved','comment':'已检查新计划、资源时段和任务交接。'})
+        decision=state['workspace']['decisions'][-1]
+        self.assertEqual(decision['disposition'],'approved')
+        self.assertTrue(decision['checkSnapshot'])
         self.assertEqual(state['statuses']['plan-clean-01'],'approved')
-        plan['revision']=3;plan['archived']=True;plan['steps']=[dict(step,confirmed=True) for step in plan['steps']]
-        state=act(6,'clean-archive','save_plan',{'plan':plan,'expectedPlanRevision':2});self.assertEqual(state['statuses']['plan-clean-01'],'archived')
+
+        # Archive through the lifecycle endpoint only after approval.  The
+        # active checks and approval basis are rechecked server-side.
+        state=act(9,'clean-archive','transition_plan',{'planId':'plan-clean-01','lifecycle':'archived'})
+        archived=next(item for item in state['workspace']['plans'] if item['id']=='plan-clean-01')
+        self.assertTrue(archived['archived']);self.assertEqual(archived['lifecycle'],'archived')
+        self.assertEqual(state['statuses']['plan-clean-01'],'archived')
+        self.assertEqual(len(state['workspace']['laboratories']),1)
+        self.assertEqual(len(state['workspace']['equipment']),1)
+        self.assertEqual(len(state['workspace']['plans']),1)
     def test_utf8_text_import(self):
         r=self.client.post('/api/spatial/import-text?filename=test.md',content='计划文本\n检查 F-01'.encode())
         self.assertEqual(r.status_code,200);self.assertEqual(r.json()['locator'],'extracted-text-lines')
@@ -851,6 +927,21 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(all(edge['from'] in {node['id'] for node in graph['nodes']} and edge['to'] in {node['id'] for node in graph['nodes']} for edge in graph['edges']))
         self.assertEqual(self.client.get('/api/spatial/graph?dateFrom=bad').status_code,422)
         self.assertEqual(self.client.get('/api/spatial/graph?hops=3').status_code,422)
+
+    def test_relationship_graph_scopes_plan_queries_to_laboratory(self):
+        initialize(s.store())
+        same_lab=self.client.get('/api/spatial/graph?labId=lab-201&planId=EXP-001')
+        self.assertEqual(same_lab.status_code,200,same_lab.text)
+        graph=same_lab.json()
+        self.assertEqual(graph['labId'],'lab-201')
+        self.assertEqual(graph['filters']['labId'],'lab-201')
+        self.assertTrue(graph['nodes'])
+        other_lab=self.client.get('/api/spatial/graph?labId=lab-301&planId=EXP-001')
+        self.assertEqual(other_lab.status_code,404,other_lab.text)
+        self.assertIn('不属于当前实验室',other_lab.json()['detail'])
+        unscoped=self.client.get('/api/spatial/graph?planId=EXP-001')
+        self.assertEqual(unscoped.status_code,200,unscoped.text)
+        self.assertIsNone(unscoped.json()['labId'])
 
     def test_relationship_graph_contract_exposes_edge_state_and_provenance(self):
         initialize(s.store())
