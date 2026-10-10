@@ -1165,6 +1165,30 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
                 raise ValueError("该 AI 建议已有未完成任务，请打开原任务继续处理。")
         upsert("tasks", task)
         object_id, summary = x["task"]["id"], "创建协作任务"
+    elif action == "assign_task":
+        # Assignment is an explicit collaboration mutation, separate from a
+        # task status update.  It leaves the evidence/approval basis untouched
+        # and records the hand-off reason in the audit event below.  The local
+        # role gate in ``mutate_workspace`` keeps this operation from being
+        # presented as a multi-user permission system.
+        t = get("tasks", x["id"])
+        if t["status"] in {"done", "cancelled"}:
+            raise ValueError("已完成或已取消任务不能直接转交；请先重新打开任务。")
+        new_owner = str(x.get("newOwner", "")).strip()
+        note = str(x.get("note", "")).strip()
+        expected_owner = x.get("expectedOwner")
+        if expected_owner is not None and str(expected_owner) != t["owner"]:
+            raise ValueError("任务负责人已变化，请刷新后重新转交。")
+        if not new_owner or len(new_owner) > 180:
+            raise ValueError("转交负责人不能为空且不能超过 180 个字符。")
+        if new_owner == t["owner"]:
+            raise ValueError("转交负责人必须与当前负责人不同。")
+        if not note or len(note) > 2000:
+            raise ValueError("转交任务必须填写不超过 2000 个字符的交接说明。")
+        previous_owner = t["owner"]
+        t["owner"] = new_owner
+        object_id = t["id"]
+        summary = f"转交协作任务：{previous_owner} → {new_owner}；{note}"
     elif action == "update_task":
         t = get("tasks", x["id"])
         requested = x.get("status")
@@ -1766,6 +1790,8 @@ def get_relationship_graph(
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
     if body.type == "approve" and local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有记录正式复核的权限。")
+    if body.type == "assign_task" and local_role() not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有转交协作任务的权限。")
     try:
         return envelope(store().mutate(body.expectedRevision, body.requestId, body.type, body.payload, actor))
     except (ValidationError, ValueError, KeyError, TypeError) as error:

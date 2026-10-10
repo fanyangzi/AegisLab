@@ -211,6 +211,16 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
       summary=d.status==='verified'?'记录资料核验结果':'退回资料'; break
     }
     case 'save_task': { const task=structuredClone(x.task) as Task; if (task.sourceId && task.actionKind && next.tasks.some(existing => existing.id!==task.id && existing.planId===task.planId && existing.sourceId===task.sourceId && existing.sourceLine===task.sourceLine && existing.actionKind===task.actionKind && ['open','submitted','returned','reopened'].includes(existing.status))) throw new Error('该 AI 建议已有未完成任务，请打开原任务继续处理。'); upsert(next.tasks,task); objectId=task.id; summary='创建协作任务'; break }
+    case 'assign_task': {
+      const t=next.tasks.find(t=>t.id===x.id), newOwner=String(x.newOwner??'').trim(), note=String(x.note??'').trim(), expectedOwner=x.expectedOwner
+      if (!t) throw new Error('任务不存在。')
+      if (['done','cancelled'].includes(t.status)) throw new Error('已完成或已取消任务不能直接转交；请先重新打开任务。')
+      if (expectedOwner!==undefined && String(expectedOwner)!==t.owner) throw new Error('任务负责人已变化，请刷新后重新转交。')
+      if (!newOwner || newOwner.length>180) throw new Error('转交负责人不能为空且不能超过 180 个字符。')
+      if (newOwner===t.owner) throw new Error('转交负责人必须与当前负责人不同。')
+      if (!note || note.length>2000) throw new Error('转交任务必须填写不超过 2000 个字符的交接说明。')
+      const previous=t.owner;t.owner=newOwner;objectId=t.id;summary=`转交协作任务：${previous} → ${newOwner}；${note}`;break
+    }
     case 'update_task': {
       const t=next.tasks.find(t=>t.id===x.id), requested=x.status as Task['status']
       if (!t || !Object.prototype.hasOwnProperty.call(taskTransitions, requested)) throw new Error('任务状态无效')

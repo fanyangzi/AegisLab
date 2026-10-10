@@ -224,6 +224,23 @@ class DomainTests(unittest.TestCase):
         w=s.apply_operation(w,'update_task',{'id':task_id,'status':'done','note':'已完成'},'负责人')
         with self.assertRaises(ValueError):
             s.apply_operation(w,'update_task',{'id':task_id,'status':'submitted','note':'重新提交'},'负责人')
+    def test_task_assignment_is_explicit_and_audited(self):
+        w=fixture(); task_id=w['tasks'][0]['id']; before_status=w['tasks'][0]['status']
+        changed=s.apply_operation(w,'assign_task',{
+            'id':task_id,'newOwner':'接收负责人','expectedOwner':w['tasks'][0]['owner'],
+            'note':'交接设备检查记录与当前计划依据。',
+        },'安全负责人')
+        task=next(item for item in changed['tasks'] if item['id']==task_id)
+        self.assertEqual(task['owner'],'接收负责人');self.assertEqual(task['status'],before_status)
+        self.assertIn('转交协作任务',changed['events'][-1]['summary'])
+        self.assertIn('陈同学',changed['events'][-1]['summary'])
+        with self.assertRaises(ValueError):
+            s.apply_operation(changed,'assign_task',{
+                'id':task_id,'newOwner':'另一位负责人','expectedOwner':'原负责人','note':'过期负责人条件',
+            },'安全负责人')
+        completed=s.apply_operation(changed,'update_task',{'id':task_id,'status':'done','note':'已完成'},'负责人')
+        with self.assertRaises(ValueError):
+            s.apply_operation(completed,'assign_task',{'id':task_id,'newOwner':'再次转交','note':'不应改动终态任务'},'负责人')
     def test_duplicate_ai_task_is_rejected(self):
         w=fixture(); task={'id':'ai-task-1','title':'补充检查证据','planId':'EXP-001','equipmentId':'F-01','owner':'陈同学','dueAt':'2026-10-09T18:00:00+08:00','status':'open','note':'来源 SOP L1','sourceId':'EXP-001:EVIDENCE:F-01','sourceLine':1,'documentIds':[],'actionKind':'evidence','actionTarget':{'type':'evidence','planId':'EXP-001','equipmentId':'F-01'}}
         w=s.apply_operation(w,'save_task',{'task':task},'负责人')
@@ -455,6 +472,21 @@ class ApiTests(unittest.TestCase):
         initialize(s.store())
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
             response=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'role-deny-0001','type':'approve','payload':{'planId':'EXP-003','expectedPlanRevision':1,'comment':'尝试越权复核'}})
+        self.assertEqual(response.status_code,403)
+    def test_server_role_controls_task_assignment_and_persists_handoff(self):
+        initialize(s.store())
+        denied=self.client.post('/api/spatial/actions',json={
+            'expectedRevision':1,'requestId':'assign-allow-01','type':'assign_task',
+            'payload':{'id':'task-1','newOwner':'接收负责人','expectedOwner':'陈同学','note':'交接检查记录'},
+        })
+        self.assertEqual(denied.status_code,200,denied.text)
+        state=denied.json();self.assertEqual(state['workspace']['tasks'][0]['owner'],'接收负责人')
+        self.assertIn('转交协作任务',state['workspace']['events'][-1]['summary'])
+        with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
+            response=self.client.post('/api/spatial/actions',json={
+                'expectedRevision':2,'requestId':'assign-deny-02','type':'assign_task',
+                'payload':{'id':'task-1','newOwner':'不应写入','expectedOwner':'接收负责人','note':'研究者不应转交'},
+            })
         self.assertEqual(response.status_code,403)
     def test_clean_workspace_can_complete_web_lifecycle_without_examples(self):
         def act(revision, request_id, action, payload):
