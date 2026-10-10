@@ -10,6 +10,7 @@ const req=createRequire(import.meta.url)
 execFileSync(process.execPath,[resolve('node_modules/typescript/bin/tsc'),'--ignoreConfig','--module','commonjs','--target','es2022','--lib','ES2022,DOM','--skipLibCheck','--outDir',temp,'src/web/types.ts','src/web/domain.ts'],{stdio:'inherit'})
 writeFileSync(join(temp,'package.json'),'{"type":"commonjs"}')
 const d=req(join(temp,'domain.js')),template=JSON.parse(readFileSync('data/spatial-example.json','utf8'))
+const workspaceSource=readFileSync('src/web/Workspace.tsx','utf8')
 let count=0
 const test=(name,fn)=>{fn();count++;console.log(`PASS ${count}: ${name}`)}
 const fixture=()=>structuredClone(template)
@@ -44,6 +45,7 @@ try {
  test('stale branch is rejected after a resource change',()=>{let w=fixture();const p=w.plans[0],branch={id:'b',name:'候选',planId:p.id,baseRevision:p.revision,baseBasis:d.basis(w,p),reservations:structuredClone(p.reservations),createdAt:new Date().toISOString()};w=d.applyLocal(w,{type:'save_branch',payload:{branch}});w.equipment[0].status='unavailable';assert.throws(()=>d.applyLocal(w,{type:'apply_branch',payload:{id:'b'}}))})
  test('non-empty workspace cannot be replaced by example initialization',()=>assert.throws(()=>d.applyLocal(fixture(),{type:'initialize',payload:{workspace:fixture()}})))
  test('example dates shift consistently without changing the template',()=>{const before=JSON.stringify(template),shifted=d.prepareExample(template,'2026-11-01');assert.equal(Date.parse(shifted.plans[0].reservations[0].start)-Date.parse(template.plans[0].reservations[0].start),23*86400000);assert.equal(JSON.stringify(template),before)})
+ test('expiry recheck UI keeps the manual idempotent boundary',()=>{assert.match(workspaceSource,/\/api\/spatial\/expiry\/recheck/);assert.match(workspaceSource,/worker/);assert.match(workspaceSource,/不会自动批准、取消计划或创建任务/);assert.match(workspaceSource,/再次查看结果/);assert.match(workspaceSource,/新建一次复核/);assert.match(workspaceSource,/setRequestId\(uid\('expiry-ui'\)\)/)})
  if(process.argv.includes('--parity'))writeFileSync('tests/web-parity.json',JSON.stringify({basis:template.plans.map(p=>d.basis(template,p)),checks:d.checkWorkspace(template).map(c=>({id:c.id,state:c.state})),statuses:template.plans.map(p=>d.planStatus(template,p))}))
  console.log(`\n${count} browser-domain tests passed.`)
 }finally{rmSync(temp,{recursive:true,force:true})}
