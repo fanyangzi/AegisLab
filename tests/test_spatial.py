@@ -193,6 +193,65 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(result.reason,'远程模型返回 HTTP 401')
         self.assertNotIn('test-token', result.text)
 
+    def test_llm_prefers_responses_api_and_reads_output_text(self):
+        calls=[]
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self): return '{"output_text":"模型总结：请人工复核"}'.encode('utf-8')
+        def fake_urlopen(request, timeout=0):
+            calls.append((request.full_url, json.loads(request.data.decode('utf-8'))))
+            return Response()
+        with patch.dict(os.environ, {
+            'LABSAFETY_LLM_BASE_URL':'https://example.invalid/v1',
+            'LABSAFETY_LLM_MODEL':'gpt-6.1-sol',
+            'LABSAFETY_LLM_API_KEY':'test-token',
+            'LABSAFETY_LLM_ENABLED':'1',
+        }), patch('backend.app.llm.urllib.request.urlopen', side_effect=fake_urlopen):
+            result=LLMAdapter().summarize({'title':'测试计划'}, {'results':[]})
+        self.assertFalse(result.degraded)
+        self.assertEqual(result.text,'模型总结：请人工复核')
+        self.assertEqual(len(calls),1)
+        self.assertEqual(calls[0][0],'https://example.invalid/v1/responses')
+        self.assertIn('instructions',calls[0][1])
+        self.assertIn('input',calls[0][1])
+        self.assertNotIn('messages',calls[0][1])
+        self.assertNotIn('temperature',calls[0][1])
+
+    def test_llm_reads_responses_output_blocks(self):
+        self.assertEqual(
+            LLMAdapter._response_text({'output':[{'type':'message','content':[
+                {'type':'output_text','text':'第一段'},
+                {'type':'output_text','text':{'value':'第二段'}},
+            ]}]}),
+            '第一段\n第二段',
+        )
+
+    def test_llm_falls_back_to_chat_only_when_responses_is_unsupported(self):
+        calls=[]
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self): return '{"choices":[{"message":{"content":"兼容网关总结"}}]}'.encode('utf-8')
+        def fake_urlopen(request, timeout=0):
+            calls.append(request.full_url)
+            if request.full_url.endswith('/responses'):
+                raise urllib.error.HTTPError(request.full_url, 404, 'unsupported', {}, None)
+            return Response()
+        with patch.dict(os.environ, {
+            'LABSAFETY_LLM_BASE_URL':'https://example.invalid/v1',
+            'LABSAFETY_LLM_MODEL':'gpt-6.1-sol',
+            'LABSAFETY_LLM_API_KEY':'test-token',
+            'LABSAFETY_LLM_ENABLED':'1',
+        }), patch('backend.app.llm.urllib.request.urlopen', side_effect=fake_urlopen):
+            result=LLMAdapter().summarize({'title':'测试计划'}, {'results':[]})
+        self.assertFalse(result.degraded)
+        self.assertEqual(result.text,'兼容网关总结')
+        self.assertEqual(calls,[
+            'https://example.invalid/v1/responses',
+            'https://example.invalid/v1/chat/completions',
+        ])
+
 class StoreTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.path=str(Path(self.temp.name)/'workspace.db');self.store=s.WorkspaceStore(self.path)
