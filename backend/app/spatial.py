@@ -1014,6 +1014,17 @@ class WorkspaceStore:
                 CREATE INDEX IF NOT EXISTS idx_spatial_workspace_snapshots_saved
                     ON spatial_workspace_snapshots(saved_at DESC);
             """)
+            # There is no worker process in the browser-only deployment.  A
+            # process that opens the database after a crash/restart therefore
+            # must make an unfinished synchronous job explicit instead of
+            # leaving a misleading `running` state forever.
+            conn.execute(
+                """UPDATE spatial_jobs
+                   SET status='failed', finished_at=COALESCE(finished_at, ?),
+                       error=COALESCE(error, ?)
+                   WHERE status='running'""",
+                (now(), "服务重启时任务仍在运行；本地部署没有后台 Worker，任务已标记失败，可重新发起。"),
+            )
             conn.execute("INSERT OR IGNORE INTO spatial_workspace VALUES(1,0,?)", (json.dumps(empty_workspace(), ensure_ascii=False),))
     @contextmanager
     def connection(self):
@@ -1081,20 +1092,50 @@ class WorkspaceStore:
         return item
     def set_job_running(self, job_id: str) -> dict:
         with self.connection() as conn:
-            conn.execute("UPDATE spatial_jobs SET status='running',started_at=COALESCE(started_at,?) WHERE job_id=? AND status IN ('queued','running')", (now(), job_id))
             row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
-        if not row:
-            raise HTTPException(404, "后台任务不存在。")
+            if not row:
+                raise HTTPException(404, "后台任务不存在。")
+            if row[4] != "queued":
+                if row[4] in {"running"}:
+                    return self._job_row(row)
+                raise HTTPException(409, f"任务已经进入终态 {row[4]}，不能重新运行。")
+            conn.execute("UPDATE spatial_jobs SET status='running',started_at=COALESCE(started_at,?),error=NULL WHERE job_id=? AND status='queued'", (now(), job_id))
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
         return self._job_row(row)
     def finish_job(self, job_id: str, *, status: str, result: dict | None = None, error: str | None = None) -> dict:
         if status not in {"succeeded", "failed", "cancelled"}:
             raise ValueError("无效的任务终态。")
         with self.connection() as conn:
-            conn.execute("UPDATE spatial_jobs SET status=?,finished_at=?,result_payload=?,error=? WHERE job_id=?",
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
+            if not row:
+                raise HTTPException(404, "后台任务不存在。")
+            current = row[4]
+            if current in {"succeeded", "failed", "cancelled"}:
+                if current == status:
+                    return self._job_row(row)
+                raise HTTPException(409, f"任务已经进入终态 {current}，不能改成 {status}。")
+            if status == "succeeded" and current != "running":
+                raise HTTPException(409, "只有运行中的任务可以完成。")
+            conn.execute("UPDATE spatial_jobs SET status=?,finished_at=?,result_payload=?,error=? WHERE job_id=? AND status IN ('queued','running')",
                          (status, now(), json.dumps(result, ensure_ascii=False) if result is not None else None, error, job_id))
             row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
-        if not row:
-            raise HTTPException(404, "后台任务不存在。")
+        return self._job_row(row)
+    def cancel_job(self, job_id: str, *, reason: str = "由负责人取消") -> dict:
+        """Cancel a queued/running job and keep terminal states immutable."""
+        with self.connection() as conn:
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
+            if not row:
+                raise HTTPException(404, "后台任务不存在。")
+            current = row[4]
+            if current == "cancelled":
+                return self._job_row(row)
+            if current in {"succeeded", "failed"}:
+                raise HTTPException(409, f"任务已经进入终态 {current}，不能取消。")
+            conn.execute(
+                "UPDATE spatial_jobs SET status='cancelled',finished_at=?,error=? WHERE job_id=? AND status IN ('queued','running')",
+                (now(), reason[:500], job_id),
+            )
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
         return self._job_row(row)
     def job(self, job_id: str) -> dict | None:
         with self.connection() as conn:
@@ -1461,6 +1502,19 @@ def get_job(job_id: str, actor: str = Depends(local_owner)):
         raise HTTPException(404, '后台任务不存在。')
     return job
 
+@router.post('/jobs/{job_id}/cancel')
+def cancel_job(job_id: str, actor: str = Depends(local_owner)):
+    """Request cancellation for a durable local job.
+
+    Analysis currently runs in the request process, so cancellation can stop
+    queued work or prevent a later retry, but it cannot interrupt Python code
+    that is already executing.  The state transition is persisted and a
+    synchronous handler must still check it before publishing a result.
+    """
+    if local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有取消分析任务的权限。")
+    return store().cancel_job(job_id, reason=f"{actor} 取消任务")
+
 
 @router.post('/plans/{plan_id}/analysis')
 def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
@@ -1477,95 +1531,114 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     job = store().begin_job(job_id=job_id, kind="analysis", plan_id=p['id'], idempotency_key=job_id)
     if job["status"] == "succeeded" and job.get("result"):
         return {**job["result"], "job": job}
+    if job["status"] in {"cancelled", "failed"}:
+        raise HTTPException(409, f"该分析任务已处于 {job['status']} 终态，请修改计划修订后重新发起。")
     store().set_job_running(job_id)
-    parsed = parse_sop(p['source'])
-    # Spatial plans already contain reviewer-visible, line-preserving steps.
-    # Many institutional SOPs are prose rather than numbered instructions, so
-    # the generic parser can legitimately return only its fallback first line.
-    # In that case use the plan's confirmed structure for the copilot and rule
-    # review instead of pretending the remaining steps do not exist.
-    if len(parsed.get('steps', [])) < len(p.get('steps', [])):
-        structured_steps = []
-        for index, source_step in enumerate(p['steps'], 1):
-            text = source_step['text']
-            # Re-run the same deterministic parser on the exact source line;
-            # do not invent PPE or controls merely because a word suggests a
-            # hazard.  A missing control must remain an explicit unknown.
-            line_parse = parse_sop(text)
-            candidate = line_parse.get('steps', [None])[0]
-            if candidate is None:
-                candidate = LabStep(order=index, instruction=text)
-            equipment_names = [e['name'] for e in w['equipment'] if e['id'] in source_step.get('equipmentIds', [])]
-            structured_steps.append(candidate.model_copy(update={
-                'order': index,
-                'instruction': text,
-                'equipment': sorted(set(candidate.equipment + equipment_names)),
-                'evidence_refs': [f"plan-line-{source_step['line']}"],
-                'document_revision_id': f"planrev-{p['id']}-v{p['revision']}",
-                'source_line': source_step['line'],
-                'source_text_hash': hashlib.sha256(source_step['text'].encode('utf-8')).hexdigest(),
-            }))
-        parsed['steps'] = structured_steps
-        parsed['document_revision_id'] = f"planrev-{p['id']}-v{p['revision']}"
-        parsed['ppe'] = sorted({ppe for step in structured_steps for ppe in step.requires_ppe})
-        parsed['equipment'] = sorted({item for step in structured_steps for item in step.equipment})
-        parsed['ventilation'] = '通风柜' if any(step.ventilation for step in structured_steps) else parsed.get('ventilation')
-        parsed['waste_streams'] = sorted({step.waste_stream for step in structured_steps if step.waste_stream})
-    adapter = LLMAdapter()
-    model_fields = adapter.extract_sop(p['source'])
-    parsed, model_used = _merge_model_parse(parsed, model_fields)
-    review = Review(id=p['id'], title=p['name'], objective='实验计划辅助文本预审', requester=p['owner'], room=p['labId'],
-        sop=p['source'], created_at=now(), updated_at=now(), steps=parsed['steps'], substances=parsed['substances'],
-        ppe=parsed['ppe'], equipment=parsed['equipment'], ventilation=parsed['ventilation'], waste_streams=parsed['waste_streams'],
-        evidence=[Evidence(**item) for item in parsed['evidence']])
-    engine = ReviewRuleEngine()
-    evaluation = engine.evaluate(review)
-    result = adapter.summarize(review.model_dump(mode='json'), evaluation.model_dump(mode='json'))
-    copilot = _copilot_packet(w, p, parsed, evaluation)
-    # The trace is intentionally explicit in the response so the UI can show
-    # what came from the model, what came from deterministic rules, and what
-    # still requires a human decision.  It is metadata, not an approval.
-    plan_checks = [item for item in evaluation.results if getattr(item, "rule_id", None)]
-    check_counts = {
-        "pass": sum(1 for item in plan_checks if item.passed),
-        "needs_review": sum(1 for item in plan_checks if not item.passed),
-    }
-    decision_state = "blocked" if copilot["ruleSummary"]["blocked"] else "needs_review" if copilot["ruleSummary"]["unknown"] else "ready_for_human_review"
-    decision_label = {
-        "blocked": "存在阻断，安全门保持关闭",
-        "needs_review": "存在未知项，需补证后人工复核",
-        "ready_for_human_review": "规则范围内未见未满足项，仍需人工复核",
-    }[decision_state]
-    # This is a provenance ledger for the run, not a claim that the model or
-    # public sources certify the experiment.  Keeping the input/output counts
-    # next to each stage makes it visible which work was deterministic and
-    # which part (if any) came from the configured model.
-    trace = {
-        'runId': f"copilot:{p['id']}:v{p['revision']}",
-        'generatedAt': now(),
-        'stages': [
-            {'id': 'understand', 'label': '结构化理解', 'status': 'model' if model_used else 'deterministic', 'detail': f"识别 {len(parsed['steps'])} 个步骤、{len(parsed['substances'])} 个化学品实体", 'inputs': ['计划原文'], 'outputs': ['步骤实体', '化学品实体', '设备语义']},
-            {'id': 'check', 'label': '规则核验', 'status': 'rule', 'detail': f"{check_counts['pass']} 项满足，{check_counts['needs_review']} 项待处理", 'inputs': ['结构化步骤', '资源台账', '证据目录'], 'outputs': ['阻断项', '未知项', '规则来源']},
-            {'id': 'scenario', 'label': '场景推演', 'status': 'deterministic', 'detail': f"生成 {len(copilot['scenarios'])} 个隔离候选方案", 'inputs': ['阻断项', '未知项', '预约安排'], 'outputs': ['替代资源候选', '先补证候选']},
-            {'id': 'review', 'label': '人工复核', 'status': 'required', 'detail': '候选结果需要负责人确认后才可形成计划修订', 'inputs': ['候选结果', '来源与证据'], 'outputs': ['人工意见', '版本化决定']},
-        ],
-        'model': {'configured': adapter.status()['configured'], 'used': model_used, 'provider': result.provider, 'name': adapter.model or None},
-        'sources': [
-            {'kind': 'sop', 'label': '计划原文', 'reference': p['sourceName'], 'detail': f"{len(parsed['steps'])} 个结构化步骤 · 保留原文行号", 'status': 'used'},
-            {'kind': 'rules', 'label': '确定性规则包', 'reference': engine.version, 'detail': f"{len(plan_checks)} 条规则结果 · {check_counts['needs_review']} 项待处理", 'status': 'used'},
-            {'kind': 'resources', 'label': '资源与证据目录', 'reference': f"{len(w['equipment'])} 台设备 · {len(w['documents'])} 份资料", 'detail': '只依据当前工作区登记，不替代现场核验', 'status': 'used'},
-            {'kind': 'model', 'label': '模型解释层', 'reference': adapter.model or '未配置', 'detail': '仅生成候选解释；不可自动批准或改写计划', 'status': 'used' if model_used else 'degraded'},
-        ],
-        'decision': {'state': decision_state, 'label': decision_label, 'approvalRequired': True, 'reason': 'AI 候选和规则结果不能替代机构审批或现场确认。'},
-        'source_policy': '所有候选都绑定 SOP 行号、资源检查或证据记录；无法建立来源时保留为待确认。',
-    }
-    response = {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
-        'parser': 'model-enriched-deterministic-sop-v2' if model_used else 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
-        'degraded': result.provider == 'offline' or result.degraded or not result.available,
-        'summary': result.text, 'results': [r.model_dump(mode='json') for r in evaluation.results],
-        'copilot': copilot,
-        'trace': trace,
-        'scope': 'AI 负责结构化理解与解释；确定性规则和人工复核负责约束结论。不会自动批准、修改计划或生成事故处置指令。'}
-    store().save_analysis_run(response)
-    job = store().finish_job(job_id, status="succeeded", result=response)
-    return {**response, "job": job}
+    try:
+        parsed = parse_sop(p['source'])
+        # Spatial plans already contain reviewer-visible, line-preserving steps.
+        # Many institutional SOPs are prose rather than numbered instructions, so
+        # the generic parser can legitimately return only its fallback first line.
+        # In that case use the plan's confirmed structure for the copilot and rule
+        # review instead of pretending the remaining steps do not exist.
+        if len(parsed.get('steps', [])) < len(p.get('steps', [])):
+            structured_steps = []
+            for index, source_step in enumerate(p['steps'], 1):
+                text = source_step['text']
+                # Re-run the same deterministic parser on the exact source line;
+                # do not invent PPE or controls merely because a word suggests a
+                # hazard.  A missing control must remain an explicit unknown.
+                line_parse = parse_sop(text)
+                candidate = line_parse.get('steps', [None])[0]
+                if candidate is None:
+                    candidate = LabStep(order=index, instruction=text)
+                equipment_names = [e['name'] for e in w['equipment'] if e['id'] in source_step.get('equipmentIds', [])]
+                structured_steps.append(candidate.model_copy(update={
+                    'order': index,
+                    'instruction': text,
+                    'equipment': sorted(set(candidate.equipment + equipment_names)),
+                    'evidence_refs': [f"plan-line-{source_step['line']}"],
+                    'document_revision_id': f"planrev-{p['id']}-v{p['revision']}",
+                    'source_line': source_step['line'],
+                    'source_text_hash': hashlib.sha256(source_step['text'].encode('utf-8')).hexdigest(),
+                }))
+            parsed['steps'] = structured_steps
+            parsed['document_revision_id'] = f"planrev-{p['id']}-v{p['revision']}"
+            parsed['ppe'] = sorted({ppe for step in structured_steps for ppe in step.requires_ppe})
+            parsed['equipment'] = sorted({item for step in structured_steps for item in step.equipment})
+            parsed['ventilation'] = '通风柜' if any(step.ventilation for step in structured_steps) else parsed.get('ventilation')
+            parsed['waste_streams'] = sorted({step.waste_stream for step in structured_steps if step.waste_stream})
+        adapter = LLMAdapter()
+        model_fields = adapter.extract_sop(p['source'])
+        parsed, model_used = _merge_model_parse(parsed, model_fields)
+        review = Review(id=p['id'], title=p['name'], objective='实验计划辅助文本预审', requester=p['owner'], room=p['labId'],
+            sop=p['source'], created_at=now(), updated_at=now(), steps=parsed['steps'], substances=parsed['substances'],
+            ppe=parsed['ppe'], equipment=parsed['equipment'], ventilation=parsed['ventilation'], waste_streams=parsed['waste_streams'],
+            evidence=[Evidence(**item) for item in parsed['evidence']])
+        engine = ReviewRuleEngine()
+        evaluation = engine.evaluate(review)
+        result = adapter.summarize(review.model_dump(mode='json'), evaluation.model_dump(mode='json'))
+        copilot = _copilot_packet(w, p, parsed, evaluation)
+        # The trace is intentionally explicit in the response so the UI can show
+        # what came from the model, what came from deterministic rules, and what
+        # still requires a human decision.  It is metadata, not an approval.
+        plan_checks = [item for item in evaluation.results if getattr(item, "rule_id", None)]
+        check_counts = {
+            "pass": sum(1 for item in plan_checks if item.passed),
+            "needs_review": sum(1 for item in plan_checks if not item.passed),
+        }
+        decision_state = "blocked" if copilot["ruleSummary"]["blocked"] else "needs_review" if copilot["ruleSummary"]["unknown"] else "ready_for_human_review"
+        decision_label = {
+            "blocked": "存在阻断，安全门保持关闭",
+            "needs_review": "存在未知项，需补证后人工复核",
+            "ready_for_human_review": "规则范围内未见未满足项，仍需人工复核",
+        }[decision_state]
+        # This is a provenance ledger for the run, not a claim that the model or
+        # public sources certify the experiment.  Keeping the input/output counts
+        # next to each stage makes it visible which work was deterministic and
+        # which part (if any) came from the configured model.
+        trace = {
+            'runId': f"copilot:{p['id']}:v{p['revision']}",
+            'generatedAt': now(),
+            'stages': [
+                {'id': 'understand', 'label': '结构化理解', 'status': 'model' if model_used else 'deterministic', 'detail': f"识别 {len(parsed['steps'])} 个步骤、{len(parsed['substances'])} 个化学品实体", 'inputs': ['计划原文'], 'outputs': ['步骤实体', '化学品实体', '设备语义']},
+                {'id': 'check', 'label': '规则核验', 'status': 'rule', 'detail': f"{check_counts['pass']} 项满足，{check_counts['needs_review']} 项待处理", 'inputs': ['结构化步骤', '资源台账', '证据目录'], 'outputs': ['阻断项', '未知项', '规则来源']},
+                {'id': 'scenario', 'label': '场景推演', 'status': 'deterministic', 'detail': f"生成 {len(copilot['scenarios'])} 个隔离候选方案", 'inputs': ['阻断项', '未知项', '预约安排'], 'outputs': ['替代资源候选', '先补证候选']},
+                {'id': 'review', 'label': '人工复核', 'status': 'required', 'detail': '候选结果需要负责人确认后才可形成计划修订', 'inputs': ['候选结果', '来源与证据'], 'outputs': ['人工意见', '版本化决定']},
+            ],
+            'model': {'configured': adapter.status()['configured'], 'used': model_used, 'provider': result.provider, 'name': adapter.model or None},
+            'sources': [
+                {'kind': 'sop', 'label': '计划原文', 'reference': p['sourceName'], 'detail': f"{len(parsed['steps'])} 个结构化步骤 · 保留原文行号", 'status': 'used'},
+                {'kind': 'rules', 'label': '确定性规则包', 'reference': engine.version, 'detail': f"{len(plan_checks)} 条规则结果 · {check_counts['needs_review']} 项待处理", 'status': 'used'},
+                {'kind': 'resources', 'label': '资源与证据目录', 'reference': f"{len(w['equipment'])} 台设备 · {len(w['documents'])} 份资料", 'detail': '只依据当前工作区登记，不替代现场核验', 'status': 'used'},
+                {'kind': 'model', 'label': '模型解释层', 'reference': adapter.model or '未配置', 'detail': '仅生成候选解释；不可自动批准或改写计划', 'status': 'used' if model_used else 'degraded'},
+            ],
+            'decision': {'state': decision_state, 'label': decision_label, 'approvalRequired': True, 'reason': 'AI 候选和规则结果不能替代机构审批或现场确认。'},
+            'source_policy': '所有候选都绑定 SOP 行号、资源检查或证据记录；无法建立来源时保留为待确认。',
+        }
+        response = {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
+            'parser': 'model-enriched-deterministic-sop-v2' if model_used else 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
+            'degraded': result.provider == 'offline' or result.degraded or not result.available,
+            'summary': result.text, 'results': [r.model_dump(mode='json') for r in evaluation.results],
+            'copilot': copilot,
+            'trace': trace,
+            'scope': 'AI 负责结构化理解与解释；确定性规则和人工复核负责约束结论。不会自动批准、修改计划或生成事故处置指令。'}
+        # A cancellation request can arrive while a synchronous analysis is
+        # assembling its result.  Never publish a successful result after the
+        # durable job has been cancelled.
+        current_job = store().job(job_id)
+        if current_job and current_job["status"] == "cancelled":
+            raise HTTPException(409, "分析任务已取消，未发布分析结果。")
+        store().save_analysis_run(response)
+        job = store().finish_job(job_id, status="succeeded", result=response)
+        return {**response, "job": job}
+    except HTTPException:
+        current_job = store().job(job_id)
+        if current_job and current_job["status"] in {"queued", "running"}:
+            store().finish_job(job_id, status="failed", error="分析请求被拒绝或中断。")
+        raise
+    except Exception as error:
+        current_job = store().job(job_id)
+        if current_job and current_job["status"] in {"queued", "running"}:
+            store().finish_job(job_id, status="failed", error=f"{type(error).__name__}: {str(error)[:500]}")
+        raise HTTPException(500, "分析任务失败；请查看任务记录后修改计划或重新发起。") from error

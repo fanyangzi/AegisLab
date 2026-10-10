@@ -189,6 +189,33 @@ class StoreTests(unittest.TestCase):
         initialize(self.store);candidate=self.store.read();candidate['name']='过期恢复'
         with self.assertRaises(HTTPException) as result:self.store.restore(expected_revision=0,request_id='restore-0002',candidate=candidate,actor='测试负责人')
         self.assertEqual(result.exception.status_code,409);self.assertEqual(self.store.snapshots(),[])
+    def test_job_cancel_is_persisted_and_terminal_states_are_immutable(self):
+        queued=self.store.begin_job(job_id='job-cancel-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-cancel-01')
+        self.assertEqual(queued['status'],'queued')
+        cancelled=self.store.cancel_job('job-cancel-01',reason='测试取消')
+        self.assertEqual(cancelled['status'],'cancelled');self.assertEqual(cancelled['error'],'测试取消')
+        self.assertEqual(self.store.cancel_job('job-cancel-01')['status'],'cancelled')
+        with self.assertRaises(HTTPException) as result:self.store.set_job_running('job-cancel-01')
+        self.assertEqual(result.exception.status_code,409)
+        succeeded=self.store.begin_job(job_id='job-success-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-success-01')
+        self.store.set_job_running(succeeded['jobId'])
+        self.store.finish_job(succeeded['jobId'],status='succeeded',result={'ok':True})
+        with self.assertRaises(HTTPException) as result:self.store.cancel_job(succeeded['jobId'])
+        self.assertEqual(result.exception.status_code,409)
+    def test_running_job_is_marked_failed_when_a_new_store_opens_after_restart(self):
+        created=self.store.begin_job(job_id='job-restart-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-restart-01')
+        self.store.set_job_running(created['jobId'])
+        restarted=s.WorkspaceStore(self.path)
+        recovered=restarted.job(created['jobId'])
+        self.assertEqual(recovered['status'],'failed')
+        self.assertIn('服务重启',recovered['error'])
+        self.assertIsNotNone(recovered['finishedAt'])
+    def test_failed_job_is_queryable_after_explicit_failure(self):
+        created=self.store.begin_job(job_id='job-fail-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-fail-01')
+        self.store.set_job_running(created['jobId'])
+        failed=self.store.finish_job(created['jobId'],status='failed',error='解析器异常')
+        self.assertEqual(failed['status'],'failed');self.assertEqual(failed['error'],'解析器异常')
+        self.assertEqual(s.WorkspaceStore(self.path).job(created['jobId'])['status'],'failed')
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
@@ -265,6 +292,21 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):r=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})
         self.assertEqual(r.status_code,200);self.assertEqual(s.store().read(),before);self.assertTrue(r.json()['degraded'])
         runs=self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs'];self.assertEqual(len(runs),1);self.assertEqual(runs[0]['trace']['runId'],r.json()['trace']['runId'])
+    def test_job_cancel_api_persists_state_and_is_role_gated(self):
+        job=s.store().begin_job(job_id='api-cancel-01',kind='analysis',plan_id='EXP-001',idempotency_key='api-cancel-01')
+        response=self.client.post('/api/spatial/jobs/'+job['jobId']+'/cancel')
+        self.assertEqual(response.status_code,200,response.text);self.assertEqual(response.json()['status'],'cancelled')
+        self.assertEqual(self.client.get('/api/spatial/jobs/'+job['jobId']).json()['status'],'cancelled')
+        with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
+            denied=self.client.post('/api/spatial/jobs/'+job['jobId']+'/cancel')
+        self.assertEqual(denied.status_code,403)
+    def test_analysis_failure_finishes_job_as_failed(self):
+        initialize(s.store())
+        with patch('backend.app.parser.parse_sop', side_effect=RuntimeError('解析器异常')):
+            response=self.client.post('/api/spatial/plans/EXP-001/analysis')
+        self.assertEqual(response.status_code,500,response.text)
+        job=self.client.get('/api/spatial/jobs/analysis:EXP-001:v1')
+        self.assertEqual(job.status_code,200);self.assertEqual(job.json()['status'],'failed');self.assertIn('RuntimeError',job.json()['error'])
     def test_relationship_graph_supports_plan_type_and_time_filters(self):
         initialize(s.store())
         response=self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,equipment&dateFrom=2026-10-09T09:00:00%2B08:00&dateTo=2026-10-09T09:30:00%2B08:00')
