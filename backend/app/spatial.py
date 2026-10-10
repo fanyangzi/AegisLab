@@ -999,6 +999,13 @@ class WorkspaceStore:
                     generated_at TEXT NOT NULL, degraded INTEGER NOT NULL, payload TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_spatial_analysis_plan ON spatial_analysis_runs(plan_id, generated_at DESC);
+                CREATE TABLE IF NOT EXISTS spatial_jobs(
+                    job_id TEXT PRIMARY KEY, kind TEXT NOT NULL, plan_id TEXT,
+                    idempotency_key TEXT NOT NULL UNIQUE, status TEXT NOT NULL,
+                    created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT,
+                    result_payload TEXT, error TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_jobs_plan ON spatial_jobs(plan_id, created_at DESC);
             """)
             conn.execute("INSERT OR IGNORE INTO spatial_workspace VALUES(1,0,?)", (json.dumps(empty_workspace(), ensure_ascii=False),))
     @contextmanager
@@ -1043,6 +1050,53 @@ class WorkspaceStore:
         with self.connection() as conn:
             rows = conn.execute("SELECT payload FROM spatial_analysis_runs WHERE plan_id=? ORDER BY generated_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
         return [json.loads(row[0]) for row in rows]
+    def begin_job(self, *, job_id: str, kind: str, plan_id: str | None, idempotency_key: str) -> dict:
+        """Create or resume a durable job record.
+
+        Analysis is currently executed synchronously by the request handler. The
+        durable record still makes its lifecycle explicit and queryable after a
+        process restart; it does not claim a background worker exists.
+        """
+        with self.connection() as conn:
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE idempotency_key=?", (idempotency_key,)).fetchone()
+            if row:
+                return self._job_row(row)
+            created = now()
+            conn.execute("INSERT INTO spatial_jobs(job_id,kind,plan_id,idempotency_key,status,created_at) VALUES(?,?,?,?,?,?)",
+                         (job_id, kind, plan_id, idempotency_key, "queued", created))
+            return self._job_row(conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone())
+    @staticmethod
+    def _job_row(row: sqlite3.Row | tuple) -> dict:
+        keys = ("jobId", "kind", "planId", "idempotencyKey", "status", "createdAt", "startedAt", "finishedAt", "result", "error")
+        item = dict(zip(keys, row))
+        if item.get("result"):
+            item["result"] = json.loads(item["result"])
+        return item
+    def set_job_running(self, job_id: str) -> dict:
+        with self.connection() as conn:
+            conn.execute("UPDATE spatial_jobs SET status='running',started_at=COALESCE(started_at,?) WHERE job_id=? AND status IN ('queued','running')", (now(), job_id))
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, "后台任务不存在。")
+        return self._job_row(row)
+    def finish_job(self, job_id: str, *, status: str, result: dict | None = None, error: str | None = None) -> dict:
+        if status not in {"succeeded", "failed", "cancelled"}:
+            raise ValueError("无效的任务终态。")
+        with self.connection() as conn:
+            conn.execute("UPDATE spatial_jobs SET status=?,finished_at=?,result_payload=?,error=? WHERE job_id=?",
+                         (status, now(), json.dumps(result, ensure_ascii=False) if result is not None else None, error, job_id))
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
+        if not row:
+            raise HTTPException(404, "后台任务不存在。")
+        return self._job_row(row)
+    def job(self, job_id: str) -> dict | None:
+        with self.connection() as conn:
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
+        return self._job_row(row) if row else None
+    def jobs(self, plan_id: str, limit: int = 20) -> list[dict]:
+        with self.connection() as conn:
+            rows = conn.execute("SELECT * FROM spatial_jobs WHERE plan_id=? ORDER BY created_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
+        return [self._job_row(row) for row in rows]
 
 
 _store: WorkspaceStore | None = None
@@ -1303,6 +1357,19 @@ def list_analysis_runs(plan_id: str, limit: int = 20, actor: str = Depends(local
         raise HTTPException(404, '计划不存在。')
     return {"planId": plan_id, "runs": store().analysis_runs(plan_id, limit)}
 
+@router.get('/plans/{plan_id}/jobs')
+def list_plan_jobs(plan_id: str, limit: int = 20, actor: str = Depends(local_owner)):
+    if not any(plan["id"] == plan_id for plan in store().read()["plans"]):
+        raise HTTPException(404, '计划不存在。')
+    return {"planId": plan_id, "jobs": store().jobs(plan_id, limit)}
+
+@router.get('/jobs/{job_id}')
+def get_job(job_id: str, actor: str = Depends(local_owner)):
+    job = store().job(job_id)
+    if not job:
+        raise HTTPException(404, '后台任务不存在。')
+    return job
+
 
 @router.post('/plans/{plan_id}/analysis')
 def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
@@ -1315,6 +1382,11 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     p = next((p for p in w['plans'] if p['id'] == plan_id), None)
     if p is None:
         raise HTTPException(404, '计划不存在。')
+    job_id = f"analysis:{p['id']}:v{p['revision']}"
+    job = store().begin_job(job_id=job_id, kind="analysis", plan_id=p['id'], idempotency_key=job_id)
+    if job["status"] == "succeeded" and job.get("result"):
+        return {**job["result"], "job": job}
+    store().set_job_running(job_id)
     parsed = parse_sop(p['source'])
     # Spatial plans already contain reviewer-visible, line-preserving steps.
     # Many institutional SOPs are prose rather than numbered instructions, so
@@ -1404,4 +1476,5 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
         'trace': trace,
         'scope': 'AI 负责结构化理解与解释；确定性规则和人工复核负责约束结论。不会自动批准、修改计划或生成事故处置指令。'}
     store().save_analysis_run(response)
-    return response
+    job = store().finish_job(job_id, status="succeeded", result=response)
+    return {**response, "job": job}
