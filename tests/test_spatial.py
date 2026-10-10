@@ -218,6 +218,22 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
             response=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'role-deny-0001','type':'approve','payload':{'planId':'EXP-003','expectedPlanRevision':1,'comment':'尝试越权复核'}})
         self.assertEqual(response.status_code,403)
+    def test_clean_workspace_can_complete_web_lifecycle_without_examples(self):
+        def act(revision, request_id, action, payload):
+            response=self.client.post('/api/spatial/actions',json={'expectedRevision':revision,'requestId':request_id,'type':action,'payload':payload})
+            self.assertEqual(response.status_code,200,response.text);return response.json()
+        lab={'id':'lab-clean','name':'空白验证实验室','description':'clean acceptance','width':12,'depth':10}
+        act(0,'clean-lab-01','save_lab',{'lab':lab})
+        equipment={'id':'eq-clean-01','labId':'lab-clean','code':'C-01','name':'清洁操作台','kind':'bench','x':0,'z':0,'rotation':0,'capacity':1,'status':'available','owner':'验证负责人','description':'新工作区录入','requiresEvidence':False,'specVersion':1,'maintenance':[]}
+        act(1,'clean-eq-01','save_equipment',{'equipment':equipment})
+        source='第一步：准备样品\n第二步：完成记录'
+        plan={'id':'plan-clean-01','code':'CLEAN-001','labId':'lab-clean','name':'清洁环境新计划','owner':'验证负责人','revision':1,'source':source,'sourceName':'clean-source.txt','steps':[{'id':'clean-step-1','text':'第一步：准备样品','line':1,'equipmentIds':['eq-clean-01'],'confirmed':False},{'id':'clean-step-2','text':'第二步：完成记录','line':2,'equipmentIds':[],'confirmed':False}],'reservations':[{'id':'clean-res-1','equipmentId':'eq-clean-01','start':'2026-10-09T09:00:00+08:00','end':'2026-10-09T10:00:00+08:00'}],'archived':False}
+        state=act(2,'clean-plan-01','save_plan',{'plan':plan});state=act(3,'clean-confirm','confirm_steps',{'planId':'plan-clean-01'});self.assertEqual(state['statuses']['plan-clean-01'],'ready')
+        task={'id':'clean-task-01','title':'完成清洁环境记录','planId':'plan-clean-01','equipmentId':'eq-clean-01','owner':'验证负责人','dueAt':'2026-10-09T18:00:00+08:00','status':'open','note':'来自清洁环境验收'}
+        state=act(4,'clean-task-01','save_task',{'task':task});state=act(5,'clean-approve','approve',{'planId':'plan-clean-01','expectedPlanRevision':2,'comment':'已核对清洁环境工作流'})
+        self.assertEqual(state['statuses']['plan-clean-01'],'approved')
+        plan['revision']=3;plan['archived']=True;plan['steps']=[dict(step,confirmed=True) for step in plan['steps']]
+        state=act(6,'clean-archive','save_plan',{'plan':plan,'expectedPlanRevision':2});self.assertEqual(state['statuses']['plan-clean-01'],'archived')
     def test_utf8_text_import(self):
         r=self.client.post('/api/spatial/import-text?filename=test.md',content='计划文本\n检查 F-01'.encode())
         self.assertEqual(r.status_code,200);self.assertEqual(r.json()['locator'],'extracted-text-lines')
