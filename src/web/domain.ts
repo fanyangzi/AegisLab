@@ -253,7 +253,7 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
       if (!b || !p || p.revision!==b.baseRevision || basis(next,p)!==b.baseBasis) throw new Error('方案已过期：计划、资源或证据发生变化，请重新比较。')
       const candidate=candidateWorkspace(next,b), candidatePlan=candidate.plans.find(item=>item.id===p.id)
       if (!candidatePlan) throw new Error('方案关联的计划不存在。')
-      p.reservations=structuredClone(candidatePlan.reservations); p.revision++; objectId=p.id; summary=`应用方案「${b.name}」，产生新修订并触发重新复核`; break
+      p.reservations=structuredClone(candidatePlan.reservations); p.revision++; objectId=p.id; summary=`应用方案「${b.name}」，产生新修订并触发重新复核${b.patches?.length?`，记录 ${b.patches.length} 个字段变更`:''}`; break
     }
     case 'approve': throw new Error('浏览器草稿不记录正式复核。请连接服务端 API，由服务器核验最新版本。')
     default: throw new Error('不支持的操作。')

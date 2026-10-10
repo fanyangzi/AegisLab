@@ -1258,9 +1258,34 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         note = str(x.get("note", t["note"])).strip()
         if requested in {"returned", "cancelled", "reopened"} and not note:
             raise ValueError("退回、取消或重开任务必须填写处理说明。")
+        handoff_requested = any(key in x for key in ("newOwner", "expectedOwner", "handoffNote"))
+        previous_owner = t["owner"]
+        new_owner = ""
+        handoff_note = ""
+        if handoff_requested:
+            # Status changes and ownership changes are one business operation.
+            # This avoids leaving a task half-transferred when the second
+            # request in a browser form fails or loses its revision race.
+            if current in {"done", "cancelled"}:
+                raise ValueError("已完成或已取消任务不能在同一操作中直接转交；请先重新打开任务。")
+            expected_owner = x.get("expectedOwner")
+            if expected_owner is None or str(expected_owner) != t["owner"]:
+                raise ValueError("任务负责人已变化，请刷新后重新转交。")
+            new_owner = str(x.get("newOwner", "")).strip()
+            handoff_note = str(x.get("handoffNote", "")).strip()
+            if not new_owner or len(new_owner) > 180:
+                raise ValueError("转交负责人不能为空且不能超过 180 个字符。")
+            if new_owner == t["owner"]:
+                raise ValueError("转交负责人必须与当前负责人不同。")
+            if not handoff_note or len(handoff_note) > 2000:
+                raise ValueError("转交任务必须填写不超过 2000 个字符的交接说明。")
         t.update(status=requested, note=note)
+        if handoff_requested:
+            t["owner"] = new_owner
         labels = {"returned": "退回补充", "cancelled": "取消任务", "reopened": "重新打开"}
         summary = labels.get(requested, "更新任务进度") + "；不自动改变证据或审批"
+        if handoff_requested:
+            summary = f"{summary}；同时转交：{previous_owner} → {new_owner}；{handoff_note}"
     elif action == "save_branch":
         b = copy.deepcopy(x["branch"])
         p = get("plans", b["planId"])
@@ -1278,7 +1303,9 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         candidate_plan = next(q for q in candidate["plans"] if q["id"] == p["id"])
         p["reservations"] = copy.deepcopy(candidate_plan["reservations"])
         p["revision"] += 1
-        object_id, summary = p["id"], f"应用方案「{b['name']}」，产生新修订并触发重新复核"
+        patch_count = len(b.get("patches", []))
+        detail = f"，记录 {patch_count} 个字段变更" if patch_count else ""
+        object_id, summary = p["id"], f"应用方案「{b['name']}」，产生新修订并触发重新复核{detail}"
     elif action == "approve":
         p = get("plans", x["planId"])
         if p["revision"] != x.get("expectedPlanRevision") or p["archived"] or p.get("lifecycle") in {"archived", "cancelled"}:
@@ -1839,7 +1866,8 @@ def get_relationship_graph(
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
     if body.type == "approve" and local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有记录正式复核的权限。")
-    if body.type == "assign_task" and local_role() not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
+    handoff_update = body.type == "update_task" and any(key in body.payload for key in ("newOwner", "expectedOwner", "handoffNote"))
+    if (body.type == "assign_task" or handoff_update) and local_role() not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有转交协作任务的权限。")
     try:
         return envelope(store().mutate(body.expectedRevision, body.requestId, body.type, body.payload, actor))
