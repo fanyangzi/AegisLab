@@ -49,6 +49,43 @@ class DomainTests(unittest.TestCase):
     def test_wrong_evidence_version(self):
         w=fixture();next(e for e in w['equipment'] if e['id']=='A-01')['specVersion']=2
         self.assertTrue(any(c['planId']=='EXP-003' and c['code']=='EVIDENCE' and c['state']=='unknown' for c in s.check_workspace(w)))
+    def test_evidence_applicability_exposes_scope_and_provenance_reason(self):
+        w=fixture()
+        check=next(c for c in s.check_workspace(w) if c['planId']=='EXP-003' and c['code']=='EVIDENCE' and c['equipmentId']=='A-01')
+        self.assertEqual(check['evidenceScope'], {
+            'equipmentId':'A-01', 'specVersion':1,
+            'reservationIds':['EXP-003-r0'], 'requiredCoverage':'all-reservations',
+        })
+        item=next(item for item in check['evidenceApplicability'] if item['documentId']=='doc-A-01')
+        self.assertEqual(item['state'],'supports')
+        self.assertEqual(item['reason'],'covers-all-reservations')
+        self.assertEqual(item['coverage'],'complete')
+        self.assertEqual(item['coveredReservationIds'],['EXP-003-r0'])
+        self.assertEqual(item['source'],'设备维护台账 · 2026-Q4（示例）')
+        self.assertIsNone(item['capturedAt'])
+
+    def test_document_save_records_provenance_without_granting_applicability(self):
+        w=fixture()
+        document={
+            'id':'doc-provenance-01','name':'A-01 新检查记录','kind':'inspection','equipmentId':'A-01',
+            'specVersion':1,'status':'verified','validFrom':'2026-10-09T00:00:00+08:00',
+            'validUntil':'2026-10-09T23:59:00+08:00','content':'现场复核记录：联锁待确认。',
+            'source':'现场检查表 / 记录 2026-10-09','reviewedBy':'旧值','reviewedAt':'2026-10-09T01:00:00+08:00',
+            'sourceType':'upload','sourceLocator':'inspection/2026-10-09/A-01.txt',
+            'provenanceNote':'由负责人上传，等待独立核验。',
+        }
+        saved=s.apply_operation(w,'save_document',{'document':document},'负责人')
+        stored=next(item for item in saved['documents'] if item['id']==document['id'])
+        self.assertEqual(stored['status'],'pending')
+        self.assertEqual(stored['contentLength'],len(document['content']))
+        self.assertEqual(stored['sourceType'],'upload')
+        self.assertEqual(stored['sourceLocator'],document['sourceLocator'])
+        self.assertTrue(stored['capturedAt'])
+        check=next(c for c in s.check_workspace(saved) if c['planId']=='EXP-003' and c['code']=='EVIDENCE' and c['equipmentId']=='A-01')
+        item=next(item for item in check['evidenceApplicability'] if item['documentId']==document['id'])
+        self.assertEqual(item['state'],'candidate')
+        self.assertEqual(item['reason'],'not-verified')
+        self.assertEqual(item['coverage'],'complete')
     def test_replacement_requires_source_reconciliation(self):
         w=fixture();w['plans'][0]['reservations'][0]['equipmentId']='F-02'
         self.assertTrue(any(c['planId']=='EXP-001' and c['code']=='BINDING' for c in s.check_workspace(w)))

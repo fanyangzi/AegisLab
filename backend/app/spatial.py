@@ -191,6 +191,15 @@ class Document(StrictModel):
     source: str = Field(min_length=1, max_length=1000)
     reviewedBy: str | None
     reviewedAt: str | None
+    # Provenance fields are optional for backwards-compatible imports.  They
+    # describe where a document came from and when its text was captured; they
+    # do not assert that the source is authoritative or that the evidence is
+    # applicable to every plan.  Applicability is evaluated separately below.
+    sourceType: Literal["upload", "manual", "external", "system"] | None = None
+    sourceLocator: str | None = Field(default=None, max_length=1000)
+    capturedAt: str | None = None
+    contentLength: int | None = Field(default=None, ge=0, strict=True)
+    provenanceNote: str | None = Field(default=None, max_length=1000)
 
 class Task(StrictModel):
     id: str
@@ -312,6 +321,12 @@ def validate_workspace(w: dict) -> dict:
         interval(d["validFrom"], d["validUntil"])
         if not d["content"].strip() or not d["source"].strip():
             raise ValueError("资料内容和来源为必填项。")
+        if d.get("capturedAt") is not None:
+            # A provenance timestamp is a claim about when the captured text
+            # entered the workspace; reject ambiguous local timestamps.
+            dt(d["capturedAt"])
+        if d.get("contentLength") is not None and d["contentLength"] != len(d["content"]):
+            raise ValueError("资料内容长度与 provenance 记录不一致。")
     for t in w["tasks"]:
         dt(t["dueAt"])
         if (t["planId"] is not None and t["planId"] not in plans) or (t["equipmentId"] is not None and t["equipmentId"] not in equipment):
@@ -431,7 +446,13 @@ def basis(w: dict, p: dict) -> str:
         doc_window = {"start": d["validFrom"], "end": d["validUntil"]}
         if not relevant(doc_window, reservations) and d.get("kind") == "inspection":
             continue
-        relevant_documents.append({k: d.get(k) for k in ("id", "equipmentId", "kind", "specVersion", "status", "validFrom", "validUntil", "content", "source", "reviewedBy", "reviewedAt")})
+        document_facts = {k: d.get(k) for k in ("id", "equipmentId", "kind", "specVersion", "status", "validFrom", "validUntil", "content", "source", "reviewedBy", "reviewedAt")}
+        # Keep legacy fingerprints byte-for-byte stable when an imported
+        # document has no provenance metadata.  New records include only the
+        # fields that were actually captured, so absent metadata is not a
+        # fabricated claim and the browser/Python parity contract survives.
+        document_facts.update({k: d[k] for k in ("sourceType", "sourceLocator", "capturedAt", "contentLength", "provenanceNote") if d.get(k) is not None})
+        relevant_documents.append(document_facts)
     relevant_documents.sort(key=lambda d: (d.get("equipmentId") or "", d.get("kind", ""), d.get("id", "")))
     other = []
     for q in w["plans"]:
@@ -492,13 +513,42 @@ def check_workspace(w: dict) -> list[dict]:
                 covered = all(any(dt(d["validFrom"]) <= dt(r["start"]) and dt(d["validUntil"]) >= dt(r["end"]) for d in valid) for r in reservations)
                 applicability = []
                 for d in docs:
-                    if d["status"] != "verified": state = "candidate"
-                    elif d["specVersion"] != e["specVersion"]: state = "mismatched"
-                    elif not any(dt(d["validFrom"]) <= dt(r["start"]) and dt(d["validUntil"]) >= dt(r["end"]) for r in reservations): state = "expired"
-                    else: state = "supports"
-                    applicability.append({"documentId": d["id"], "state": state, "specVersion": d["specVersion"], "validFrom": d["validFrom"], "validUntil": d["validUntil"]})
+                    covered_reservation_ids = [
+                        r["id"] for r in reservations
+                        if dt(d["validFrom"]) <= dt(r["start"]) and dt(d["validUntil"]) >= dt(r["end"])
+                    ]
+                    missing_reservation_ids = [r["id"] for r in reservations if r["id"] not in covered_reservation_ids]
+                    if d["status"] != "verified":
+                        state, reason = "candidate", "not-verified"
+                    elif d["specVersion"] != e["specVersion"]:
+                        state, reason = "mismatched", "spec-version-mismatch"
+                    elif not covered_reservation_ids:
+                        state, reason = "expired", "outside-reservation-window"
+                    else:
+                        state = "supports"
+                        reason = "covers-all-reservations" if not missing_reservation_ids else "partial-reservation-coverage"
+                    applicability.append({
+                        "documentId": d["id"], "state": state, "reason": reason,
+                        "coverage": "complete" if not missing_reservation_ids and covered_reservation_ids else "partial" if covered_reservation_ids else "none",
+                        "coveredReservationIds": covered_reservation_ids,
+                        "missingReservationIds": missing_reservation_ids,
+                        "equipmentId": identifier,
+                        "specVersion": d["specVersion"], "expectedSpecVersion": e["specVersion"],
+                        "validFrom": d["validFrom"], "validUntil": d["validUntil"],
+                        "source": d["source"], "sourceType": d.get("sourceType"),
+                        "sourceLocator": d.get("sourceLocator"), "capturedAt": d.get("capturedAt"),
+                        "contentLength": d.get("contentLength"),
+                        "provenanceNote": d.get("provenanceNote"),
+                        "reviewedBy": d.get("reviewedBy"), "reviewedAt": d.get("reviewedAt"),
+                    })
                 add("EVIDENCE", "pass" if covered else "unknown", f"{e['code']} 的检查证据适用" if covered else f"{e['code']} 缺少适用的检查证据", "对象、规格版本、核验状态与全部使用时段均匹配。" if covered else "需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。", identifier, documents=[d["id"] for d in docs])
                 results[-1]["evidenceApplicability"] = applicability
+                results[-1]["evidenceScope"] = {
+                    "equipmentId": identifier,
+                    "specVersion": e["specVersion"],
+                    "reservationIds": [r["id"] for r in reservations],
+                    "requiredCoverage": "all-reservations",
+                }
     return results
 
 
@@ -972,6 +1022,18 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         summary = "人工核对原文与全部步骤"
     elif action == "save_document":
         d = copy.deepcopy(x["document"])
+        previous = next((item for item in w["documents"] if item["id"] == d["id"]), None)
+        # Preserve capture provenance across edits while recording a bounded,
+        # inspectable text length for the exact content that was submitted.
+        # This intentionally avoids treating a digest as evidence of source
+        # authority; reviewers still verify source, object, version and time.
+        if previous:
+            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote"):
+                if d.get(field) is None and previous.get(field) is not None:
+                    d[field] = previous[field]
+        d.setdefault("sourceType", "manual")
+        d.setdefault("capturedAt", now())
+        d["contentLength"] = len(d.get("content", ""))
         d.update(status="pending", reviewedBy=None, reviewedAt=None)
         upsert("documents", d)
         object_id, summary = d["id"], "提交资料，等待独立核验"
