@@ -60,6 +60,8 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(item['state'],'supports')
         self.assertEqual(item['reason'],'covers-all-reservations')
         self.assertEqual(item['coverage'],'complete')
+        self.assertEqual(item['coverageBasis'],'validity-window')
+        self.assertTrue(item['effectiveForAllReservations'])
         self.assertEqual(item['coveredReservationIds'],['EXP-003-r0'])
         self.assertEqual(item['source'],'设备维护台账 · 2026-Q4（示例）')
         self.assertIsNone(item['capturedAt'])
@@ -86,6 +88,7 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(item['state'],'candidate')
         self.assertEqual(item['reason'],'not-verified')
         self.assertEqual(item['coverage'],'complete')
+        self.assertFalse(item['effectiveForAllReservations'])
     def test_replacement_requires_source_reconciliation(self):
         w=fixture();w['plans'][0]['reservations'][0]['equipmentId']='F-02'
         self.assertTrue(any(c['planId']=='EXP-001' and c['code']=='BINDING' for c in s.check_workspace(w)))

@@ -530,6 +530,8 @@ def check_workspace(w: dict) -> list[dict]:
                     applicability.append({
                         "documentId": d["id"], "state": state, "reason": reason,
                         "coverage": "complete" if not missing_reservation_ids and covered_reservation_ids else "partial" if covered_reservation_ids else "none",
+                        "coverageBasis": "validity-window",
+                        "effectiveForAllReservations": state == "supports" and not missing_reservation_ids,
                         "coveredReservationIds": covered_reservation_ids,
                         "missingReservationIds": missing_reservation_ids,
                         "equipmentId": identifier,
