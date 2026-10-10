@@ -175,7 +175,7 @@ def create_review_from_sop(payload: SOPParseRequest) -> Review:
         ventilation=parsed["ventilation"],
         waste_streams=parsed["waste_streams"],
         evidence=[Evidence(**item) for item in parsed["evidence"]],
-        metadata={"synthetic": True, "input_sha256": parsed["input_sha256"], "parser": "llm-enriched-deterministic-v2" if model_used else "deterministic-sop-v2", "llm_extraction_used": model_used},
+        metadata={"synthetic": False, "provenance": "user-provided", "input_sha256": parsed["input_sha256"], "parser": "llm-enriched-deterministic-v2" if model_used else "deterministic-sop-v2", "llm_extraction_used": model_used},
     ))
 
 

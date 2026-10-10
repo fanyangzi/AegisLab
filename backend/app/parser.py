@@ -216,7 +216,7 @@ def parse_sop(text: str) -> Dict[str, Any]:
                 "content": line,
                 "source": "user-provided SOP",
                 "sha256": _hash(line),
-                "metadata": {"line": i, "synthetic": True},
+                "metadata": {"line": i, "synthetic": False, "provenance": "user-provided"},
             }
             for i, line in source_lines
         ],
