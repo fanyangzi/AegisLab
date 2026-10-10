@@ -241,6 +241,15 @@ class DomainTests(unittest.TestCase):
         completed=s.apply_operation(changed,'update_task',{'id':task_id,'status':'done','note':'已完成'},'负责人')
         with self.assertRaises(ValueError):
             s.apply_operation(completed,'assign_task',{'id':task_id,'newOwner':'再次转交','note':'不应改动终态任务'},'负责人')
+    def test_task_handoff_and_status_change_are_atomic(self):
+        w=fixture(); task_id=w['tasks'][0]['id']; current=w['tasks'][0]
+        changed=s.apply_operation(w,'update_task',{
+            'id':task_id,'status':'submitted','note':'接收人已确认并提交材料。',
+            'newOwner':'接收负责人','expectedOwner':current['owner'],'handoffNote':'交接当前设备检查记录。',
+        },'安全负责人')
+        task=next(item for item in changed['tasks'] if item['id']==task_id)
+        self.assertEqual((task['status'],task['owner']),('submitted','接收负责人'))
+        self.assertIn('同时转交',changed['events'][-1]['summary'])
     def test_duplicate_ai_task_is_rejected(self):
         w=fixture(); task={'id':'ai-task-1','title':'补充检查证据','planId':'EXP-001','equipmentId':'F-01','owner':'陈同学','dueAt':'2026-10-09T18:00:00+08:00','status':'open','note':'来源 SOP L1','sourceId':'EXP-001:EVIDENCE:F-01','sourceLine':1,'documentIds':[],'actionKind':'evidence','actionTarget':{'type':'evidence','planId':'EXP-001','equipmentId':'F-01'}}
         w=s.apply_operation(w,'save_task',{'task':task},'负责人')
@@ -517,6 +526,21 @@ class ApiTests(unittest.TestCase):
                 'payload':{'id':'task-1','newOwner':'不应写入','expectedOwner':'接收负责人','note':'研究者不应转交'},
             })
         self.assertEqual(response.status_code,403)
+    def test_server_role_controls_atomic_task_handoff_update(self):
+        initialize(s.store())
+        response=self.client.post('/api/spatial/actions',json={
+            'expectedRevision':1,'requestId':'handoff-update-01','type':'update_task',
+            'payload':{'id':'task-1','status':'submitted','note':'接收人已确认。','newOwner':'接收负责人','expectedOwner':'陈同学','handoffNote':'交接设备检查记录'},
+        })
+        self.assertEqual(response.status_code,200,response.text)
+        state=response.json()['workspace'];task=next(item for item in state['tasks'] if item['id']=='task-1')
+        self.assertEqual((task['status'],task['owner']),('submitted','接收负责人'))
+        with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
+            denied=self.client.post('/api/spatial/actions',json={
+                'expectedRevision':2,'requestId':'handoff-update-02','type':'update_task',
+                'payload':{'id':'task-1','status':'done','note':'研究者不应转交。','newOwner':'越权负责人','expectedOwner':'接收负责人','handoffNote':'越权尝试'},
+            })
+        self.assertEqual(denied.status_code,403)
     def test_branch_api_accepts_and_applies_a_multi_field_patch(self):
         initialize(s.store())
         workspace=s.store().read();plan=next(item for item in workspace['plans'] if item['id']=='EXP-001')

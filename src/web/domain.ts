@@ -239,6 +239,19 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
       if (!taskTransitions[t.status].includes(requested)) throw new Error(`任务不能从“${t.status}”流转到“${requested}”。`)
       const note=String(x.note ?? t.note).trim()
       if (['returned','cancelled','reopened'].includes(requested) && !note) throw new Error('退回、取消或重开任务必须填写处理说明。')
+      const handoffRequested=['newOwner','expectedOwner','handoffNote'].some(key=>Object.prototype.hasOwnProperty.call(x,key))
+      if (handoffRequested) {
+        if (['done','cancelled'].includes(t.status)) throw new Error('已完成或已取消任务不能在同一操作中直接转交；请先重新打开任务。')
+        if (x.expectedOwner===undefined || String(x.expectedOwner)!==t.owner) throw new Error('任务负责人已变化，请刷新后重新转交。')
+        const previousOwner=t.owner,newOwner=String(x.newOwner??'').trim(),handoffNote=String(x.handoffNote??'').trim()
+        if (!newOwner || newOwner.length>180) throw new Error('转交负责人不能为空且不能超过 180 个字符。')
+        if (newOwner===t.owner) throw new Error('转交负责人必须与当前负责人不同。')
+        if (!handoffNote || handoffNote.length>2000) throw new Error('转交任务必须填写不超过 2000 个字符的交接说明。')
+        t.owner=newOwner
+        t.status=requested; t.note=note
+        summary='更新任务进度并转交任务：'+previousOwner+' → '+newOwner+'；'+handoffNote
+        break
+      }
       t.status=requested; t.note=note
       summary=({returned:'退回补充',cancelled:'取消任务',reopened:'重新打开'} as Record<string,string>)[requested] ? `${({returned:'退回补充',cancelled:'取消任务',reopened:'重新打开'} as Record<string,string>)[requested]}；不自动改变证据或审批` : '更新任务进度，不自动改变证据或审批'
       break
