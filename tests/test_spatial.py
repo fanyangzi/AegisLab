@@ -407,6 +407,17 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(job.status_code,200);self.assertEqual(job.json()['status'],'failed');self.assertIn('RuntimeError',job.json()['error'])
         retry=self.client.post('/api/spatial/plans/EXP-001/analysis?retry=true')
         self.assertEqual(retry.status_code,200,retry.text);self.assertEqual(retry.json()['job']['status'],'succeeded')
+    def test_analysis_retry_reruns_succeeded_revision_without_rewriting_plan(self):
+        initialize(s.store())
+        with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):
+            first=self.client.post('/api/spatial/plans/EXP-001/analysis')
+            self.assertEqual(first.status_code,200,first.text)
+            second=self.client.post('/api/spatial/plans/EXP-001/analysis?retry=true')
+        self.assertEqual(second.status_code,200,second.text)
+        self.assertNotEqual(first.json()['job']['jobId'],second.json()['job']['jobId'])
+        self.assertEqual(second.json()['planRevision'],first.json()['planRevision'])
+        self.assertEqual(len(self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs']),2)
+        self.assertEqual(s.store().read()['revision'],1)
     def test_relationship_graph_supports_plan_type_and_time_filters(self):
         initialize(s.store())
         response=self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,equipment&dateFrom=2026-10-09T09:00:00%2B08:00&dateTo=2026-10-09T09:30:00%2B08:00')

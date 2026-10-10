@@ -1576,11 +1576,13 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
         raise HTTPException(404, '计划不存在。')
     job_id = f"analysis:{p['id']}:v{p['revision']}"
     existing = store().job(job_id)
-    if retry and existing and existing["status"] in {"failed", "cancelled"}:
-        # A retry is a new durable attempt.  Terminal history stays immutable,
-        # while the new idempotency key allows the same plan revision to run
-        # again after a transient parser/model failure.
-        job_id = f"{job_id}:retry:{str(uuid4())[:8]}"
+    if retry and existing and existing["status"] in {"failed", "cancelled", "succeeded"}:
+        # A retry/rerun is a new durable attempt. Terminal history stays
+        # immutable, while the new idempotency key allows the same plan
+        # revision to run again after a transient model failure or a provider
+        # configuration change. The current plan is never rewritten.
+        suffix = "rerun" if existing["status"] == "succeeded" else "retry"
+        job_id = f"{job_id}:{suffix}:{str(uuid4())[:8]}"
     job = store().begin_job(job_id=job_id, kind="analysis", plan_id=p['id'], idempotency_key=job_id)
     if job["status"] == "succeeded" and job.get("result"):
         return {**job["result"], "job": job}
@@ -1651,7 +1653,9 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
         # next to each stage makes it visible which work was deterministic and
         # which part (if any) came from the configured model.
         trace = {
-            'runId': f"copilot:{p['id']}:v{p['revision']}",
+            # Include the durable job attempt so an explicit rerun of the same
+            # plan revision remains a separate immutable history record.
+            'runId': f"copilot:{job_id}",
             'generatedAt': now(),
             'stages': [
                 {'id': 'understand', 'label': '结构化理解', 'status': 'model' if model_used else 'deterministic', 'detail': f"识别 {len(parsed['steps'])} 个步骤、{len(parsed['substances'])} 个化学品实体", 'inputs': ['计划原文'], 'outputs': ['步骤实体', '化学品实体', '设备语义']},
