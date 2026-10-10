@@ -471,6 +471,41 @@ class ApiTests(unittest.TestCase):
         evaluations=self.client.get('/api/spatial/plans/EXP-001/evaluations').json()['evaluations']
         self.assertEqual(len(evaluations),1);self.assertEqual(evaluations[0]['evaluationId'],r.json()['evaluationId']);self.assertEqual(evaluations[0]['basis'],s.basis(before,before['plans'][0]))
 
+    def test_analysis_packet_actions_are_source_anchored_and_declarative(self):
+        """Every Copilot button target must resolve to a known review surface.
+
+        The browser treats these fields as navigation hints only.  This test
+        protects the real action closure (source/evidence/equipment/rule)
+        without turning an AI suggestion into an approval or workspace write.
+        """
+        initialize(s.store())
+        before=s.store().read()
+        with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):
+            response=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})
+        self.assertEqual(response.status_code,200,response.text)
+        packet=response.json()['copilot']
+        plan=next(item for item in before['plans'] if item['id']=='EXP-001')
+        source_lines={step['line'] for step in plan['steps']}
+        equipment_ids={item['id'] for item in before['equipment']}
+        document_ids={item['id'] for item in before['documents']}
+        items=packet['riskSignals']+packet['conflicts']+packet['evidenceGaps']+packet['nextActions']
+        items += packet.get('relations',[])
+        self.assertTrue(items)
+        allowed={'source_line','equipment','evidence','rule','relationship','task','scenario'}
+        for item in items:
+            kind=item.get('actionKind');target=item.get('actionTarget')
+            self.assertIn(kind,allowed,item)
+            self.assertIsInstance(target,dict,item)
+            self.assertEqual(target.get('type'),kind,item)
+            self.assertEqual(target.get('planId'),plan['id'],item)
+            self.assertNotIn('approve',target)
+            self.assertNotIn('execute',target)
+            if kind=='source_line': self.assertIn(target.get('line'),source_lines,item)
+            if kind=='equipment': self.assertIn(target.get('equipmentId'),equipment_ids,item)
+            if kind=='evidence': self.assertIn(target.get('documentId'),document_ids,item)
+            if kind=='relationship': self.assertTrue(target.get('relationId') or (target.get('from') and target.get('to')),item)
+        self.assertEqual(s.store().read(),before)
+
     def test_plan_lifecycle_api_rechecks_transition(self):
         initialize(s.store())
         response=self.client.post('/api/spatial/actions',json={
@@ -532,6 +567,19 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(all(edge['from'] in {node['id'] for node in graph['nodes']} and edge['to'] in {node['id'] for node in graph['nodes']} for edge in graph['edges']))
         self.assertEqual(self.client.get('/api/spatial/graph?dateFrom=bad').status_code,422)
         self.assertEqual(self.client.get('/api/spatial/graph?hops=3').status_code,422)
+
+    def test_relationship_graph_contract_exposes_edge_state_and_provenance(self):
+        initialize(s.store())
+        response=self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,equipment,document,task,check&dateFrom=2026-10-09T09:00:00%2B08:00&dateTo=2026-10-09T09:30:00%2B08:00')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json()
+        self.assertTrue(graph['filters']['types'])
+        self.assertTrue(all(edge['state'] in {'pass','unknown','blocked'} for edge in graph['edges']))
+        self.assertTrue(all(edge.get('provenance') for edge in graph['edges']))
+        plan=next(node for node in graph['nodes'] if node['id']=='plan:EXP-001')
+        self.assertEqual(plan['reservationCount'],3)
+        self.assertTrue(plan['timeFiltered'])
+        self.assertEqual(self.client.get('/api/spatial/graph?types=rule').status_code,422)
     def test_restore_api_is_role_gated_and_creates_snapshot(self):
         initialize(s.store());candidate=s.store().read();candidate['name']='服务端恢复验收';candidate['revision']=700
         response=self.client.post('/api/spatial/restore',json={'expectedRevision':1,'requestId':'api-restore-01','confirm':'RESTORE','workspace':candidate})
