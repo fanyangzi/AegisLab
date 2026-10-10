@@ -256,7 +256,15 @@ export function SafetyChainGraph({ snapshot, labId, selection, onSelect, all = f
   const [hops, setHops] = useState<1 | 2>(2)
   const [enabledTypes, setEnabledTypes] = useState<Set<ChainNodeType>>(() => new Set(CHAIN_NODE_TYPES))
   const [pinned, setPinned] = useState<Set<string>>(() => new Set())
-  const model = useMemo(() => serverGraph?.nodes.length ? buildServerSafetyChainGraph(serverGraph) : buildSafetyChainGraph(snapshot, labId, planId), [snapshot, labId, planId, serverGraph])
+  // Keep the richer browser projection (including explicitly marked chemical,
+  // control and approval candidates) for normal rendering.  The server graph
+  // remains the queryable source and is used as a safe fallback for an empty
+  // local workspace; this avoids silently promoting unanchored AI candidates
+  // into persisted graph facts while still allowing direct API inspection.
+  const model = useMemo(() => {
+    const local = buildSafetyChainGraph(snapshot, labId, planId)
+    return local.nodes.length || !serverGraph?.nodes.length ? local : buildServerSafetyChainGraph(serverGraph)
+  }, [snapshot, labId, planId, serverGraph])
   const selectedNodeIds = useMemo(() => model.nodes.filter(node => node.selection && selection && node.selection.type === selection.type && node.selection.id === selection.id).map(node => node.id), [model.nodes, selection])
   const fallbackAnchor = model.nodes.find(node => node.type === 'plan')?.id || model.nodes[0]?.id
   const anchors = unique([...selectedNodeIds, ...pinned, ...(selectedNodeIds.length || pinned.size ? [] : fallbackAnchor ? [fallbackAnchor] : [])])

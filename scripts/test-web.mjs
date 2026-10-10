@@ -11,6 +11,7 @@ execFileSync(process.execPath,[resolve('node_modules/typescript/bin/tsc'),'--ign
 writeFileSync(join(temp,'package.json'),'{"type":"commonjs"}')
 const d=req(join(temp,'domain.js')),template=JSON.parse(readFileSync('data/spatial-example.json','utf8'))
 const workspaceSource=readFileSync('src/web/Workspace.tsx','utf8')
+const viewsSource=readFileSync('src/web/Views.tsx','utf8')
 let count=0
 const test=(name,fn)=>{fn();count++;console.log(`PASS ${count}: ${name}`)}
 const fixture=()=>structuredClone(template)
@@ -49,7 +50,7 @@ try {
  test('non-empty workspace cannot be replaced by example initialization',()=>assert.throws(()=>d.applyLocal(fixture(),{type:'initialize',payload:{workspace:fixture()}})))
  test('example dates shift consistently without changing the template',()=>{const before=JSON.stringify(template),shifted=d.prepareExample(template,'2026-11-01');assert.equal(Date.parse(shifted.plans[0].reservations[0].start)-Date.parse(template.plans[0].reservations[0].start),23*86400000);assert.equal(JSON.stringify(template),before)})
  test('expiry recheck UI keeps the manual idempotent boundary',()=>{assert.match(workspaceSource,/\/api\/spatial\/expiry\/recheck/);assert.match(workspaceSource,/worker/);assert.match(workspaceSource,/不会自动批准、取消计划或创建任务/);assert.match(workspaceSource,/再次查看结果/);assert.match(workspaceSource,/新建一次复核/);assert.match(workspaceSource,/setRequestId\(uid\('expiry-ui'\)\)/)})
- test('plan scope remains consistent across space, graph, and timeline views',()=>{assert.match(workspaceSource,/planId:q\.get\('plan'\)/);assert.match(workspaceSource,/selection\?\.type==='plan'\?\{planId:selection\.id\}/);assert.match(workspaceSource,/RelationshipGraph snapshot=\{snapshot\} labId=\{labId\} planId=\{route\.planId\}/);assert.match(workspaceSource,/Timeline workspace=\{w\} labId=\{labId\} planId=\{route\.planId\}/);assert.match(workspaceSource,/SpaceDock plans=\{plans\} equipment=\{equipment\} workspace=\{w\} labId=\{labId\} planId=\{route\.planId\}/)})
+ test('plan scope remains consistent across space, graph, and timeline views',()=>{assert.match(workspaceSource,/planId:q\.get\('plan'\)/);assert.match(workspaceSource,/selection\?\.type==='plan'\?\{planId:selection\.id\}/);assert.match(workspaceSource,/RelationshipGraph snapshot=\{snapshot\} labId=\{labId\} planId=\{route\.planId\} date=\{route\.date\}/);assert.match(workspaceSource,/Timeline workspace=\{w\} labId=\{labId\} planId=\{route\.planId\}/);assert.match(workspaceSource,/SpaceDock plans=\{plans\} equipment=\{equipment\} workspace=\{w\} labId=\{labId\} planId=\{route\.planId\}/);assert.match(viewsSource,/new URLSearchParams\(\{labId\}\)/);assert.match(viewsSource,/query\.set\('planId',planId\)/);assert.match(viewsSource,/query\.set\('dateFrom',start\.toISOString\(\)\)/);assert.match(viewsSource,/query\.set\('dateTo',end\.toISOString\(\)/)})
  if(process.argv.includes('--parity'))writeFileSync('tests/web-parity.json',JSON.stringify({basis:template.plans.map(p=>d.basis(template,p)),checks:d.checkWorkspace(template).map(c=>({id:c.id,state:c.state})),statuses:template.plans.map(p=>d.planStatus(template,p))}))
  console.log(`\n${count} browser-domain tests passed.`)
 }finally{rmSync(temp,{recursive:true,force:true})}

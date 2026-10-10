@@ -46,7 +46,9 @@ export function RelationshipGraph({snapshot,labId,selection,onSelect,planId,date
   if(snapshot.mode!=='server'){setServerGraph(null);setGraphError('');return}
   const query=new URLSearchParams({labId});if(planId)query.set('planId',planId)
   if(date && /^\d{4}-\d{2}-\d{2}$/.test(date)){
-   const start=new Date(`${date}T00:00:00+08:00`),end=new Date(start.getTime()+24*60*60*1000)
+   // Use the browser's local day, then send absolute instants to the API;
+   // this keeps the graph aligned with the timeline on non-UTC machines.
+   const start=new Date(`${date}T00:00:00`),end=new Date(start.getTime()+24*60*60*1000)
    query.set('dateFrom',start.toISOString());query.set('dateTo',end.toISOString())
   }
   let live=true;setServerGraph(null);setGraphError('')
