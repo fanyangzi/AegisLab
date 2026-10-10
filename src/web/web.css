@@ -190,3 +190,17 @@
 .al-expiry-lists>div>em{font-style:normal;color:#a0b1c6;font-size:11px;line-height:1.55}
 .al-expiry-result>.al-note{margin:15px 0 0}
 @media (max-width:900px){.al-expiry-controls{align-items:stretch;flex-direction:column}.al-expiry-controls .al-field{max-width:none}.al-expiry-actions{justify-content:flex-start}.al-expiry-metrics,.al-expiry-lists{grid-template-columns:1fr}.al-expiry-card-head{flex-direction:column}}
+
+/* Approval dispositions are explicit business actions, not a generic radio list. */
+.al-choice-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0 18px}
+.al-choice{display:flex;align-items:flex-start;gap:8px;padding:12px;border:1px solid #e3ebf7;border-radius:9px;background:#fbfdff;color:#7890ad;cursor:pointer;line-height:1.55}
+.al-choice:hover{border-color:#b8cfee;background:#f5f9ff}
+.al-choice.selected{border-color:#89aae0;background:#f0f6ff;box-shadow:0 0 0 2px #e5efff}
+.al-choice input{margin-top:3px;accent-color:var(--blue);flex-shrink:0}
+.al-choice span{display:flex;flex-direction:column;gap:3px}
+.al-choice b{font-size:11px;color:#5d7da7}
+.al-choice small{font-size:10px;line-height:1.55;color:#9aacc2}
+.al-exception-panel{padding:14px 16px;border:1px solid #f0e5cf;border-radius:10px;background:#fffdf8;margin:0 0 15px}
+.al-exception-panel .al-section-label{margin-top:0}
+.al-exception-panel .al-checkbox{margin:7px 0}
+@media (max-width:760px){.al-choice-row{grid-template-columns:1fr}}

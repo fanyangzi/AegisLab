@@ -92,7 +92,18 @@ export interface Task {
   status: 'open' | 'submitted' | 'done' | 'returned' | 'cancelled' | 'reopened'; note: string;
   sourceId?: string | null; sourceLine?: number | null; documentIds?: string[]; actionKind?: string | null; actionTarget?: Record<string, unknown> | null
 }
-export interface Decision { id: string; planId: string; revision: number; basis: string; actor: string; comment: string; at: string }
+export interface Decision {
+  id: string; planId: string; revision: number; basis: string; actor: string; comment: string; at: string
+  /** Server-recorded disposition; absent on legacy approvals for backwards compatibility. */
+  disposition?: 'approved' | 'returned' | 'exception'
+  /** Server-derived identity metadata. The browser never chooses this value. */
+  actorRole?: string
+  stage?: string
+  /** Immutable check states observed when this decision was recorded. */
+  checkSnapshot?: Array<{id: string; state: Check['state']; title?: string}>
+  /** Structured exception scope, only present for an exception disposition. */
+  exception?: {checkIds: string[]; reason: string; mitigation: string; expiresAt: string}
+}
 export interface AuditEvent { id: string; at: string; actor: string; action: string; objectId: string; summary: string }
 export type BranchPatchPath = 'reservation.equipmentId' | 'reservation.start' | 'reservation.end'
 export interface BranchPatch { path: BranchPatchPath; targetId: string; before: string; after: string; reason: string }
@@ -130,7 +141,11 @@ export const kindNames: Record<Kind, string> = {
  co2_incubator: '二氧化碳培养箱', gel_documentation: '凝胶成像系统', electrophoresis: '电泳系统', flow_cytometer: '流式细胞仪',
  fluorescence_microscope: '荧光 / 共聚焦显微镜', cleanroom: '洁净室 / 负压操作间',
 }
-export const statusNames: Record<string, string> = { draft: '待确认', blocked: '存在阻断', unknown: '待补证', ready: '待复核', approved: '复核已记录', recheck: '需重新复核', archived: '已归档', cancelled: '已取消' }
+export const statusNames: Record<string, string> = {
+  draft: '待确认', blocked: '存在阻断', unknown: '待补证', ready: '待复核', approved: '复核已记录',
+  pending_approval: '等待下一审批阶段', returned: '审批已退回', approved_with_exception: '例外授权',
+  recheck: '需重新复核', archived: '已归档', cancelled: '已取消'
+}
 export const taskStatusNames: Record<Task['status'], string> = {
   open: '待处理', reopened: '已重开', submitted: '待核验', returned: '退回补充', done: '已完成', cancelled: '已取消',
 }

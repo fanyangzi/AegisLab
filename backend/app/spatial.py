@@ -242,6 +242,56 @@ class Decision(StrictModel):
     actor: str
     comment: str = Field(min_length=1, max_length=2000)
     at: str
+    # Decisions are immutable evidence of a human disposition.  Legacy
+    # records omit these fields and remain interpreted as a normal approval.
+    disposition: Literal["approved", "returned", "exception"] = "approved"
+    actorRole: str = Field(default="safety_owner", max_length=80)
+    stage: str = Field(default="safety_owner", max_length=80)
+    checkSnapshot: list[dict[str, Any]] = Field(default_factory=list, max_length=500)
+    exception: dict[str, Any] | None = None
+
+
+def approval_stages() -> list[str]:
+    """Return the server-configured approval stages without trusting the UI.
+
+    The default remains the existing single safety-owner gate so old local
+    workspaces keep their behavior.  Institutions can opt into a second EHS
+    stage through an environment setting without changing the data contract.
+    """
+    raw = os.getenv("AEGIS_APPROVAL_STAGES", "safety_owner")
+    stages = [item.strip() for item in raw.split(",") if item.strip()]
+    return stages or ["safety_owner"]
+
+
+def decision_check_snapshot(checks: list[dict]) -> list[dict]:
+    return [
+        {"id": str(check.get("id", "")), "state": str(check.get("state", "unknown")), "title": str(check.get("title", ""))[:240]}
+        for check in checks
+    ]
+
+
+def approval_state(w: dict, p: dict, checks: list[dict]) -> dict:
+    """Derive current approval state from immutable decisions and current basis."""
+    decisions = [d for d in w.get("decisions", []) if d.get("planId") == p.get("id")]
+    current_basis = basis(w, p)
+    # Only the latest decision determines whether the current chain needs a
+    # recheck. Older decisions remain immutable history; a new decision at
+    # the current basis starts a fresh chain.
+    stale = bool(decisions and decisions[-1].get("basis") != current_basis)
+    latest = decisions[-1] if decisions else None
+    stages = approval_stages()
+    approved_stages = {item.get("stage", item.get("actorRole", "safety_owner")) for item in decisions if item.get("disposition", "approved") == "approved" and item.get("basis") == current_basis}
+    pending = next((stage for stage in stages if stage not in approved_stages), None)
+    disposition = latest.get("disposition", "approved") if latest else None
+    return {
+        "stages": stages,
+        "latest": latest,
+        "stale": stale,
+        "pendingStage": pending,
+        "disposition": disposition,
+        "checkSnapshot": decision_check_snapshot(checks),
+        "latestCheckSnapshot": latest.get("checkSnapshot", []) if latest else [],
+    }
 
 class Event(StrictModel):
     id: str
@@ -608,10 +658,14 @@ def plan_status(w: dict, p: dict, checks: list[dict]) -> str:
         return "archived"
     if p.get("lifecycle") == "cancelled":
         return "cancelled"
-    decisions = [d for d in w["decisions"] if d["planId"] == p["id"]]
-    decision = decisions[-1] if decisions else None
-    if decision and decision["basis"] != basis(w, p):
+    approval = approval_state(w, p, [c for c in checks if c["planId"] == p["id"]])
+    decision = approval["latest"]
+    if approval["stale"]:
         return "recheck"
+    if decision and approval["disposition"] == "returned":
+        return "returned"
+    if decision and approval["disposition"] == "exception" and not approval["stale"]:
+        return "approved_with_exception"
     if not p["steps"] or any(not s["confirmed"] for s in p["steps"]):
         return "draft"
     relevant = [c for c in checks if c["planId"] == p["id"]]
@@ -619,7 +673,9 @@ def plan_status(w: dict, p: dict, checks: list[dict]) -> str:
         return "blocked"
     if any(c["state"] == "unknown" for c in relevant):
         return "unknown"
-    return "approved" if decision else "ready"
+    if decision and approval["pendingStage"] is None:
+        return "approved"
+    return "pending_approval" if decision else "ready"
 
 
 def envelope(w: dict) -> dict:
@@ -1024,46 +1080,53 @@ def _merge_model_parse(parsed: dict, model_fields: Any) -> tuple[dict, bool]:
     raw_substances = model_fields.get("substances")
     if isinstance(raw_substances, list):
         candidates = []
-        from .models import Substance
         for item in raw_substances:
             if not isinstance(item, dict) or not str(item.get("name", "")).strip():
                 continue
             if str(item.get("name", "")).strip() not in parsed.get("source", "") and str(item.get("name", "")).strip() not in "\n".join(getattr(s, "instruction", "") for s in parsed.get("steps", [])):
                 continue
             try:
-                candidates.append(Substance(
-                    name=str(item["name"]).strip()[:180],
-                    cas_number=str(item.get("cas_number") or "").strip() or None,
-                    hazard_classes=[str(v).strip() for v in item.get("hazard_classes", []) if str(v).strip()][:10],
-                ))
+                name = str(item["name"]).strip()[:180]
+                candidates.append({
+                    "name": name,
+                    "casNumber": str(item.get("cas_number") or "").strip() or None,
+                    "hazardClasses": [str(v).strip() for v in item.get("hazard_classes", []) if str(v).strip()][:10],
+                    "status": "candidate",
+                })
             except (TypeError, ValueError):
                 continue
         if candidates:
-            # Keep model output reviewable, but do not let it erase chemicals
-            # found deterministically in the source.
-            existing = {str(getattr(item, "name", "")).strip() for item in merged.get("substances", [])}
-            merged["substances"] = list(merged.get("substances", [])) + [item for item in candidates if item.name not in existing]
+            # A model may suggest a chemical and a hazard class, but a name
+            # substring is not a source anchor.  Keep these suggestions in a
+            # visible candidate lane; only the deterministic parser (or a
+            # later independently verified SDS) may change authoritative
+            # substances used by rules.  This prevents prompt-injected JSON
+            # from turning an untrusted model guess into a risk fact.
+            merged["model_candidates"].append({
+                "kind": "substances",
+                "values": candidates,
+                "status": "candidate",
+                "authority": "none-until-source-anchored-and-reviewed",
+            })
             used = True
 
     for key in ("ppe", "equipment", "waste_streams"):
         values = model_fields.get(key)
         if isinstance(values, list):
             normalized = sorted({str(value).strip() for value in values if str(value).strip()})
-            accepted = [value for value in normalized if any(value in str(getattr(step, "instruction", "")) for step in parsed.get("steps", []))]
             if normalized:
-                merged["model_candidates"].append({"kind": key, "values": normalized, "accepted": accepted, "status": "candidate"})
-                # Only source-present values already recognized by the
-                # deterministic parser may enrich the confirmed aggregate.
-                if accepted:
-                    merged[key] = sorted({*merged.get(key, []), *accepted})
+                source_present = [value for value in normalized if any(value in str(getattr(step, "instruction", "")) for step in parsed.get("steps", []))]
+                # A substring is not a source assertion: it can appear in a
+                # negated sentence or in a prompt-injection aside. Keep the
+                # model output visible, but never let it change the
+                # authoritative rule inputs without a later human/SDS review.
+                merged["model_candidates"].append({"kind": key, "values": normalized, "sourcePresent": source_present, "status": "candidate", "authority": "none-until-reviewed"})
                 used = True
     ventilation = model_fields.get("ventilation")
     if isinstance(ventilation, str) and ventilation.strip():
         candidate = ventilation.strip()
-        accepted = bool(merged.get("ventilation")) and any(candidate in str(getattr(step, "instruction", "")) for step in parsed.get("steps", []))
-        merged["model_candidates"].append({"kind": "ventilation", "value": candidate, "accepted": accepted, "status": "candidate"})
-        if accepted:
-            merged["ventilation"] = candidate
+        source_present = bool(merged.get("ventilation")) and any(candidate in str(getattr(step, "instruction", "")) for step in parsed.get("steps", []))
+        merged["model_candidates"].append({"kind": "ventilation", "value": candidate, "sourcePresent": source_present, "status": "candidate", "authority": "none-until-reviewed"})
         used = True
     return merged, used
 
@@ -1315,9 +1378,83 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         checks = [c for c in check_workspace(next_w) if c["planId"] == p["id"]]
         if not checks or any(c["state"] != "pass" for c in checks):
             raise ValueError("仍有阻断或未知项，不能记录复核通过。")
-        next_w["decisions"].append(dict(id=uid("decision"), planId=p["id"], revision=p["revision"], basis=basis(next_w, p), actor=actor, comment=x["comment"], at=now()))
+        role = str(x.get("_serverRole", "safety_owner"))
+        stage = approval_stages()[0]
+        next_w["decisions"].append(dict(
+            id=uid("decision"), planId=p["id"], revision=p["revision"],
+            basis=basis(next_w, p), actor=actor, comment=x["comment"], at=now(),
+            disposition="approved", actorRole=role, stage=stage,
+            checkSnapshot=decision_check_snapshot(checks), exception=None,
+        ))
         p["lifecycle"] = "submitted"
         summary = "记录当前版本的资源前置条件复核；不构成化学安全认证"
+    elif action == "approval_decision":
+        p = get("plans", x["planId"])
+        if p["revision"] != x.get("expectedPlanRevision") or p["archived"] or p.get("lifecycle") in {"archived", "cancelled"}:
+            raise ValueError("计划版本已改变或已归档。")
+        comment = str(x.get("comment", "")).strip()
+        if not comment:
+            raise ValueError("必须填写人工复核意见。")
+        disposition = x.get("disposition")
+        if disposition not in {"approved", "returned", "exception"}:
+            raise ValueError("审批决定必须是 approved、returned 或 exception。")
+        role = str(x.get("_serverRole", "safety_owner"))
+        if role not in {"safety_owner", "ehs_manager", "administrator"}:
+            raise ValueError("当前工作区身份没有记录正式审批的权限。")
+        checks = [c for c in check_workspace(next_w) if c["planId"] == p["id"]]
+        if not checks:
+            raise ValueError("计划没有可供复核的检查快照。")
+        current = approval_state(next_w, p, checks)
+        stages = approval_stages()
+        pending_stage = current["pendingStage"] or stages[0]
+        if len(stages) > 1 and role != pending_stage and role != "administrator":
+            raise ValueError(f"当前审批链等待“{pending_stage}”阶段，不能由当前身份越级处理。")
+        stage = pending_stage
+        exception_payload = None
+        if disposition == "approved":
+            if any(c["state"] != "pass" for c in checks):
+                raise ValueError("仍有阻断或未知项，不能记录复核通过。")
+            p["lifecycle"] = "submitted"
+            summary = f"记录审批阶段 {stage} 的复核通过；不构成化学安全认证"
+        elif disposition == "returned":
+            p["lifecycle"] = "revising"
+            summary = f"审批阶段 {stage} 退回计划，等待补充后重新复核"
+        else:
+            if role not in {"ehs_manager", "administrator"}:
+                raise ValueError("例外授权只能由 EHS 负责人或管理员记录。")
+            raw_exception = x.get("exception")
+            if not isinstance(raw_exception, dict):
+                raise ValueError("例外授权必须说明检查项、原因、缓解措施和失效时间。")
+            check_ids = raw_exception.get("checkIds")
+            reason = str(raw_exception.get("reason", "")).strip()
+            mitigation = str(raw_exception.get("mitigation", "")).strip()
+            expires_at = str(raw_exception.get("expiresAt", "")).strip()
+            if not isinstance(check_ids, list) or not check_ids or any(not isinstance(item, str) for item in check_ids):
+                raise ValueError("例外授权至少要指定一个检查项。")
+            by_id = {c["id"]: c for c in checks}
+            selected = [by_id.get(item) for item in check_ids]
+            if any(item is None for item in selected):
+                raise ValueError("例外授权引用了当前计划不存在的检查项。")
+            if any(item["state"] == "pass" for item in selected):
+                raise ValueError("例外授权只能针对当前阻断或待确认项。")
+            if not reason or not mitigation:
+                raise ValueError("例外授权必须填写原因和缓解措施。")
+            try:
+                expiry = dt(expires_at)
+            except (TypeError, ValueError) as error:
+                raise ValueError("例外失效时间必须是带时区的 ISO 时间。") from error
+            if expiry <= datetime.now(timezone.utc):
+                raise ValueError("例外失效时间必须晚于当前时间。")
+            exception_payload = {"checkIds": list(dict.fromkeys(check_ids)), "reason": reason[:2000], "mitigation": mitigation[:2000], "expiresAt": expires_at}
+            p["lifecycle"] = "submitted"
+            summary = f"审批阶段 {stage} 记录限时例外；原始检查仍保留为阻断或待确认"
+        next_w["decisions"].append(dict(
+            id=uid("decision"), planId=p["id"], revision=p["revision"],
+            basis=basis(next_w, p), actor=actor, comment=comment, at=now(),
+            disposition=disposition, actorRole=role, stage=stage,
+            checkSnapshot=decision_check_snapshot(checks), exception=exception_payload,
+        ))
+        object_id = p["id"]
     elif action == "transition_plan":
         p = get("plans", x["planId"])
         requested = x.get("lifecycle", x.get("status"))
@@ -1714,6 +1851,17 @@ def get_source_registry(actor: str = Depends(local_owner)):
     sources = read_source_registry()
     return {"sources": sources, "scope": "公开类别与管理机制参考，不是机构资产台账"}
 
+@router.get("/plans/{plan_id}/approval")
+def get_plan_approval(plan_id: str, actor: str = Depends(local_owner)):
+    """Return the server-derived approval chain for one current plan."""
+    w = store().read()
+    plan = next((item for item in w.get("plans", []) if item.get("id") == plan_id), None)
+    if plan is None:
+        raise HTTPException(404, "计划不存在。")
+    checks = [item for item in check_workspace(w) if item.get("planId") == plan_id]
+    state = approval_state(w, plan, checks)
+    return {"planId": plan_id, "planRevision": plan.get("revision"), "role": local_role(), "status": plan_status(w, plan, checks), **state}
+
 @router.get("/graph")
 def get_relationship_graph(
     planId: str | None = None,
@@ -1864,13 +2012,17 @@ def get_relationship_graph(
 
 @router.post("/actions")
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
-    if body.type == "approve" and local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
+    role = local_role()
+    if body.type in {"approve", "approval_decision"} and role not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有记录正式复核的权限。")
     handoff_update = body.type == "update_task" and any(key in body.payload for key in ("newOwner", "expectedOwner", "handoffNote"))
     if (body.type == "assign_task" or handoff_update) and local_role() not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有转交协作任务的权限。")
     try:
-        return envelope(store().mutate(body.expectedRevision, body.requestId, body.type, body.payload, actor))
+        payload = dict(body.payload)
+        if body.type in {"approve", "approval_decision"}:
+            payload["_serverRole"] = role
+        return envelope(store().mutate(body.expectedRevision, body.requestId, body.type, payload, actor))
     except (ValidationError, ValueError, KeyError, TypeError) as error:
         message = str(error) if not isinstance(error, ValidationError) else "输入结构不符合工作区契约。"
         raise HTTPException(422, message) from error

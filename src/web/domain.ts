@@ -78,11 +78,43 @@ export function checkWorkspace(w: Workspace): Check[] {
   }
   return all
 }
+
+export type CheckDelta = {
+  id: string
+  code: string
+  title: string
+  equipmentId: string | null
+  from: Check['state'] | 'missing'
+  to: Check['state'] | 'missing'
+  detail: string
+}
+
+/** Compare two isolated rule snapshots without treating a candidate as fact. */
+export function compareChecks(before: Check[], after: Check[]): CheckDelta[] {
+  const beforeById = new Map(before.map(check => [check.id, check]))
+  const afterById = new Map(after.map(check => [check.id, check]))
+  const ids = new Set([...beforeById.keys(), ...afterById.keys()])
+  return [...ids].map(id => {
+    const previous = beforeById.get(id)
+    const next = afterById.get(id)
+    return {
+      id,
+      code: next?.code || previous?.code || 'CHECK',
+      title: next?.title || previous?.title || id,
+      equipmentId: next?.equipmentId ?? previous?.equipmentId ?? null,
+      from: (previous?.state || 'missing') as CheckDelta['from'],
+      to: (next?.state || 'missing') as CheckDelta['to'],
+      detail: next?.detail || previous?.detail || '检查项在候选方案中不再适用。',
+    }
+  }).filter(delta => delta.from !== delta.to).sort((a, b) => `${a.code}|${a.equipmentId || ''}|${a.id}`.localeCompare(`${b.code}|${b.equipmentId || ''}|${b.id}`))
+}
 export function planStatus(w: Workspace, p: Plan, checks: Check[] = checkWorkspace(w)): string {
   if (p.archived) return 'archived'
   if (p.lifecycle === 'cancelled') return 'cancelled'
   const decision = w.decisions.filter(d => d.planId === p.id).at(-1)
   if (decision && decision.basis !== basis(w, p)) return 'recheck'
+  if (decision?.disposition === 'returned') return 'returned'
+  if (decision?.disposition === 'exception') return 'approved_with_exception'
   if (!p.steps.length || p.steps.some(s => !s.confirmed)) return 'draft'
   const relevant = checks.filter(c => c.planId === p.id)
   if (relevant.some(c => c.state === 'blocked')) return 'blocked'
@@ -268,7 +300,8 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
       if (!candidatePlan) throw new Error('方案关联的计划不存在。')
       p.reservations=structuredClone(candidatePlan.reservations); p.revision++; objectId=p.id; summary=`应用方案「${b.name}」，产生新修订并触发重新复核${b.patches?.length?`，记录 ${b.patches.length} 个字段变更`:''}`; break
     }
-    case 'approve': throw new Error('浏览器草稿不记录正式复核。请连接服务端 API，由服务器核验最新版本。')
+    case 'approve':
+    case 'approval_decision': throw new Error('浏览器草稿不记录正式复核。请连接服务端 API，由服务器核验最新版本。')
     default: throw new Error('不支持的操作。')
   }
   next.revision=w.revision+1

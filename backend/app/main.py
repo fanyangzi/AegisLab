@@ -133,9 +133,12 @@ def ai_preview_sop(payload: SOPParseRequest) -> Dict[str, Any]:
         "equipment": parsed["equipment"],
         "ventilation": parsed["ventilation"],
         "waste_streams": parsed["waste_streams"],
+        # Candidate-only model output is visible for review, while the
+        # authoritative fields above remain deterministic and source-bound.
+        "model_candidates": parsed.get("model_candidates", []),
         "evidence": parsed["evidence"],
         "trace": {"stages": [
-            {"id": "understand", "label": "结构化理解", "status": "model" if llm_used else "deterministic", "detail": f"识别 {len(parsed['steps'])} 个步骤与 {len(parsed['substances'])} 个化学品"},
+            {"id": "understand", "label": "结构化理解", "status": "model" if llm_used else "deterministic", "detail": f"识别 {len(parsed['steps'])} 个步骤与 {len(parsed['substances'])} 个化学品；保留 {len(parsed.get('model_candidates', []))} 组候选待确认"},
             {"id": "link", "label": "关系绑定", "status": "derived", "detail": f"建立 {len(relations)} 条步骤—对象关系"},
             {"id": "action", "label": "动作建议", "status": "human-required", "detail": f"生成 {len(actions)} 个待确认动作"},
         ], "relations": relations[:40], "actions": actions[:12]},

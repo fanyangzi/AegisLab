@@ -144,9 +144,22 @@ export function buildSafetyChainGraph(snapshot: Snapshot, labId: string, planId?
     if (planDecisions.length) {
       planDecisions.forEach(decision => {
         const latest = planDecisions.at(-1)
-        const current = latest?.id === decision.id && snapshot.statuses[plan.id] === 'approved' && decision.basis === basis(w, plan)
-        const approvalNode = add({ id: nodeId('approval', decision.id), label: current ? (decision.comment || '人工决策已记录') : '历史复核 · 当前需重新核对', code: current ? '当前适用' : '历史记录', type: 'approval', icon: 'shield', state: current ? 'pass' : 'unknown', lane: 8, detail: `${decision.actor} · ${dateText(decision.at)}${current ? '' : ' · 计划条件已变化，历史批准不代表当前有效'}` })
-        link(planNode.id, approvalNode.id, '人工决策', `计划 ${plan.code} 的人工记录由 ${decision.actor} 于 ${dateText(decision.at)} 写入；当前状态为 ${snapshot.statuses[plan.id] || 'unknown'}。`, current ? 'pass' : 'unknown')
+        const disposition = decision.disposition || 'approved'
+        const status = snapshot.statuses[plan.id] || 'unknown'
+        const sameBasis = decision.basis === basis(w, plan)
+        const current = latest?.id === decision.id && sameBasis && ['approved', 'approved_with_exception', 'returned'].includes(status)
+        // An exception is a current decision but it must stay amber: the
+        // frozen checks can still contain blocked/unknown states.
+        const currentApproved = current && status === 'approved' && disposition === 'approved'
+        const dispositionLabel = disposition === 'returned' ? '审批退回 · 需要修订' : disposition === 'exception' ? '例外授权 · 有限范围' : currentApproved ? (decision.comment || '人工决策已记录') : '历史复核 · 当前需重新核对'
+        const snapshotSummary = decision.checkSnapshot?.length
+          ? ` · 已冻结 ${decision.checkSnapshot.length} 项检查快照（${decision.checkSnapshot.filter(item => item.state === 'pass').length} 通过、${decision.checkSnapshot.filter(item => item.state === 'blocked').length} 阻断、${decision.checkSnapshot.filter(item => item.state === 'unknown').length} 待确认）`
+          : ''
+        const exceptionSummary = decision.exception ? ` · 例外 ${decision.exception.checkIds.length} 项，有效至 ${dateText(decision.exception.expiresAt)}` : ''
+        const stageSummary = decision.stage || decision.actorRole ? ` · ${decision.stage || decision.actorRole}` : ''
+        const detail = `${decision.actor}${stageSummary} · ${dateText(decision.at)}${sameBasis ? '' : ' · 计划条件已变化，历史批准不代表当前有效'}${snapshotSummary}${exceptionSummary}`
+        const approvalNode = add({ id: nodeId('approval', decision.id), label: dispositionLabel, code: currentApproved ? '当前适用' : disposition === 'returned' && current ? '待修订' : disposition === 'exception' && current ? '例外范围' : '历史记录', type: 'approval', icon: 'shield', state: currentApproved ? 'pass' : 'unknown', lane: 8, detail })
+        link(planNode.id, approvalNode.id, '人工决策', `计划 ${plan.code} 的人工记录由 ${decision.actor} 于 ${dateText(decision.at)} 写入；处置为${disposition === 'returned' ? '退回补充' : disposition === 'exception' ? '例外授权' : '放行'}，当前状态为 ${status}。${snapshotSummary}${exceptionSummary}`, currentApproved ? 'pass' : 'unknown')
       })
     } else {
       const approvalNode = add({ id: `chain-approval-${plan.id}-pending`, label: '等待人工放行', code: '审批前提', type: 'approval', icon: 'shield', state: 'unknown', lane: 8, detail: '当前没有该计划的人工决策记录；AI 与规则都不能替代负责人最终复核。' })
