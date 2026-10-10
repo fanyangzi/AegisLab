@@ -236,6 +236,7 @@ class ApiTests(unittest.TestCase):
         initialize(s.store());before=s.store().read()
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):r=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})
         self.assertEqual(r.status_code,200);self.assertEqual(s.store().read(),before);self.assertTrue(r.json()['degraded'])
+        runs=self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs'];self.assertEqual(len(runs),1);self.assertEqual(runs[0]['trace']['runId'],r.json()['trace']['runId'])
     def test_review_endpoint_rejects_unanchored_model_reordering(self):
         with patch.object(self.service.llm, 'extract_sop', return_value={'steps':[{'order':2,'instruction':'第二步：完成转移操作'},{'order':1,'instruction':'第一步：准备样品'}]}):
             response=self.client.post('/reviews/from-sop',json={'title':'来源绑定测试','room':'测试室','sop_text':'第一步：准备样品\n第二步：完成转移操作'})

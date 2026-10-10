@@ -994,6 +994,11 @@ class WorkspaceStore:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS spatial_workspace(id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL, payload TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS spatial_operations(id TEXT PRIMARY KEY, request_hash TEXT NOT NULL, result_revision INTEGER NOT NULL);
+                CREATE TABLE IF NOT EXISTS spatial_analysis_runs(
+                    run_id TEXT PRIMARY KEY, plan_id TEXT NOT NULL, plan_revision INTEGER NOT NULL,
+                    generated_at TEXT NOT NULL, degraded INTEGER NOT NULL, payload TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_analysis_plan ON spatial_analysis_runs(plan_id, generated_at DESC);
             """)
             conn.execute("INSERT OR IGNORE INTO spatial_workspace VALUES(1,0,?)", (json.dumps(empty_workspace(), ensure_ascii=False),))
     @contextmanager
@@ -1023,6 +1028,21 @@ class WorkspaceStore:
             conn.execute("UPDATE spatial_workspace SET revision=?,payload=? WHERE id=1", (result["revision"], json.dumps(result, ensure_ascii=False)))
             conn.execute("INSERT INTO spatial_operations VALUES(?,?,?)", (request_id, fingerprint, result["revision"]))
             return result
+    def save_analysis_run(self, payload: dict) -> None:
+        trace = payload.get("trace") or {}
+        run_id = str(trace.get("runId") or uid("analysis"))
+        with self.connection() as conn:
+            conn.execute(
+                """INSERT INTO spatial_analysis_runs(run_id,plan_id,plan_revision,generated_at,degraded,payload)
+                   VALUES(?,?,?,?,?,?) ON CONFLICT(run_id) DO UPDATE SET
+                   plan_revision=excluded.plan_revision,generated_at=excluded.generated_at,
+                   degraded=excluded.degraded,payload=excluded.payload""",
+                (run_id, str(payload.get("planId", "")), int(payload.get("planRevision", 0)), str(trace.get("generatedAt") or now()), 1 if payload.get("degraded") else 0, json.dumps(payload, ensure_ascii=False)),
+            )
+    def analysis_runs(self, plan_id: str, limit: int = 20) -> list[dict]:
+        with self.connection() as conn:
+            rows = conn.execute("SELECT payload FROM spatial_analysis_runs WHERE plan_id=? ORDER BY generated_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
+        return [json.loads(row[0]) for row in rows]
 
 
 _store: WorkspaceStore | None = None
@@ -1151,6 +1171,14 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
         raise HTTPException(422, f'文件无法提取：{str(error)[:180]}') from error
 
 
+@router.get('/plans/{plan_id}/analysis/runs')
+def list_analysis_runs(plan_id: str, limit: int = 20, actor: str = Depends(local_owner)):
+    w = store().read()
+    if not any(plan["id"] == plan_id for plan in w["plans"]):
+        raise HTTPException(404, '计划不存在。')
+    return {"planId": plan_id, "runs": store().analysis_runs(plan_id, limit)}
+
+
 @router.post('/plans/{plan_id}/analysis')
 def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     """Reuse legacy parsing/rules and optional LLM explanation without approval."""
@@ -1243,10 +1271,12 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
         'decision': {'state': decision_state, 'label': decision_label, 'approvalRequired': True, 'reason': 'AI 候选和规则结果不能替代机构审批或现场确认。'},
         'source_policy': '所有候选都绑定 SOP 行号、资源检查或证据记录；无法建立来源时保留为待确认。',
     }
-    return {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
+    response = {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
         'parser': 'model-enriched-deterministic-sop-v2' if model_used else 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
         'degraded': result.provider == 'offline' or result.degraded or not result.available,
         'summary': result.text, 'results': [r.model_dump(mode='json') for r in evaluation.results],
         'copilot': copilot,
         'trace': trace,
         'scope': 'AI 负责结构化理解与解释；确定性规则和人工复核负责约束结论。不会自动批准、修改计划或生成事故处置指令。'}
+    store().save_analysis_run(response)
+    return response
