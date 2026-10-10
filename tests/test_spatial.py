@@ -378,6 +378,29 @@ class StoreTests(unittest.TestCase):
         self.store.finish_job(succeeded['jobId'],status='succeeded',result={'ok':True})
         with self.assertRaises(HTTPException) as result:self.store.cancel_job(succeeded['jobId'])
         self.assertEqual(result.exception.status_code,409)
+
+    def test_manual_expiry_recheck_persists_report_and_is_idempotent(self):
+        initialize(self.store)
+        workspace = self.store.read()
+        document = next(item for item in workspace['documents'] if item['id'] == 'doc-F-01')
+        document['validUntil'] = '2026-10-08T23:59:00+08:00'
+        # This fixture edit simulates a previously recorded validity window;
+        # the report must be derived from the stored snapshot at execution.
+        self.store.mutate(1, 'expiry-fixture-01', 'save_document', {'document': document}, '测试负责人')
+        self.store.mutate(2, 'expiry-fixture-02', 'verify_document', {'id': 'doc-F-01', 'status': 'verified'}, '测试负责人')
+        first = self.store.expiry_recheck(request_id='expiry-run-0001', as_of='2026-10-10T00:00:00+08:00', actor='测试负责人')
+        self.assertEqual(first['status'], 'succeeded')
+        report = first['result']
+        self.assertEqual(report['worker'], 'not-running')
+        self.assertEqual(report['trigger'], 'manual')
+        self.assertIn('doc-F-01', {item['documentId'] for item in report['expiredEvidence']})
+        self.assertIn('task-1', {item['taskId'] for item in report['overdueTasks']})
+        impacted = next(item for item in report['impactedPlans'] if item['planId'] == 'EXP-001')
+        self.assertIn('evidence-valid-until-reached', impacted['reasonCodes'])
+        second = self.store.expiry_recheck(request_id='expiry-run-0001', as_of='2026-10-10T00:00:00+08:00', actor='测试负责人')
+        self.assertEqual(second['jobId'], first['jobId'])
+        self.assertEqual(second['result'], first['result'])
+        self.assertEqual(self.store.job(first['jobId'])['kind'], 'expiry_recheck')
     def test_running_job_is_marked_failed_when_a_new_store_opens_after_restart(self):
         created=self.store.begin_job(job_id='job-restart-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-restart-01')
         self.store.set_job_running(created['jobId'])
@@ -527,6 +550,35 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
             denied=self.client.post('/api/spatial/jobs/'+job['jobId']+'/cancel')
         self.assertEqual(denied.status_code,403)
+
+    def test_expiry_recheck_api_is_manual_and_durable(self):
+        initialize(s.store())
+        first=self.client.post('/api/spatial/expiry/recheck',json={
+            'requestId':'api-expiry-0001',
+            'asOf':'2026-10-10T00:00:00+08:00',
+        })
+        self.assertEqual(first.status_code,200,first.text)
+        payload=first.json()
+        self.assertEqual(payload['kind'],'expiry_recheck')
+        self.assertEqual(payload['status'],'succeeded')
+        self.assertEqual(payload['result']['worker'],'not-running')
+        self.assertEqual(payload['result']['trigger'],'manual')
+        again=self.client.post('/api/spatial/expiry/recheck',json={
+            'requestId':'api-expiry-0001',
+            'asOf':'2026-10-10T00:00:00+08:00',
+        })
+        self.assertEqual(again.status_code,200,again.text)
+        self.assertEqual(again.json()['jobId'],payload['jobId'])
+        conflict=self.client.post('/api/spatial/expiry/recheck',json={
+            'requestId':'api-expiry-0001',
+            'asOf':'2026-10-11T00:00:00+08:00',
+        })
+        self.assertEqual(conflict.status_code,409,conflict.text)
+        bad=self.client.post('/api/spatial/expiry/recheck',json={
+            'requestId':'api-expiry-bad',
+            'asOf':'2026-10-10T00:00:00',
+        })
+        self.assertEqual(bad.status_code,422,bad.text)
     def test_analysis_failure_finishes_job_as_failed(self):
         initialize(s.store())
         with patch('backend.app.parser.parse_sop', side_effect=RuntimeError('解析器异常')):

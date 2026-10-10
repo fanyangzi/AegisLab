@@ -578,6 +578,109 @@ def envelope(w: dict) -> dict:
     return dict(workspace=w, checks=checks, statuses={p["id"]: plan_status(w, p, checks) for p in w["plans"]}, mode="server", rulePack=RULE_PACK, scope="资源时段、台账可用性、检查证据适用性与原文确认；不构成全域化学安全评估或开工许可。")
 
 
+def expiry_recheck_report(w: dict, as_of: str) -> dict:
+    """Return a reproducible expiry/overdue report for the current snapshot.
+
+    This is deliberately a pure report builder.  It does not mark evidence
+    verified, alter a plan, or create work items.  The durable endpoint stores
+    the report in ``spatial_jobs`` so a later browser request can inspect the
+    same result instead of silently treating a fresh calculation as a worker
+    run.  Plan impact is derived from the existing applicability checks, so an
+    expired record only affects a plan when its object, version and reservation
+    window make that record relevant.
+    """
+    as_of_dt = dt(as_of)
+    expired_evidence: list[dict] = []
+    expired_ids: set[str] = set()
+    for document in w.get("documents", []):
+        until = dt(document["validUntil"])
+        if document.get("status") == "verified" and until <= as_of_dt:
+            expired_ids.add(document["id"])
+            expired_evidence.append({
+                "documentId": document["id"],
+                "name": document["name"],
+                "equipmentId": document.get("equipmentId"),
+                "specVersion": document.get("specVersion"),
+                "validUntil": document["validUntil"],
+                "source": document.get("source"),
+                "status": document.get("status"),
+                "reason": "valid-until-reached",
+            })
+
+    active_task_states = {"open", "submitted", "reopened"}
+    overdue_tasks = [
+        {
+            "taskId": task["id"],
+            "title": task["title"],
+            "planId": task.get("planId"),
+            "equipmentId": task.get("equipmentId"),
+            "owner": task.get("owner"),
+            "dueAt": task["dueAt"],
+            "status": task["status"],
+            "reason": "due-at-reached",
+        }
+        for task in w.get("tasks", [])
+        if task.get("status") in active_task_states and dt(task["dueAt"]) <= as_of_dt
+    ]
+
+    checks = check_workspace(w)
+    impacted_plans: list[dict] = []
+    for plan in w.get("plans", []):
+        if plan.get("archived") or plan.get("lifecycle") == "cancelled":
+            continue
+        plan_checks = [check for check in checks if check["planId"] == plan["id"]]
+        expired_check_ids: list[str] = []
+        expired_plan_document_ids: set[str] = set()
+        for check in plan_checks:
+            if check.get("code") != "EVIDENCE":
+                continue
+            for applicability in check.get("evidenceApplicability", []):
+                document_id = applicability.get("documentId")
+                if document_id in expired_ids and applicability.get("state") in {"expired", "partial", "mismatched", "candidate"}:
+                    expired_check_ids.append(check["id"])
+                    expired_plan_document_ids.add(document_id)
+                    break
+        decisions = [decision for decision in w.get("decisions", []) if decision.get("planId") == plan["id"]]
+        decision_invalidated = bool(decisions and decisions[-1].get("basis") != basis(w, plan))
+        if not expired_check_ids and not decision_invalidated:
+            continue
+        reasons: list[str] = []
+        if expired_check_ids:
+            reasons.append("evidence-valid-until-reached")
+        if decision_invalidated:
+            reasons.append("recorded-decision-basis-changed")
+        impacted_plans.append({
+            "planId": plan["id"],
+            "code": plan["code"],
+            "revision": plan["revision"],
+            "status": plan_status(w, plan, plan_checks),
+            "reasonCodes": reasons,
+            "expiredDocumentIds": sorted(expired_plan_document_ids),
+            "checkIds": sorted(set(expired_check_ids)),
+            "decisionInvalidated": decision_invalidated,
+        })
+
+    impacted_plans.sort(key=lambda item: item["planId"])
+    expired_evidence.sort(key=lambda item: (item["validUntil"], item["documentId"]))
+    overdue_tasks.sort(key=lambda item: (item["dueAt"], item["taskId"]))
+    return {
+        "runType": "expiry_recheck",
+        "trigger": "manual",
+        "asOf": as_of,
+        "worker": "not-running",
+        "scope": "已核验资料有效期、未完成任务截止时间、受影响的当前计划",
+        "expiredEvidence": expired_evidence,
+        "overdueTasks": overdue_tasks,
+        "impactedPlans": impacted_plans,
+        "counts": {
+            "expiredEvidence": len(expired_evidence),
+            "overdueTasks": len(overdue_tasks),
+            "impactedPlans": len(impacted_plans),
+        },
+        "nextStep": "由负责人查看影响对象并手动补证、修订或重新复核；本次重检不会自动批准、取消或创建任务。",
+    }
+
+
 COPILOT_ACTION_KINDS = {
     "source_line", "equipment", "evidence", "rule", "relationship", "task", "scenario",
 }
@@ -1348,6 +1451,37 @@ class WorkspaceStore:
         with self.connection() as conn:
             rows = conn.execute("SELECT * FROM spatial_jobs WHERE plan_id=? ORDER BY created_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
         return [self._job_row(row) for row in rows]
+    def expiry_recheck(self, *, request_id: str, as_of: str, actor: str) -> dict:
+        """Run and persist a manual expiry scan using the durable job ledger.
+
+        This is intentionally synchronous.  The returned ``worker`` marker is
+        ``not-running`` and makes the boundary explicit until a real scheduler
+        and outbox are introduced.  Idempotency is keyed by the caller's
+        request ID, so retrying a browser request returns the original report.
+        """
+        try:
+            dt(as_of)
+        except (TypeError, ValueError) as error:
+            raise ValueError("重检时间必须是带时区的 ISO 时间。") from error
+        job_id = f"expiry-recheck:{request_id}"
+        job = self.begin_job(job_id=job_id, kind="expiry_recheck", plan_id=None, idempotency_key=request_id)
+        if job["status"] == "succeeded" and job.get("result"):
+            stored_as_of = job["result"].get("asOf")
+            if stored_as_of and dt(stored_as_of) != dt(as_of):
+                raise HTTPException(409, "同一 requestId 不能用于不同的重检时间。")
+            return job
+        if job["status"] in {"failed", "cancelled"}:
+            raise HTTPException(409, f"该重检任务已处于 {job['status']} 终态，请更换 requestId 重试。")
+        self.set_job_running(job_id)
+        try:
+            report = expiry_recheck_report(self.read(), as_of)
+            report.update({"requestId": request_id, "jobId": job_id, "generatedAt": now(), "actor": actor})
+            return self.finish_job(job_id, status="succeeded", result=report)
+        except Exception as error:
+            current = self.job(job_id)
+            if current and current["status"] in {"queued", "running"}:
+                self.finish_job(job_id, status="failed", error=f"{type(error).__name__}: {str(error)[:500]}")
+            raise
     def restore(self, *, expected_revision: int, request_id: str, candidate: dict, actor: str) -> dict:
         """Replace the workspace only after validation and a durable pre-restore snapshot.
 
@@ -1449,6 +1583,18 @@ class RestoreRequest(StrictModel):
     requestId: str = Field(min_length=8, max_length=128)
     confirm: Literal["RESTORE"]
     workspace: dict
+
+
+class ExpiryRecheckRequest(StrictModel):
+    """A manually-triggered, durable expiry scan.
+
+    ``asOf`` is injectable so an operator can reproduce a review at a known
+    time.  The endpoint records the result as a durable job; it does not claim
+    that a background worker or scheduler is running.
+    """
+
+    requestId: str = Field(default_factory=lambda: uid("expiry"), min_length=8, max_length=128)
+    asOf: str | None = None
 
 router = APIRouter(prefix="/api/spatial", tags=["web-workspace"])
 
@@ -1740,6 +1886,28 @@ def get_job(job_id: str, actor: str = Depends(local_owner)):
     if not job:
         raise HTTPException(404, '后台任务不存在。')
     return job
+
+
+@router.post('/expiry/recheck')
+def recheck_expiry(body: ExpiryRecheckRequest, actor: str = Depends(local_owner)):
+    """Persist a manual expiry/overdue scan for review.
+
+    The endpoint is deliberately explicit about its boundary: it evaluates
+    effective evidence windows and task deadlines at ``asOf`` but does not
+    pretend that a background Worker, notification channel, or automatic task
+    creator is present.  A client may omit ``asOf`` to use the current UTC
+    instant; tests and incident reviews should pass a fixed, timezone-aware
+    timestamp for reproducibility.
+    """
+    as_of = body.asOf or now()
+    try:
+        return store().expiry_recheck(request_id=body.requestId, as_of=as_of, actor=actor)
+    except HTTPException:
+        raise
+    except (ValueError, TypeError) as error:
+        raise HTTPException(422, str(error)) from error
+    except Exception as error:
+        raise HTTPException(500, f"到期重检失败：{type(error).__name__}: {str(error)[:180]}") from error
 
 @router.post('/jobs/{job_id}/cancel')
 def cancel_job(job_id: str, actor: str = Depends(local_owner)):
