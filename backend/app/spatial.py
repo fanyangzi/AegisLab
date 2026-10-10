@@ -196,6 +196,11 @@ class Task(StrictModel):
     dueAt: str
     status: Literal["open", "submitted", "done"]
     note: str = Field(max_length=5000)
+    sourceId: str | None = Field(default=None, max_length=180)
+    sourceLine: int | None = Field(default=None, ge=1)
+    documentIds: list[str] = Field(default_factory=list, max_length=100)
+    actionKind: str | None = Field(default=None, max_length=60)
+    actionTarget: dict[str, Any] | None = None
 
 class Decision(StrictModel):
     id: str
@@ -384,12 +389,55 @@ def find_equipment_position(w: dict, equipment: dict) -> tuple[float, float]:
 
 
 def basis(w: dict, p: dict) -> str:
-    ids = {r["equipmentId"] for r in p["reservations"]}
-    excluded = {"x", "z", "rotation", "name", "owner", "description"}
-    return canonical(dict(rulePack=RULE_PACK, plan=p,
-        equipment=[{k: v for k, v in e.items() if k not in excluded} for e in w["equipment"] if e["id"] in ids],
-        documents=[d for d in w["documents"] if d["equipmentId"] in ids],
-        otherReservations=[dict(planId=q["id"], **r) for q in w["plans"] if q["id"] != p["id"] and not q["archived"] for r in q["reservations"] if r["equipmentId"] in ids]))
+    """Fingerprint only facts that can change this plan's checks.
+
+    Display edits, camera placement, unrelated future maintenance and distant
+    reservations must not revoke a recorded decision.  The fingerprint still
+    changes for a source/step/booking edit, a relevant equipment state or
+    specification change, and evidence whose applicability window intersects
+    the plan's actual reservations.
+    """
+    reservations = sorted((dict(r) for r in p.get("reservations", [])), key=lambda r: (r.get("equipmentId", ""), r.get("start", ""), r.get("end", ""), r.get("id", "")))
+    ids = {r["equipmentId"] for r in reservations}
+    def relevant(interval: dict, windows: list[dict]) -> bool:
+        return any(overlap(interval, window) for window in windows)
+    relevant_equipment = []
+    for e in w["equipment"]:
+        if e["id"] not in ids:
+            continue
+        e_reservations = [r for r in reservations if r["equipmentId"] == e["id"]]
+        maintenance = sorted((m for m in e.get("maintenance", []) if relevant(m, e_reservations)), key=lambda m: (m.get("start", ""), m.get("end", ""), m.get("id", "")))
+        relevant_equipment.append({
+            "id": e["id"], "labId": e["labId"], "kind": e["kind"],
+            "status": e["status"], "capacity": e["capacity"],
+            "requiresEvidence": e["requiresEvidence"], "specVersion": e["specVersion"],
+            "maintenance": maintenance,
+        })
+    relevant_equipment.sort(key=lambda e: e["id"])
+    relevant_documents = []
+    for d in w["documents"]:
+        if d.get("equipmentId") not in ids:
+            continue
+        doc_window = {"start": d["validFrom"], "end": d["validUntil"]}
+        if not relevant(doc_window, reservations) and d.get("kind") == "inspection":
+            continue
+        relevant_documents.append({k: d.get(k) for k in ("id", "equipmentId", "kind", "specVersion", "status", "validFrom", "validUntil", "content", "source", "reviewedBy", "reviewedAt")})
+    relevant_documents.sort(key=lambda d: (d.get("equipmentId") or "", d.get("kind", ""), d.get("id", "")))
+    other = []
+    for q in w["plans"]:
+        if q["id"] == p["id"] or q["archived"]:
+            continue
+        for r in q.get("reservations", []):
+            if r["equipmentId"] in ids and relevant(r, reservations):
+                other.append(dict(planId=q["id"], **r))
+    other.sort(key=lambda r: (r.get("equipmentId", ""), r.get("start", ""), r.get("end", ""), r.get("planId", ""), r.get("id", "")))
+    plan_facts = {
+        "id": p["id"], "labId": p["labId"], "revision": p.get("revision"), "sourceName": p.get("sourceName"), "source": p["source"],
+        "steps": [{k: s.get(k) for k in ("id", "text", "line", "equipmentIds", "confirmed")} for s in sorted(p.get("steps", []), key=lambda s: (s.get("line", 0), s.get("id", "")))],
+        "reservations": reservations,
+    }
+    return canonical(dict(rulePack=RULE_PACK, plan=plan_facts, equipment=relevant_equipment,
+        documents=relevant_documents, otherReservations=other))
 
 
 def check_workspace(w: dict) -> list[dict]:
@@ -432,7 +480,15 @@ def check_workspace(w: dict) -> list[dict]:
                 docs = [d for d in w["documents"] if d["equipmentId"] == identifier and d["kind"] == "inspection"]
                 valid = [d for d in docs if d["status"] == "verified" and d["specVersion"] == e["specVersion"]]
                 covered = all(any(dt(d["validFrom"]) <= dt(r["start"]) and dt(d["validUntil"]) >= dt(r["end"]) for d in valid) for r in reservations)
+                applicability = []
+                for d in docs:
+                    if d["status"] != "verified": state = "candidate"
+                    elif d["specVersion"] != e["specVersion"]: state = "mismatched"
+                    elif not any(dt(d["validFrom"]) <= dt(r["start"]) and dt(d["validUntil"]) >= dt(r["end"]) for r in reservations): state = "expired"
+                    else: state = "supports"
+                    applicability.append({"documentId": d["id"], "state": state, "specVersion": d["specVersion"], "validFrom": d["validFrom"], "validUntil": d["validUntil"]})
                 add("EVIDENCE", "pass" if covered else "unknown", f"{e['code']} 的检查证据适用" if covered else f"{e['code']} 缺少适用的检查证据", "对象、规格版本、核验状态与全部使用时段均匹配。" if covered else "需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。", identifier, documents=[d["id"] for d in docs])
+                results[-1]["evidenceApplicability"] = applicability
     return results
 
 
@@ -515,9 +571,12 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
         }
     steps = [step.model_dump(mode="json") if hasattr(step, "model_dump") else step for step in parsed.get("steps", [])]
     substances = [substance.model_dump(mode="json") if hasattr(substance, "model_dump") else substance for substance in parsed.get("substances", [])]
-    for index, step in enumerate(steps):
-        if index < len(plan.get("steps", [])):
-            source_step = plan["steps"][index]
+    plan_steps_by_line = {int(item.get("line")): item for item in plan.get("steps", []) if item.get("line") is not None}
+    for step in steps:
+        # Source line is the only legal join key.  Never borrow a plan step by
+        # array position after a model has reordered or omitted entries.
+        source_step = plan_steps_by_line.get(step.get("source_line") or step.get("line"))
+        if source_step:
             step.setdefault("line", source_step.get("line"))
             step.setdefault("planEquipmentIds", source_step.get("equipmentIds", []))
     hazards: list[dict] = []
@@ -651,7 +710,7 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
     scenarios.append({"id": "evidence-first", "name": "先补证再放行", "kind": "workflow", "status": "suggested", "summary": "不改变排程，优先处理证据缺口和原文确认。", "counts": baseline_counts, "changes": [{"action": "complete-evidence", "count": len(evidence_gaps)}], "reasoning": ["不改变正式资源预约", f"先闭环 {len(evidence_gaps)} 个证据或确认缺口", "由负责人完成复核后再形成新修订"], "actionability": "task", **action("scenario", {"planId": plan["id"], "scenarioId": "evidence-first"})})
 
     return {
-        "entities": {"steps": len(steps), "hazards": unique_hazards, "substances": substances, "ppe": parsed.get("ppe", []), "equipment": parsed.get("equipment", []), "wasteStreams": parsed.get("waste_streams", []), "ventilation": parsed.get("ventilation")},
+        "entities": {"steps": len(steps), "hazards": unique_hazards, "substances": substances, "ppe": parsed.get("ppe", []), "equipment": parsed.get("equipment", []), "wasteStreams": parsed.get("waste_streams", []), "ventilation": parsed.get("ventilation"), "modelCandidates": parsed.get("model_candidates", [])},
         "relations": relations,
         "riskSignals": unique_hazards,
         "conflicts": conflicts,
@@ -666,25 +725,46 @@ def _merge_model_parse(parsed: dict, model_fields: Any) -> tuple[dict, bool]:
     """Merge a model candidate without losing deterministic source anchors.
 
     The model is useful for prose SOPs where the deterministic vocabulary is
-    intentionally small.  Every accepted step inherits the deterministic
-    evidence reference at the same ordinal position; the plan endpoint later
-    adds the actual source line.  Invalid or partial model output is ignored
-    field-by-field so the offline parser remains the authoritative fallback.
+    intentionally small.  A model step is accepted only when it carries an
+    explicit document revision and source line/text hash that matches the
+    source ledger.  Array order, title similarity and missing spans are never
+    allowed to inherit a trusted citation.
     """
     if not isinstance(model_fields, dict):
         return parsed, False
     merged = dict(parsed)
+    # Candidate output is kept separate from the confirmed deterministic
+    # parse.  A model may explain an anchored line, but it cannot silently
+    # promote a guessed control or chemical into a fact used by rules.
+    merged["model_candidates"] = []
     used = False
 
     raw_steps = model_fields.get("steps")
     if isinstance(raw_steps, list):
         candidates = []
         from .models import LabStep, Substance
+        source_steps = list(parsed.get("steps", []))
         for index, item in enumerate(raw_steps):
             if not isinstance(item, dict):
                 continue
             instruction = str(item.get("instruction", "")).strip()
             if not instruction:
+                continue
+            revision = item.get("documentRevisionId") or item.get("document_revision_id")
+            source_line = item.get("sourceLine") or item.get("source_line")
+            source_hash = item.get("sourceTextHash") or item.get("source_text_hash")
+            try:
+                source_line = int(source_line)
+            except (TypeError, ValueError):
+                source_line = None
+            matched = next((candidate for candidate in source_steps if candidate.source_line == source_line), None)
+            if not revision or revision != parsed.get("document_revision_id") or matched is None:
+                # Unanchored model text remains visible only through the
+                # deterministic fallback; it cannot become a cited fact.
+                continue
+            if source_hash and source_hash != matched.source_text_hash:
+                continue
+            if matched.instruction.strip() != instruction.strip():
                 continue
             try:
                 step = LabStep(
@@ -696,18 +776,33 @@ def _merge_model_parse(parsed: dict, model_fields: Any) -> tuple[dict, bool]:
                     equipment=[str(v).strip() for v in item.get("equipment", []) if str(v).strip()][:20],
                     ventilation=str(item.get("ventilation") or "").strip() or None,
                     waste_stream=str(item.get("waste_stream") or "").strip() or None,
-                    evidence_refs=(parsed.get("steps", [])[index].evidence_refs if index < len(parsed.get("steps", [])) else []),
+                    evidence_refs=list(matched.evidence_refs),
+                    document_revision_id=matched.document_revision_id,
+                    source_line=matched.source_line,
+                    source_text_hash=matched.source_text_hash,
+                    control_assertions=list(matched.control_assertions),
                 )
             except (TypeError, ValueError):
                 continue
             candidates.append(step)
+            merged["model_candidates"].append({
+                "kind": "step",
+                "documentRevisionId": matched.document_revision_id,
+                "sourceLine": matched.source_line,
+                "sourceTextHash": matched.source_text_hash,
+                "instruction": instruction,
+                "hazard": step.hazard,
+                "controls": list(step.controls),
+                "requiresPpe": list(step.requires_ppe),
+                "equipment": list(step.equipment),
+                "ventilation": step.ventilation,
+                "wasteStream": step.waste_stream,
+                "status": "candidate",
+            })
         if candidates:
-            # A model may omit a low-signal line.  Keep the deterministic
-            # source step instead of silently shrinking the review surface.
-            if len(candidates) < len(parsed.get("steps", [])):
-                merged["steps"] = candidates + list(parsed.get("steps", []))[len(candidates):]
-            else:
-                merged["steps"] = candidates
+            # Deterministic fields remain authoritative.  This survives model
+            # reordering, merging and omission without borrowing another
+            # line's evidence or treating a candidate as confirmation.
             used = True
 
     raw_substances = model_fields.get("substances")
@@ -716,6 +811,8 @@ def _merge_model_parse(parsed: dict, model_fields: Any) -> tuple[dict, bool]:
         from .models import Substance
         for item in raw_substances:
             if not isinstance(item, dict) or not str(item.get("name", "")).strip():
+                continue
+            if str(item.get("name", "")).strip() not in parsed.get("source", "") and str(item.get("name", "")).strip() not in "\n".join(getattr(s, "instruction", "") for s in parsed.get("steps", [])):
                 continue
             try:
                 candidates.append(Substance(
@@ -736,12 +833,21 @@ def _merge_model_parse(parsed: dict, model_fields: Any) -> tuple[dict, bool]:
         values = model_fields.get(key)
         if isinstance(values, list):
             normalized = sorted({str(value).strip() for value in values if str(value).strip()})
+            accepted = [value for value in normalized if any(value in str(getattr(step, "instruction", "")) for step in parsed.get("steps", []))]
             if normalized:
-                merged[key] = sorted({*merged.get(key, []), *normalized})
+                merged["model_candidates"].append({"kind": key, "values": normalized, "accepted": accepted, "status": "candidate"})
+                # Only source-present values already recognized by the
+                # deterministic parser may enrich the confirmed aggregate.
+                if accepted:
+                    merged[key] = sorted({*merged.get(key, []), *accepted})
                 used = True
     ventilation = model_fields.get("ventilation")
     if isinstance(ventilation, str) and ventilation.strip():
-        merged["ventilation"] = ventilation.strip()
+        candidate = ventilation.strip()
+        accepted = bool(merged.get("ventilation")) and any(candidate in str(getattr(step, "instruction", "")) for step in parsed.get("steps", []))
+        merged["model_candidates"].append({"kind": "ventilation", "value": candidate, "accepted": accepted, "status": "candidate"})
+        if accepted:
+            merged["ventilation"] = candidate
         used = True
     return merged, used
 
@@ -822,7 +928,21 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         d.update(status=x["status"], reviewedBy=actor, reviewedAt=now())
         summary = "记录资料核验结果" if d["status"] == "verified" else "退回资料"
     elif action == "save_task":
-        upsert("tasks", copy.deepcopy(x["task"]))
+        task = copy.deepcopy(x["task"])
+        # An AI action carries a stable source id and action kind.  Reopening
+        # the same suggestion must not create a second indistinguishable open
+        # task; an explicitly completed task may be reopened only by changing
+        # its source/action or by editing the existing record.
+        if task.get("sourceId") and task.get("actionKind"):
+            duplicate = next((existing for existing in next_w["tasks"] if existing["id"] != task.get("id")
+                and existing.get("planId") == task.get("planId")
+                and existing.get("sourceId") == task.get("sourceId")
+                and existing.get("sourceLine") == task.get("sourceLine")
+                and existing.get("actionKind") == task.get("actionKind")
+                and existing.get("status") in {"open", "submitted"}), None)
+            if duplicate:
+                raise ValueError("该 AI 建议已有未完成任务，请打开原任务继续处理。")
+        upsert("tasks", task)
         object_id, summary = x["task"]["id"], "创建协作任务"
     elif action == "update_task":
         t = get("tasks", x["id"])
@@ -930,6 +1050,19 @@ def local_owner(request: Request) -> str:
             raise HTTPException(403, "拒绝非本机网页来源。")
     return os.getenv("AEGIS_WORKSPACE_OWNER", "本机负责人")
 
+
+def local_role() -> str:
+    """Return the server-configured role for this local workspace.
+
+    Browser payloads never choose this value.  The local single-owner default
+    is a safety owner for development; deployments should set an explicit
+    role and a workspace token before exposing the API beyond localhost.
+    """
+    role = os.getenv("AEGIS_WORKSPACE_ROLE", "safety_owner").strip()
+    if role not in {"instructor", "researcher", "safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(500, "工作区角色配置无效。")
+    return role
+
 class Mutation(StrictModel):
     expectedRevision: int = Field(ge=0)
     requestId: str = Field(min_length=8, max_length=128)
@@ -950,6 +1083,8 @@ def get_source_registry(actor: str = Depends(local_owner)):
 
 @router.post("/actions")
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
+    if body.type == "approve" and local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有记录正式复核的权限。")
     try:
         return envelope(store().mutate(body.expectedRevision, body.requestId, body.type, body.payload, actor))
     except (ValidationError, ValueError, KeyError, TypeError) as error:
@@ -1037,19 +1172,25 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
         structured_steps = []
         for index, source_step in enumerate(p['steps'], 1):
             text = source_step['text']
-            hazard = '挥发性溶剂暴露、火灾与废液风险' if any(term in text for term in ('溶剂', '萃取', '分液', '蒸发', '废液', '色谱', '挥发')) else None
-            controls = []
-            if any(term in text for term in ('通风柜', '排风', '通风')):
-                controls.append('在通风柜或有效局部排风下操作')
-            if any(term in text for term in ('废液', '废弃物')):
-                controls.append('按相容性和类别分流并标识废液')
+            # Re-run the same deterministic parser on the exact source line;
+            # do not invent PPE or controls merely because a word suggests a
+            # hazard.  A missing control must remain an explicit unknown.
+            line_parse = parse_sop(text)
+            candidate = line_parse.get('steps', [None])[0]
+            if candidate is None:
+                candidate = LabStep(order=index, instruction=text)
             equipment_names = [e['name'] for e in w['equipment'] if e['id'] in source_step.get('equipmentIds', [])]
-            structured_steps.append(LabStep(order=index, instruction=text, hazard=hazard, controls=controls,
-                requires_ppe=['护目镜', '化学防护手套'] if hazard else [], equipment=equipment_names,
-                ventilation='通风柜' if '通风柜' in text else None,
-                waste_stream='有机废液' if '废液' in text else None,
-                evidence_refs=[f"plan-line-{source_step['line']}"]))
+            structured_steps.append(candidate.model_copy(update={
+                'order': index,
+                'instruction': text,
+                'equipment': sorted(set(candidate.equipment + equipment_names)),
+                'evidence_refs': [f"plan-line-{source_step['line']}"],
+                'document_revision_id': f"planrev-{p['id']}-v{p['revision']}",
+                'source_line': source_step['line'],
+                'source_text_hash': hashlib.sha256(source_step['text'].encode('utf-8')).hexdigest(),
+            }))
         parsed['steps'] = structured_steps
+        parsed['document_revision_id'] = f"planrev-{p['id']}-v{p['revision']}"
         parsed['ppe'] = sorted({ppe for step in structured_steps for ppe in step.requires_ppe})
         parsed['equipment'] = sorted({item for step in structured_steps for item in step.equipment})
         parsed['ventilation'] = '通风柜' if any(step.ventilation for step in structured_steps) else parsed.get('ventilation')

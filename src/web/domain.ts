@@ -12,10 +12,22 @@ export function canonical(value: unknown): string {
 }
 /** Fingerprint of decision-relevant facts, not of camera position or UI selection. */
 export function basis(workspace: Workspace, plan: Plan): string {
-  const ids = new Set(plan.reservations.map(r => r.equipmentId))
-  return canonical({ rulePack: RULE_PACK, plan, equipment: workspace.equipment.filter(e => ids.has(e.id)).map(({ x, z, rotation, name, owner, description, ...e }) => e),
-    documents: workspace.documents.filter(d => d.equipmentId && ids.has(d.equipmentId)),
-    otherReservations: workspace.plans.filter(p => p.id !== plan.id && !p.archived).flatMap(p => p.reservations.filter(r => ids.has(r.equipmentId)).map(r => ({ planId: p.id, ...r }))) })
+  const reservations = plan.reservations.map(r => ({ ...r })).sort((a, b) => `${a.equipmentId}|${a.start}|${a.end}|${a.id}`.localeCompare(`${b.equipmentId}|${b.start}|${b.end}|${b.id}`))
+  const ids = new Set(reservations.map(r => r.equipmentId))
+  const relevant = (a: {start: string; end: string}, b: {start: string; end: string}) => overlaps(a, b)
+  const equipment = workspace.equipment.filter(e => ids.has(e.id)).map(e => ({
+    id: e.id, labId: e.labId, kind: e.kind, status: e.status, capacity: e.capacity,
+    requiresEvidence: e.requiresEvidence, specVersion: e.specVersion,
+    maintenance: e.maintenance.filter(m => reservations.filter(r => r.equipmentId === e.id).some(r => relevant(m, r))).sort((a, b) => `${a.start}|${a.end}|${a.id}`.localeCompare(`${b.start}|${b.end}|${b.id}`)),
+  })).sort((a, b) => a.id.localeCompare(b.id))
+  const documents = workspace.documents.filter(d => {
+    if (!d.equipmentId || !ids.has(d.equipmentId)) return false
+    if (d.kind !== 'inspection') return true
+    return reservations.some(r => relevant({ start: d.validFrom, end: d.validUntil }, r))
+  }).map(d => ({ id: d.id, equipmentId: d.equipmentId, kind: d.kind, specVersion: d.specVersion, status: d.status, validFrom: d.validFrom, validUntil: d.validUntil, content: d.content, source: d.source, reviewedBy: d.reviewedBy, reviewedAt: d.reviewedAt })).sort((a, b) => `${a.equipmentId ?? ''}|${a.kind}|${a.id}`.localeCompare(`${b.equipmentId ?? ''}|${b.kind}|${b.id}`))
+  const otherReservations = workspace.plans.filter(p => p.id !== plan.id && !p.archived).flatMap(p => p.reservations.filter(r => ids.has(r.equipmentId) && reservations.some(current => relevant(r, current))).map(r => ({ planId: p.id, ...r }))).sort((a, b) => `${a.equipmentId}|${a.start}|${a.end}|${a.planId}|${a.id}`.localeCompare(`${b.equipmentId}|${b.start}|${b.end}|${b.planId}|${b.id}`))
+  const planFacts = { id: plan.id, labId: plan.labId, revision: plan.revision, sourceName: plan.sourceName, source: plan.source, steps: plan.steps.map(({ id, text, line, equipmentIds, confirmed }) => ({ id, text, line, equipmentIds, confirmed })).sort((a, b) => a.line - b.line || a.id.localeCompare(b.id)), reservations }
+  return canonical({ rulePack: RULE_PACK, plan: planFacts, equipment, documents, otherReservations })
 }
 export function parseSteps(source: string, equipment: Equipment[]) {
   return source.split(/\r?\n/).map((raw, index) => ({ raw, index })).filter(({ raw }) => raw.trim()).map(({ raw, index }) => ({ id: uid('step'), text: raw.trim(), line: index + 1, confirmed: false, equipmentIds: equipment.filter(e => new RegExp(`(^|[^A-Za-z0-9_-])${e.code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_-])`).test(raw)).map(e => e.id) }))
@@ -50,7 +62,9 @@ export function checkWorkspace(w: Workspace): Check[] {
         const docs = w.documents.filter(d => d.equipmentId === id && d.kind === 'inspection')
         const valid = docs.filter(d => d.status === 'verified' && d.specVersion === e.specVersion)
         const covered = reservations.every(r => valid.some(d => millis(d.validFrom) <= millis(r.start) && millis(d.validUntil) >= millis(r.end)))
-        add('EVIDENCE', covered ? 'pass' : 'unknown', covered ? `${e.code} 的检查证据适用` : `${e.code} 缺少适用的检查证据`, covered ? '对象、规格版本、核验状态与全部使用时段均匹配。' : '需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。', id, [], docs.map(d => d.id))
+        const evidenceApplicability = docs.map(d => ({ documentId: d.id, state: d.status !== 'verified' ? 'candidate' as const : d.specVersion !== e.specVersion ? 'mismatched' as const : reservations.some(r => millis(d.validFrom) <= millis(r.start) && millis(d.validUntil) >= millis(r.end)) ? 'supports' as const : 'expired' as const, specVersion: d.specVersion, validFrom: d.validFrom, validUntil: d.validUntil }))
+        const check = { id: `${p.id}:EVIDENCE:${id}`, planId: p.id, code: 'EVIDENCE', state: covered ? 'pass' as const : 'unknown' as const, title: covered ? `${e.code} 的检查证据适用` : `${e.code} 缺少适用的检查证据`, detail: covered ? '对象、规格版本、核验状态与全部使用时段均匹配。' : '需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。', equipmentId: id, relatedPlanIds: [] as string[], documentIds: docs.map(d => d.id), line: p.steps.find(s => s.equipmentIds.includes(id))?.line ?? null, evidenceApplicability }
+        all.push(check)
       }
     }
   }
@@ -152,7 +166,7 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
       if (!['verified','rejected'].includes(x.status)) throw new Error('资料核验状态无效。'); d.status=x.status; d.reviewedAt=new Date().toISOString(); d.reviewedBy='本机操作者'
       summary=d.status==='verified'?'记录资料核验结果':'退回资料'; break
     }
-    case 'save_task': upsert(next.tasks,x.task as Task); objectId=x.task.id; summary='创建协作任务'; break
+    case 'save_task': { const task=structuredClone(x.task) as Task; if (task.sourceId && task.actionKind && next.tasks.some(existing => existing.id!==task.id && existing.planId===task.planId && existing.sourceId===task.sourceId && existing.sourceLine===task.sourceLine && existing.actionKind===task.actionKind && (existing.status==='open'||existing.status==='submitted'))) throw new Error('该 AI 建议已有未完成任务，请打开原任务继续处理。'); upsert(next.tasks,task); objectId=task.id; summary='创建协作任务'; break }
     case 'update_task': { const t=next.tasks.find(t=>t.id===x.id); if (!t || !['open','submitted','done'].includes(x.status)) throw new Error('任务状态无效'); t.status=x.status; t.note=x.note ?? t.note; summary='更新任务进度，不自动改变证据或审批'; break }
     case 'save_branch': {
       const b=x.branch as Branch; const p=next.plans.find(p=>p.id===b.planId)

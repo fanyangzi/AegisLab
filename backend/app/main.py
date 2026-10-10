@@ -5,7 +5,7 @@ import os
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from .spatial import _merge_model_parse, local_owner
+from .spatial import _merge_model_parse, local_owner, local_role
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -108,7 +108,8 @@ def ai_preview_sop(payload: SOPParseRequest) -> Dict[str, Any]:
     actions: list[dict[str, str]] = []
     for index, step in enumerate(parsed["steps"], 1):
         item = step.model_dump(mode="json") if hasattr(step, "model_dump") else step
-        source = f"SOP L{index}"
+        source_line = item.get("source_line") or item.get("sourceLine")
+        source = f"SOP L{source_line}" if source_line else "SOP 原文（待定位）"
         for substance in parsed["substances"]:
             substance_name = getattr(substance, "name", substance.get("name") if isinstance(substance, dict) else "")
             if substance_name and substance_name in str(item.get("instruction", "")):
@@ -154,29 +155,10 @@ def ai_preview_sop(payload: SOPParseRequest) -> Dict[str, Any]:
 def create_review_from_sop(payload: SOPParseRequest) -> Review:
     parsed = parse_sop(payload.sop_text)
     llm_fields = service.llm.extract_sop(payload.sop_text)
-    # The model can enrich ambiguous language, but deterministic evidence and
-    # the hard-rule engine remain authoritative for safety decisions.
-    if llm_fields:
-        try:
-            llm_steps = [LabStep(**item) for item in llm_fields.get("steps", []) if isinstance(item, dict) and item.get("instruction")]
-            for index, step in enumerate(llm_steps):
-                if not step.evidence_refs and index < len(parsed["steps"]):
-                    step.evidence_refs = parsed["steps"][index].evidence_refs
-            if llm_steps:
-                parsed["steps"] = llm_steps
-            llm_substances = [Substance(**item) for item in llm_fields.get("substances", []) if isinstance(item, dict) and item.get("name")]
-            if llm_substances:
-                parsed["substances"] = llm_substances
-            for key in ("ppe", "equipment", "waste_streams"):
-                values = llm_fields.get(key)
-                if isinstance(values, list) and values:
-                    parsed[key] = sorted({str(value).strip() for value in values if str(value).strip()})
-            if isinstance(llm_fields.get("ventilation"), str) and llm_fields["ventilation"].strip():
-                parsed["ventilation"] = llm_fields["ventilation"].strip()
-        except (TypeError, ValueError):
-            # Keep the deterministic parse when the model returns an invalid
-            # or incomplete structure.
-            llm_fields = {}
+    # Only explicitly source-anchored model fields may enrich the review.
+    # Missing spans, reordered steps and untrusted model citations remain a
+    # deterministic candidate instead of borrowing a neighbouring line.
+    parsed, model_used = _merge_model_parse(parsed, llm_fields)
     return service.create_review(ReviewCreate(
         title=payload.title,
         experiment_name=payload.title,
@@ -193,7 +175,7 @@ def create_review_from_sop(payload: SOPParseRequest) -> Review:
         ventilation=parsed["ventilation"],
         waste_streams=parsed["waste_streams"],
         evidence=[Evidence(**item) for item in parsed["evidence"]],
-        metadata={"synthetic": True, "input_sha256": parsed["input_sha256"], "parser": "llm-enriched-deterministic-v1" if llm_fields else "deterministic-sop-v1", "llm_extraction_used": bool(llm_fields)},
+        metadata={"synthetic": True, "input_sha256": parsed["input_sha256"], "parser": "llm-enriched-deterministic-v2" if model_used else "deterministic-sop-v2", "llm_extraction_used": model_used},
     ))
 
 
@@ -260,6 +242,10 @@ def decide_review(review_id: str, request: DecisionRequest) -> Review:
 @app.post("/reviews/{review_id}/gates/{gate_id}", response_model=Review, tags=["approval"])
 def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest) -> Review:
     try:
+        # The body may contain a display actor name, but the privilege comes
+        # from server-side workspace configuration rather than a client role
+        # selector.
+        request.actor_role = local_role()
         return service.decide_gate(review_id, gate_id, request)
     except KeyError as error:
         raise _not_found(error)
@@ -270,6 +256,7 @@ def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest) -> R
 @app.post("/reviews/{review_id}/override", response_model=Review, tags=["approval"])
 def override_review(review_id: str, request: OverrideRequest) -> Review:
     try:
+        request.actor_role = local_role()
         return service.override_review(review_id, request)
     except KeyError as error:
         raise _not_found(error)

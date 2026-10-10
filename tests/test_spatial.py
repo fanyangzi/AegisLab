@@ -11,6 +11,7 @@ from unittest.mock import patch
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from backend.app import spatial as s
+from backend.app.parser import parse_sop
 
 TEMPLATE = json.loads((Path(__file__).resolve().parents[1] / 'data/spatial-example.json').read_text())
 
@@ -84,9 +85,49 @@ class DomainTests(unittest.TestCase):
     def test_visual_change_preserves_basis(self):
         w=fixture();p=w['plans'][2];before=s.basis(w,p);next(e for e in w['equipment'] if e['id']=='A-01')['x']-=.2
         self.assertEqual(before,s.basis(w,p))
+    def test_unrelated_future_maintenance_does_not_change_basis(self):
+        w=fixture();p=w['plans'][2];before=s.basis(w,p)
+        next(e for e in w['equipment'] if e['id']=='A-01')['maintenance'].append({'id':'future','start':'2030-01-01T00:00:00Z','end':'2030-01-01T01:00:00Z','reason':'远期维护'})
+        self.assertEqual(before,s.basis(w,p))
+    def test_negated_and_proposed_controls_are_not_satisfied(self):
+        parsed=parse_sop('1. 未检查通风柜，尚未配备护目镜。\n2. 拟采用通风柜并计划补充实验服。')
+        self.assertEqual(parsed['steps'][0].ventilation, None)
+        self.assertEqual(parsed['steps'][0].requires_ppe, [])
+        states={(item['subject'], item['state']) for item in parsed['control_assertions']}
+        self.assertIn(('ventilation','negated'), states)
+        self.assertIn(('护目镜','negated'), states)
+        self.assertIn(('ventilation','proposed'), states)
+        self.assertEqual(parsed['steps'][1].controls, [])
+    def test_postfix_negation_and_history_are_not_aggregated(self):
+        parsed=parse_sop('1. 通风柜未检查，废液类别未确认。\n2. 上周已检查通风柜。')
+        self.assertIsNone(parsed['ventilation'])
+        self.assertEqual(parsed['waste_streams'], [])
+        self.assertEqual({item['state'] for item in parsed['control_assertions']}, {'negated', 'historical'})
+    def test_model_reordering_without_source_span_is_ignored(self):
+        parsed=parse_sop('1. 在通风柜中操作。\n2. 按类别分流废液。')
+        original=[step.instruction for step in parsed['steps']]
+        merged,used=s._merge_model_parse(parsed, {'steps':[{'order':2,'instruction':'按类别分流废液。'},{'order':1,'instruction':'在通风柜中操作。'}]})
+        self.assertFalse(used)
+        self.assertEqual([step.instruction for step in merged['steps']],original)
+    def test_anchored_model_is_candidate_and_cannot_promote_missing_control(self):
+        parsed=parse_sop('1. 未检查通风柜，尚未配备护目镜。')
+        merged,used=s._merge_model_parse(parsed, {'steps':[{
+            'order':1,'instruction':'未检查通风柜，尚未配备护目镜。',
+            'documentRevisionId':parsed['document_revision_id'],'sourceLine':1,
+            'sourceTextHash':parsed['steps'][0].source_text_hash,
+            'ventilation':'通风柜','requires_ppe':['护目镜']}]})
+        self.assertTrue(used)
+        self.assertIsNone(merged['ventilation'])
+        self.assertEqual(merged['ppe'],[])
+        self.assertTrue(merged['model_candidates'])
     def test_task_does_not_verify_document(self):
         w=fixture();changed=s.apply_operation(w,'update_task',{'id':w['tasks'][0]['id'],'status':'done','note':'提交材料'},'负责人')
         self.assertEqual(w['documents'],changed['documents'])
+    def test_duplicate_ai_task_is_rejected(self):
+        w=fixture(); task={'id':'ai-task-1','title':'补充检查证据','planId':'EXP-001','equipmentId':'F-01','owner':'陈同学','dueAt':'2026-10-09T18:00:00+08:00','status':'open','note':'来源 SOP L1','sourceId':'EXP-001:EVIDENCE:F-01','sourceLine':1,'documentIds':[],'actionKind':'evidence','actionTarget':{'type':'evidence','planId':'EXP-001','equipmentId':'F-01'}}
+        w=s.apply_operation(w,'save_task',{'task':task},'负责人')
+        duplicate=dict(task,id='ai-task-2')
+        with self.assertRaises(ValueError): s.apply_operation(w,'save_task',{'task':duplicate},'负责人')
     def test_invalid_source_reference(self):
         w=fixture();w['plans'][0]['steps'][0]['line']=999
         with self.assertRaises(ValueError):s.validate_workspace(w)
@@ -140,10 +181,20 @@ class StoreTests(unittest.TestCase):
 class ApiTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();s._store=s.WorkspaceStore(str(Path(self.temp.name)/'api.db'))
-        app=FastAPI();app.include_router(s.router);self.client=TestClient(app)
+        app=FastAPI();app.include_router(s.router)
+        # Mount the legacy review endpoint explicitly so this isolated API
+        # test exercises the real handler without opening the production DB.
+        from backend.app import main as legacy
+        app.post('/reviews/from-sop', response_model=legacy.Review, status_code=201)(legacy.create_review_from_sop)
+        self.legacy=legacy
+        from backend.app.db import SQLiteRepository
+        from backend.app.service import AegisService
+        self.service=AegisService(repo=SQLiteRepository(':memory:'))
+        self.service_patch=patch.object(legacy, 'service', self.service);self.service_patch.start()
+        self.client=TestClient(app)
         self.env=patch.dict(os.environ,{'AEGIS_WORKSPACE_TOKEN':''});self.env.start()
     def tearDown(self):
-        self.env.stop();self.client.close();s._store=None;self.temp.cleanup()
+        self.env.stop();self.client.close();self.service_patch.stop();s._store=None;self.temp.cleanup()
     def test_empty_api(self):self.assertEqual(self.client.get('/api/spatial').status_code,200)
     def test_save_lab_roundtrip_and_auto_place_resource(self):
         lab={'id':'lab-api','name':'API 测试实验室','description':'浏览器创建','width':10,'depth':8}
@@ -162,6 +213,11 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_TOKEN':'test-owner-token'}):
             self.assertEqual(self.client.get('/api/spatial').status_code,401)
             self.assertEqual(self.client.get('/api/spatial',headers={'Authorization':'Bearer test-owner-token'}).status_code,200)
+    def test_server_role_controls_approval(self):
+        initialize(s.store())
+        with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
+            response=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'role-deny-0001','type':'approve','payload':{'planId':'EXP-003','expectedPlanRevision':1,'comment':'尝试越权复核'}})
+        self.assertEqual(response.status_code,403)
     def test_utf8_text_import(self):
         r=self.client.post('/api/spatial/import-text?filename=test.md',content='计划文本\n检查 F-01'.encode())
         self.assertEqual(r.status_code,200);self.assertEqual(r.json()['locator'],'extracted-text-lines')
@@ -180,5 +236,10 @@ class ApiTests(unittest.TestCase):
         initialize(s.store());before=s.store().read()
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):r=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})
         self.assertEqual(r.status_code,200);self.assertEqual(s.store().read(),before);self.assertTrue(r.json()['degraded'])
+    def test_review_endpoint_rejects_unanchored_model_reordering(self):
+        with patch.object(self.service.llm, 'extract_sop', return_value={'steps':[{'order':2,'instruction':'第二步：完成转移操作'},{'order':1,'instruction':'第一步：准备样品'}]}):
+            response=self.client.post('/reviews/from-sop',json={'title':'来源绑定测试','room':'测试室','sop_text':'第一步：准备样品\n第二步：完成转移操作'})
+        self.assertEqual(response.status_code,201)
+        self.assertEqual([step['instruction'] for step in response.json()['steps']],['第一步：准备样品','第二步：完成转移操作'])
 
 if __name__=='__main__':unittest.main()

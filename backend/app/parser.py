@@ -46,10 +46,78 @@ def _evidence_id(line_no: int, line: str) -> str:
     return f"sop-line-{line_no}-{_hash(line)[:10]}"
 
 
+def _classify_occurrence(text: str, term: str, index: int) -> str:
+    """Classify one occurrence of ``term`` using its preceding clause."""
+    clause_start = max(text.rfind("，", 0, index), text.rfind(",", 0, index), text.rfind("；", 0, index), text.rfind(";", 0, index), text.rfind("。", 0, index)) + 1
+    prefix = text[clause_start:index]
+    suffix_end = len(text)
+    for mark in ("，", ",", "；", ";", "。"):
+        found = text.find(mark, index + len(term))
+        if found >= 0:
+            suffix_end = min(suffix_end, found)
+    suffix = text[index + len(term):suffix_end]
+    if re.search(r"(?:未(?:检查|确认|配备|开启|设置|使用)?|没有|无|尚未|未曾|不(?:使用|需要)?|未能)$", prefix):
+        return "negated"
+    if re.search(r"(?:未(?:检查|确认|配备|开启|设置|使用)?|没有|尚未|未确认|未检查)[^，,；;。]{0,10}$", suffix):
+        return "negated"
+    if re.search(r"(?:若|如果|如|条件是|在必要时|必要时).{0,12}$", prefix):
+        return "conditional"
+    if re.search(r"(?:拟|计划|将|准备|建议)(?:采用|使用|设置|配备|补充|确认)?$", prefix):
+        return "proposed"
+    if re.search(r"(?:曾经|历史|过去|上周|此前|之前|去年|历史上).{0,8}$", prefix):
+        return "historical"
+    return "satisfied"
+
+
+def _assertion_state(text: str, term: str) -> str:
+    """Classify a mention before promoting it to a satisfied control.
+
+    The parser is deliberately conservative: a negated, conditional, planned
+    or historical mention remains a typed assertion and never becomes a live
+    control merely because a keyword is present.
+    """
+    index = text.find(term)
+    if index < 0:
+        return "absent"
+    return _classify_occurrence(text, term, index)
+
+
+def _term_state(text: str, terms: tuple[str, ...]) -> str:
+    """Return the strongest state for any occurrence of a semantic term.
+
+    A satisfied occurrence is accepted only when the source contains one;
+    otherwise the most conservative non-live state is retained.  This keeps
+    aggregate fields from turning a sentence such as ``未检查通风柜`` into a
+    satisfied ventilation control merely because the keyword is present.
+    """
+    states: list[str] = []
+    for term in terms:
+        start = 0
+        while True:
+            index = text.find(term, start)
+            if index < 0:
+                break
+            # Do not let the short alias ``通风`` create a second satisfied
+            # occurrence inside a negated ``通风柜`` mention.
+            if term == "通风" and text[index:index + len("通风柜")] == "通风柜":
+                start = index + len(term)
+                continue
+            states.append(_classify_occurrence(text, term, index))
+            start = index + len(term)
+    if "satisfied" in states:
+        return "satisfied"
+    for state in ("negated", "conditional", "proposed", "historical"):
+        if state in states:
+            return state
+    return "absent"
+
+
 def parse_sop(text: str) -> Dict[str, Any]:
     source_lines = [(line_no, raw.strip()) for line_no, raw in enumerate(text.splitlines(), 1) if raw.strip()]
     lines = [line for _, line in source_lines]
     steps: List[LabStep] = []
+    document_revision_id = f"docrev-{_hash(text)[:16]}"
+    assertions: List[Dict[str, Any]] = []
     all_text = "\n".join(lines)
     substances: List[Substance] = []
     seen: set[str] = set()
@@ -77,11 +145,13 @@ def parse_sop(text: str) -> Dict[str, Any]:
         controls: List[str] = []
         ppe: List[str] = []
         equipment: List[str] = []
-        if any(term in instruction for term in ("通风柜", "局部排风", "通风")):
+        ventilation_state = _term_state(instruction, ("通风柜", "局部排风", "通风"))
+        if ventilation_state == "satisfied":
             controls.append("在通风柜或有效局部排风下操作")
         if any(term in instruction for term in ("防火", "火源", "点火")):
             controls.append("移除点火源并确认防火边界")
-        if any(term in instruction for term in ("废液", "废弃物")):
+        waste_state = _term_state(instruction, ("废液", "废弃物"))
+        if waste_state == "satisfied":
             controls.append("按相容性和类别分流并标识废液")
         if "分液漏斗" in instruction:
             equipment.append("分液漏斗")
@@ -90,10 +160,18 @@ def parse_sop(text: str) -> Dict[str, Any]:
         if "色谱" in instruction:
             equipment.append("色谱柱/收集容器")
         for term, normalized in PPE_TERMS.items():
-            if term in instruction:
+            if term in instruction and _assertion_state(instruction, term) == "satisfied":
                 ppe.append(normalized)
-        waste_stream = "有机废液" if "废液" in instruction else None
-        ventilation = "通风柜" if any(term in instruction for term in ("通风柜", "局部排风", "通风")) else None
+        waste_stream = "有机废液" if waste_state == "satisfied" else None
+        ventilation = "通风柜" if ventilation_state == "satisfied" else None
+        for subject, state in (("ventilation", ventilation_state), ("waste_stream", waste_state)):
+            if state not in ("absent", "satisfied"):
+                assertions.append({"subject": subject, "state": state, "line": line_no, "text": line, "documentRevisionId": document_revision_id})
+        for term, normalized in PPE_TERMS.items():
+            if term in instruction:
+                state = _assertion_state(instruction, term)
+                if state != "satisfied":
+                    assertions.append({"subject": normalized, "state": state, "line": line_no, "text": line, "documentRevisionId": document_revision_id})
         steps.append(LabStep(
             order=order,
             instruction=instruction,
@@ -104,15 +182,22 @@ def parse_sop(text: str) -> Dict[str, Any]:
             equipment=equipment,
             ventilation=ventilation,
             evidence_refs=refs,
+            document_revision_id=document_revision_id,
+            source_line=line_no,
+            source_text_hash=_hash(line),
+            control_assertions=[a for a in assertions if a.get("line") == line_no],
         ))
 
     if not steps and lines:
-        steps.append(LabStep(order=1, instruction=lines[0], evidence_refs=[_evidence_id(1, lines[0])]))
+        steps.append(LabStep(order=1, instruction=lines[0], evidence_refs=[_evidence_id(1, lines[0])], document_revision_id=document_revision_id, source_line=1, source_text_hash=_hash(lines[0])))
 
     ppe = sorted({item for step in steps for item in step.requires_ppe})
     equipment = sorted({item for step in steps for item in step.equipment})
-    ventilation = "通风柜" if "通风柜" in all_text or "局部排风" in all_text else None
-    waste_streams = ["有机废液"] if "废液" in all_text else []
+    # Only live, source-anchored step assertions become aggregate controls.
+    # Mentions in a negation, condition, proposal or historical note remain in
+    # ``control_assertions`` and therefore remain visible to the reviewer.
+    ventilation = "通风柜" if any(step.ventilation for step in steps) else None
+    waste_streams = ["有机废液"] if any(step.waste_stream for step in steps) else []
     return {
         "input_sha256": _hash(text),
         "steps": steps,
@@ -121,6 +206,8 @@ def parse_sop(text: str) -> Dict[str, Any]:
         "equipment": equipment,
         "ventilation": ventilation,
         "waste_streams": waste_streams,
+        "document_revision_id": document_revision_id,
+        "control_assertions": assertions,
         "evidence": [
             {
                 "id": _evidence_id(i, line),
