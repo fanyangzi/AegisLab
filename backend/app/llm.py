@@ -39,6 +39,7 @@ class LLMAdapter:
         self.base_url = os.getenv("LABSAFETY_LLM_BASE_URL", "").rstrip("/")
         self.model = os.getenv("LABSAFETY_LLM_MODEL", "")
         self.api_key = os.getenv("LABSAFETY_LLM_API_KEY", "")
+        self.reasoning_effort = os.getenv("LABSAFETY_LLM_REASONING_EFFORT", "low").strip() or "low"
         try:
             configured_timeout = float(os.getenv("LABSAFETY_LLM_TIMEOUT_SECONDS", "30"))
         except ValueError:
@@ -129,6 +130,7 @@ class LLMAdapter:
             "instructions": system,
             "input": user,
             "max_output_tokens": max_output_tokens,
+            "reasoning": {"effort": self.reasoning_effort},
         }
         try:
             return self._response_text(self._post_json("/responses", responses_payload))

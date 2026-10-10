@@ -215,6 +215,7 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(calls[0][0],'https://example.invalid/v1/responses')
         self.assertIn('instructions',calls[0][1])
         self.assertIn('input',calls[0][1])
+        self.assertEqual(calls[0][1]['reasoning'],{'effort':'low'})
         self.assertNotIn('messages',calls[0][1])
         self.assertNotIn('temperature',calls[0][1])
 
