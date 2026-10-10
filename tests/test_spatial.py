@@ -28,6 +28,13 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(s.envelope(s.empty_workspace())['checks'], [])
     def test_fixture_valid(self):
         s.validate_workspace(fixture())
+
+    def test_legacy_archived_plan_without_lifecycle_remains_valid(self):
+        w=fixture()
+        archived=next(plan for plan in w['plans'] if plan['archived'])
+        archived.pop('lifecycle',None)
+        s.validate_workspace(w)
+        self.assertEqual(s.envelope(w)['statuses'][archived['id']],'archived')
     def test_unknown_is_not_pass(self):
         checks=s.check_workspace(fixture())
         self.assertTrue(any(c['code']=='EVIDENCE' and c['planId']=='EXP-001' and c['state']=='unknown' for c in checks))
@@ -50,6 +57,38 @@ class DomainTests(unittest.TestCase):
     def test_eligible_review_is_recorded(self):
         w=s.apply_operation(fixture(),'approve',{'planId':'EXP-003','expectedPlanRevision':1,'comment':'已核对登记范围'},'负责人')
         self.assertEqual(s.envelope(w)['statuses']['EXP-003'],'approved')
+
+    def test_plan_archive_requires_current_checks_and_confirmation(self):
+        w=fixture(); plan=copy.deepcopy(next(p for p in w['plans'] if p['id']=='EXP-001'))
+        plan['archived']=True
+        with self.assertRaises(ValueError):
+            s.apply_operation(w,'save_plan',{'plan':plan,'expectedPlanRevision':1},'负责人')
+        # EXP-001 intentionally has an unresolved inspection applicability
+        # check; toggling the display flag must not hide that uncertainty.
+        self.assertFalse(next(p for p in w['plans'] if p['id']=='EXP-001')['archived'])
+
+    def test_plan_lifecycle_submission_and_cancel_are_server_transitions(self):
+        w=fixture()
+        with self.assertRaises(ValueError):
+            s.apply_operation(w,'transition_plan',{'planId':'EXP-004','lifecycle':'submitted'},'负责人')
+        cancelled=s.apply_operation(w,'transition_plan',{'planId':'EXP-004','lifecycle':'cancelled'},'负责人')
+        self.assertEqual(s.envelope(cancelled)['statuses']['EXP-004'],'cancelled')
+        self.assertFalse(any(check['planId']=='EXP-004' for check in s.check_workspace(cancelled)))
+        self.assertEqual(cancelled['plans'][3]['lifecycle'],'cancelled')
+
+    def test_plan_archive_after_current_review_keeps_decision_auditable(self):
+        w=s.apply_operation(fixture(),'approve',{'planId':'EXP-003','expectedPlanRevision':1,'comment':'已核对登记范围'},'负责人')
+        archived=s.apply_operation(w,'transition_plan',{'planId':'EXP-003','lifecycle':'archived'},'负责人')
+        plan=next(p for p in archived['plans'] if p['id']=='EXP-003')
+        self.assertTrue(plan['archived']);self.assertEqual(plan['lifecycle'],'archived')
+        self.assertEqual(archived['decisions'][-1]['planId'],'EXP-003')
+        self.assertEqual(s.envelope(archived)['statuses']['EXP-003'],'archived')
+
+    def test_archived_plan_cannot_be_revived_by_save(self):
+        w=fixture(); plan=copy.deepcopy(next(p for p in w['plans'] if p['id']=='EXP-009'))
+        plan['archived']=False; plan['lifecycle']='draft'
+        with self.assertRaises(ValueError):
+            s.apply_operation(w,'save_plan',{'plan':plan,'expectedPlanRevision':1},'负责人')
     def test_device_change_invalidates_review(self):
         w=s.apply_operation(fixture(),'approve',{'planId':'EXP-003','expectedPlanRevision':1,'comment':'已核对登记范围'},'负责人')
         e=copy.deepcopy(next(e for e in w['equipment'] if e['id']=='A-01'));e['status']='unavailable'
@@ -391,6 +430,20 @@ class ApiTests(unittest.TestCase):
         runs=self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs'];self.assertEqual(len(runs),1);self.assertEqual(runs[0]['trace']['runId'],r.json()['trace']['runId'])
         evaluations=self.client.get('/api/spatial/plans/EXP-001/evaluations').json()['evaluations']
         self.assertEqual(len(evaluations),1);self.assertEqual(evaluations[0]['evaluationId'],r.json()['evaluationId']);self.assertEqual(evaluations[0]['basis'],s.basis(before,before['plans'][0]))
+
+    def test_plan_lifecycle_api_rechecks_transition(self):
+        initialize(s.store())
+        response=self.client.post('/api/spatial/actions',json={
+            'expectedRevision':1,'requestId':'lifecycle-api-01','type':'transition_plan',
+            'payload':{'planId':'EXP-004','lifecycle':'submitted'},
+        })
+        self.assertEqual(response.status_code,422,response.text)
+        response=self.client.post('/api/spatial/actions',json={
+            'expectedRevision':1,'requestId':'lifecycle-api-02','type':'transition_plan',
+            'payload':{'planId':'EXP-004','lifecycle':'cancelled'},
+        })
+        self.assertEqual(response.status_code,200,response.text)
+        self.assertEqual(response.json()['statuses']['EXP-004'],'cancelled')
     def test_job_cancel_api_persists_state_and_is_role_gated(self):
         job=s.store().begin_job(job_id='api-cancel-01',kind='analysis',plan_id='EXP-001',idempotency_key='api-cancel-01')
         response=self.client.post('/api/spatial/jobs/'+job['jobId']+'/cancel')

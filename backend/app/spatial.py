@@ -172,6 +172,11 @@ class Plan(StrictModel):
     steps: list[Step] = Field(max_length=500)
     reservations: list[Reservation] = Field(max_length=500)
     archived: bool
+    # Explicit lifecycle is kept separate from the derived safety status.  Old
+    # workspaces omit this field (``None`` is interpreted as draft, or archived
+    # when archived=true); a transition operation writes it only after the
+    # server rechecks the current plan and its evidence basis.
+    lifecycle: Literal["draft", "submitted", "revising", "archived", "cancelled"] | None = None
 
 class Document(StrictModel):
     id: str
@@ -299,6 +304,8 @@ def validate_workspace(w: dict) -> dict:
                 raise ValueError("预约设备必须属于当前实验室。")
             if any(other["equipmentId"] == r["equipmentId"] and overlap(other, r) for other in p["reservations"][i + 1:]):
                 raise ValueError("同一计划不能重复占用同一资源的重叠时段。")
+        if p.get("archived") and p.get("lifecycle", "archived") not in {"archived"}:
+            raise ValueError("已归档计划必须保持 archived 生命周期。")
     for d in w["documents"]:
         if d["equipmentId"] is not None and d["equipmentId"] not in equipment:
             raise ValueError("资料关联的设备不存在。")
@@ -428,7 +435,7 @@ def basis(w: dict, p: dict) -> str:
     relevant_documents.sort(key=lambda d: (d.get("equipmentId") or "", d.get("kind", ""), d.get("id", "")))
     other = []
     for q in w["plans"]:
-        if q["id"] == p["id"] or q["archived"]:
+        if q["id"] == p["id"] or q["archived"] or q.get("lifecycle") == "cancelled":
             continue
         for r in q.get("reservations", []):
             if r["equipmentId"] in ids and relevant(r, reservations):
@@ -445,7 +452,7 @@ def basis(w: dict, p: dict) -> str:
 
 def check_workspace(w: dict) -> list[dict]:
     results: list[dict] = []
-    for p in [p for p in w["plans"] if not p["archived"]]:
+    for p in [p for p in w["plans"] if not p["archived"] and p.get("lifecycle") != "cancelled"]:
         def add(code, state, title, detail, equipment_id=None, related=None, documents=None):
             line = next((s["line"] for s in p["steps"] if equipment_id in s["equipmentIds"]), None)
             results.append(dict(id=f"{p['id']}:{code}:{equipment_id or 'plan'}", planId=p["id"], equipmentId=equipment_id, code=code, state=state, title=title, detail=detail, relatedPlanIds=related or [], documentIds=documents or [], line=line))
@@ -467,7 +474,7 @@ def check_workspace(w: dict) -> list[dict]:
             state = "blocked" if maintenance else "unknown" if e["status"] == "unknown" else "pass"
             title = f"{e['code']} 在预约范围内不可用" if maintenance else f"{e['code']} 的台账状态待确认" if state == "unknown" else f"{e['code']} 的预约不冲突于维护"
             add("AVAILABILITY", state, title, "当前停用状态或维护窗口与使用计划交叠；需更换资源或调整时段。" if maintenance else "仅依据已登记的台账与维护窗口；不代表现场传感器状态。", identifier)
-            assigned = [dict(planId=q["id"], **r) for q in w["plans"] if not q["archived"] for r in q["reservations"] if r["equipmentId"] == identifier]
+            assigned = [dict(planId=q["id"], **r) for q in w["plans"] if not q["archived"] and q.get("lifecycle") != "cancelled" for r in q["reservations"] if r["equipmentId"] == identifier]
             conflicts: list[str] = []
             for r in reservations:
                 active = [a for a in assigned if overlap(a, r)]
@@ -496,8 +503,10 @@ def check_workspace(w: dict) -> list[dict]:
 
 
 def plan_status(w: dict, p: dict, checks: list[dict]) -> str:
-    if p["archived"]:
+    if p["archived"] or p.get("lifecycle") == "archived":
         return "archived"
+    if p.get("lifecycle") == "cancelled":
+        return "cancelled"
     decisions = [d for d in w["decisions"] if d["planId"] == p["id"]]
     decision = decisions[-1] if decisions else None
     if decision and decision["basis"] != basis(w, p):
@@ -905,16 +914,58 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         previous = next((a for a in w["plans"] if a["id"] == p["id"]), None)
         if previous and previous["revision"] != x.get("expectedPlanRevision"):
             raise ValueError("计划已变更，请重新载入后保存。")
+        if previous and (previous["archived"] or previous.get("lifecycle") == "archived") and not p.get("archived"):
+            raise ValueError("已归档计划只能引用或复制，不能直接复活为当前计划。")
         p["revision"] = previous["revision"] + 1 if previous else 1
         if previous and p["source"] != previous["source"]:
             for s in p["steps"]:
                 s["confirmed"] = False
+            p["lifecycle"] = "revising"
+        elif previous:
+            p["lifecycle"] = previous.get("lifecycle", "draft")
+        else:
+            p["lifecycle"] = p.get("lifecycle", "draft")
+        if p.get("lifecycle") == "submitted" and (not p["steps"] or any(not s["confirmed"] for s in p["steps"])):
+            raise ValueError("计划提交前必须完成全部步骤的人工确认。")
+        if p.get("archived"):
+            # Archive is a business transition, not a display toggle.  Check
+            # the still-active candidate before setting archived=True, because
+            # check_workspace intentionally excludes archived plans.
+            if not p["steps"] or any(not s["confirmed"] for s in p["steps"]):
+                raise ValueError("计划归档前必须完成全部步骤的人工确认。")
+            candidate = copy.deepcopy(next_w)
+            candidate_plan = next((q for q in candidate["plans"] if q["id"] == p["id"]), None)
+            if candidate_plan is None:
+                candidate["plans"].append(copy.deepcopy(p))
+                candidate_plan = candidate["plans"][-1]
+            else:
+                candidate_plan.update(copy.deepcopy(p))
+            candidate_plan["archived"] = False
+            candidate_plan["lifecycle"] = "submitted"
+            archive_checks = [c for c in check_workspace(candidate) if c["planId"] == p["id"]]
+            if not archive_checks or any(c["state"] != "pass" for c in archive_checks):
+                raise ValueError("计划仍有阻断或未知项，不能归档。")
+            decisions = [d for d in w["decisions"] if d["planId"] == p["id"]]
+            # Saving an archive record increments the plan revision for the
+            # audit log.  Compare the approval against the pre-save revision;
+            # lifecycle metadata itself must not invalidate an otherwise
+            # unchanged decision.
+            basis_plan = copy.deepcopy(candidate_plan)
+            if previous:
+                basis_plan["revision"] = previous["revision"]
+            if decisions and decisions[-1]["basis"] != basis(candidate, basis_plan):
+                raise ValueError("当前计划基线与最近复核不一致，请先重新复核后归档。")
+            p["lifecycle"] = "archived"
+        elif p.get("lifecycle") == "archived":
+            raise ValueError("归档生命周期必须同时设置 archived=true。")
         upsert("plans", p)
         object_id, summary = p["id"], f"保存计划 {p['code']} · v{p['revision']}"
     elif action == "confirm_steps":
         p = get("plans", x["planId"])
         if not p["steps"]:
             raise ValueError("没有可确认的步骤。")
+        if p["archived"] or p.get("lifecycle") in {"archived", "cancelled"}:
+            raise ValueError("已归档或已取消计划不能重新确认步骤。")
         for s in p["steps"]:
             s["confirmed"] = True
         p["revision"] += 1
@@ -990,7 +1041,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         object_id, summary = p["id"], f"应用方案「{b['name']}」，产生新修订并触发重新复核"
     elif action == "approve":
         p = get("plans", x["planId"])
-        if p["revision"] != x.get("expectedPlanRevision") or p["archived"]:
+        if p["revision"] != x.get("expectedPlanRevision") or p["archived"] or p.get("lifecycle") in {"archived", "cancelled"}:
             raise ValueError("计划版本已改变或已归档。")
         if not x.get("comment", "").strip():
             raise ValueError("必须填写人工复核意见。")
@@ -998,7 +1049,55 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         if not checks or any(c["state"] != "pass" for c in checks):
             raise ValueError("仍有阻断或未知项，不能记录复核通过。")
         next_w["decisions"].append(dict(id=uid("decision"), planId=p["id"], revision=p["revision"], basis=basis(next_w, p), actor=actor, comment=x["comment"], at=now()))
+        p["lifecycle"] = "submitted"
         summary = "记录当前版本的资源前置条件复核；不构成化学安全认证"
+    elif action == "transition_plan":
+        p = get("plans", x["planId"])
+        requested = x.get("lifecycle", x.get("status"))
+        allowed = {"draft", "submitted", "revising", "archived", "cancelled"}
+        if requested not in allowed:
+            raise ValueError("计划生命周期无效。")
+        current = "archived" if p["archived"] else p.get("lifecycle", "draft")
+        transitions = {
+            "draft": {"draft", "submitted", "cancelled"},
+            "submitted": {"submitted", "revising", "cancelled", "archived"},
+            "revising": {"revising", "submitted", "cancelled"},
+            "cancelled": {"cancelled"},
+            "archived": {"archived"},
+        }
+        if requested not in transitions[current]:
+            raise ValueError(f"计划不能从“{current}”流转到“{requested}”。")
+        if requested == "submitted":
+            if not p["steps"] or any(not s["confirmed"] for s in p["steps"]):
+                raise ValueError("计划提交前必须完成全部步骤的人工确认。")
+            p["lifecycle"] = "submitted"
+            summary = "提交当前计划版本，等待资源与证据复核"
+        elif requested == "revising":
+            p["lifecycle"] = "revising"
+            summary = "打开计划修订状态；正式版本未被候选覆盖"
+        elif requested == "cancelled":
+            p["lifecycle"] = "cancelled"
+            p["archived"] = False
+            summary = "取消计划；保留历史记录且不再参与当前资源检查"
+        elif requested == "archived":
+            if not p["steps"] or any(not s["confirmed"] for s in p["steps"]):
+                raise ValueError("计划归档前必须完成全部步骤的人工确认。")
+            candidate = copy.deepcopy(next_w)
+            candidate_plan = next(q for q in candidate["plans"] if q["id"] == p["id"])
+            candidate_plan["archived"] = False
+            candidate_plan["lifecycle"] = "submitted"
+            archive_checks = [c for c in check_workspace(candidate) if c["planId"] == p["id"]]
+            if not archive_checks or any(c["state"] != "pass" for c in archive_checks):
+                raise ValueError("计划仍有阻断或未知项，不能归档。")
+            decisions = [d for d in w["decisions"] if d["planId"] == p["id"]]
+            if decisions and decisions[-1]["basis"] != basis(candidate, candidate_plan):
+                raise ValueError("当前计划基线与最近复核不一致，请先重新复核后归档。")
+            p["lifecycle"] = "archived"
+            p["archived"] = True
+            summary = "归档当前计划版本；历史依据仍可追溯，不能直接复活"
+        else:
+            p["lifecycle"] = requested
+            summary = "更新计划生命周期"
     else:
         raise ValueError("不支持的操作。")
     next_w["revision"] = w["revision"] + 1
