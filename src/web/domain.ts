@@ -134,6 +134,18 @@ export function candidateWorkspace(w: Workspace, branch: Branch): Workspace {
   const p = next.plans.find(p => p.id === branch.planId)
   if (!p) throw new Error('计划不存在。')
   p.reservations = structuredClone(branch.reservations)
+  const basePlan = w.plans.find(item => item.id === branch.planId)
+  if (!basePlan) throw new Error('方案关联的计划不存在。')
+  const baseById = new Map(basePlan.reservations.map(row => [row.id, row]))
+  const candidateById = new Map(p.reservations.map(row => [row.id, row]))
+  for (const patch of branch.patches ?? []) {
+    if (!['reservation.equipmentId', 'reservation.start', 'reservation.end'].includes(patch.path)) throw new Error('候选字段路径不受支持。')
+    const base = baseById.get(patch.targetId), candidate = candidateById.get(patch.targetId)
+    if (!base || !candidate) throw new Error(`候选字段目标不存在：${patch.targetId}。`)
+    const key = patch.path.slice('reservation.'.length) as keyof typeof base
+    if (base[key] !== patch.before) throw new Error('候选字段基线已变化，请重新创建方案。')
+    if (candidate[key] !== patch.after) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
+  }
   assertWorkspace(next)
   return next
 }
@@ -239,7 +251,9 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
     case 'apply_branch': {
       const b=next.branches.find(b=>b.id===x.id), p=next.plans.find(p=>p.id===b?.planId)
       if (!b || !p || p.revision!==b.baseRevision || basis(next,p)!==b.baseBasis) throw new Error('方案已过期：计划、资源或证据发生变化，请重新比较。')
-      p.reservations=structuredClone(b.reservations); p.revision++; objectId=p.id; summary=`应用方案「${b.name}」，产生新修订并触发重新复核`; break
+      const candidate=candidateWorkspace(next,b), candidatePlan=candidate.plans.find(item=>item.id===p.id)
+      if (!candidatePlan) throw new Error('方案关联的计划不存在。')
+      p.reservations=structuredClone(candidatePlan.reservations); p.revision++; objectId=p.id; summary=`应用方案「${b.name}」，产生新修订并触发重新复核`; break
     }
     case 'approve': throw new Error('浏览器草稿不记录正式复核。请连接服务端 API，由服务器核验最新版本。')
     default: throw new Error('不支持的操作。')

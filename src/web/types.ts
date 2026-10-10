@@ -94,8 +94,10 @@ export interface Task {
 }
 export interface Decision { id: string; planId: string; revision: number; basis: string; actor: string; comment: string; at: string }
 export interface AuditEvent { id: string; at: string; actor: string; action: string; objectId: string; summary: string }
+export type BranchPatchPath = 'reservation.equipmentId' | 'reservation.start' | 'reservation.end'
+export interface BranchPatch { path: BranchPatchPath; targetId: string; before: string; after: string; reason: string }
 export interface Branch {
-  id: string; name: string; planId: string; baseRevision: number; baseBasis: string; reservations: Reservation[]; createdAt: string
+  id: string; name: string; planId: string; baseRevision: number; baseBasis: string; reservations: Reservation[]; createdAt: string; patches?: BranchPatch[]
 }
 export interface Workspace {
   schemaVersion: 1; revision: number; name: string; provenance: 'user' | 'example';

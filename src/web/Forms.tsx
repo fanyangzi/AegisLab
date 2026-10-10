@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Workspace, Operation, Plan, Equipment, DocumentRecord, Branch, Reservation, Task } from './types'
+import type { Workspace, Operation, Plan, Equipment, DocumentRecord, Branch, BranchPatch, Reservation, Task } from './types'
 import { uid,kindNames } from './types'
 import { basis, candidateWorkspace, checkWorkspace, parseSteps } from './domain'
 import { Badge, Button, Field, Icon, Modal, localDate, localInput, toneFor } from './ui'
@@ -73,7 +73,8 @@ export function TaskForm({w,labId,mutate,onClose,planId,equipmentId,suggestedAct
 export function BranchForm({w,labId,mutate,onClose,plan,seed}:Common&{plan:Plan;seed?:{name?:string;reservations?:Reservation[]}}) {
  const initialChecks=checkWorkspace(w).filter(c=>c.planId===plan.id),initialName=seed?.name|| (initialChecks.some(c=>c.state==='blocked')?'AI 候选：替代受约束资源':initialChecks.some(c=>c.state==='unknown')?'AI 候选：先补证再放行':'AI 候选：优化资源安排')
  const [name,setName]=useState(initialName),[reservations,setReservations]=useState(structuredClone(seed?.reservations||plan.reservations)),[applying,setApplying]=useState(false);const f=useSave(mutate,onClose)
- const branch=useMemo<Branch>(()=>({id:uid('branch'),planId:plan.id,name,baseRevision:plan.revision,baseBasis:basis(w,plan),reservations,createdAt:new Date().toISOString()}),[name,reservations,plan,w])
+ const patches=useMemo<BranchPatch[]>(()=>reservations.flatMap(row=>{const base=plan.reservations.find(item=>item.id===row.id);if(!base)return[];return (['equipmentId','start','end'] as const).flatMap(field=>base[field]===row[field]?[]:[{path:`reservation.${field}` as BranchPatch['path'],targetId:row.id,before:base[field],after:row[field],reason:field==='equipmentId'?'切换候选资源':field==='start'?'调整候选开始时间':'调整候选结束时间'}])}),[reservations,plan])
+ const branch=useMemo<Branch>(()=>({id:uid('branch'),planId:plan.id,name,baseRevision:plan.revision,baseBasis:basis(w,plan),reservations,patches,createdAt:new Date().toISOString()}),[name,reservations,patches,plan,w])
  const evaluation=useMemo(()=>{try{const candidate=candidateWorkspace(w,branch);return {checks:checkWorkspace(candidate).filter(c=>c.planId===plan.id),error:''}}catch(e){return {checks:[],error:e instanceof Error?e.message:'候选方案无效'}}},[w,branch])
  const baseline=checkWorkspace(w).filter(c=>c.planId===plan.id),count=(checks:typeof baseline,state:string)=>checks.filter(c=>c.state===state).length
  const edit=(id:string,key:string,value:string)=>setReservations(rows=>rows.map(r=>r.id===id?{...r,[key]:value}:r))

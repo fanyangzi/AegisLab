@@ -160,6 +160,21 @@ class Reservation(StrictModel):
     start: str
     end: str
 
+class BranchPatch(StrictModel):
+    """A reviewable field-level change inside an isolated plan branch.
+
+    Branch reservations remain the candidate state used by the checker.  The
+    patch records make the user's intent explicit, so a resource switch and a
+    time change can be accepted together without treating the branch as an
+    opaque replacement snapshot.  ``before`` is checked against the branch
+    base and ``after`` against the candidate state at save/apply time.
+    """
+    path: Literal["reservation.equipmentId", "reservation.start", "reservation.end"]
+    targetId: str = Field(min_length=1, max_length=128)
+    before: str
+    after: str
+    reason: str = Field(min_length=1, max_length=500)
+
 class Plan(StrictModel):
     id: str
     code: str = Field(min_length=1, max_length=80)
@@ -244,6 +259,7 @@ class Branch(StrictModel):
     baseBasis: str
     reservations: list[Reservation] = Field(max_length=500)
     createdAt: str
+    patches: list[BranchPatch] = Field(default_factory=list, max_length=200)
 
 class Workspace(StrictModel):
     schemaVersion: Literal[1]
@@ -469,6 +485,39 @@ def basis(w: dict, p: dict) -> str:
     }
     return canonical(dict(rulePack=RULE_PACK, plan=plan_facts, equipment=relevant_equipment,
         documents=relevant_documents, otherReservations=other))
+
+
+def branch_candidate(w: dict, branch: dict) -> dict:
+    """Build and validate a branch projection without mutating ``w``.
+
+    ``reservations`` is the candidate snapshot retained for compatibility
+    with existing branches.  New branches additionally carry field-level
+    ``patches``.  Each patch is checked against the current base value and
+    against the candidate snapshot, which prevents a stale or misleading diff
+    from being stored as if it described the selected branch.
+    """
+    Branch.model_validate(branch)
+    candidate = copy.deepcopy(w)
+    plan = next((item for item in candidate["plans"] if item["id"] == branch["planId"]), None)
+    base_plan = next((item for item in w["plans"] if item["id"] == branch["planId"]), None)
+    if plan is None or base_plan is None:
+        raise ValueError("方案关联的计划不存在。")
+    plan["reservations"] = copy.deepcopy(branch["reservations"])
+    reservation_by_id = {item["id"]: item for item in plan["reservations"]}
+    base_reservation_by_id = {item["id"]: item for item in base_plan["reservations"]}
+    for patch in branch.get("patches", []):
+        path = patch["path"]
+        target_id = patch["targetId"]
+        base_row = base_reservation_by_id.get(target_id)
+        candidate_row = reservation_by_id.get(target_id)
+        if base_row is None or candidate_row is None:
+            raise ValueError(f"候选字段目标不存在：{target_id}。")
+        if base_row[path.removeprefix("reservation.")] != patch["before"]:
+            raise ValueError("候选字段基线已变化，请重新创建方案。")
+        if candidate_row[path.removeprefix("reservation.")] != patch["after"]:
+            raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
+    validate_workspace(candidate)
+    return candidate
 
 
 def check_workspace(w: dict) -> list[dict]:
@@ -1217,9 +1266,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         p = get("plans", b["planId"])
         if p["revision"] != b["baseRevision"] or basis(w, p) != b["baseBasis"]:
             raise ValueError("方案基线已变化，请以当前计划重新创建。")
-        candidate = copy.deepcopy(next_w)
-        next(q for q in candidate["plans"] if q["id"] == p["id"])["reservations"] = b["reservations"]
-        validate_workspace(candidate)
+        branch_candidate(next_w, b)
         upsert("branches", b)
         object_id, summary = b["id"], "保存独立候选方案，正式计划未改变"
     elif action == "apply_branch":
@@ -1227,7 +1274,9 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         p = get("plans", b["planId"])
         if p["revision"] != b["baseRevision"] or basis(w, p) != b["baseBasis"]:
             raise ValueError("方案已过期：计划、资源或证据发生变化，请重新比较。")
-        p["reservations"] = copy.deepcopy(b["reservations"])
+        candidate = branch_candidate(next_w, b)
+        candidate_plan = next(q for q in candidate["plans"] if q["id"] == p["id"])
+        p["reservations"] = copy.deepcopy(candidate_plan["reservations"])
         p["revision"] += 1
         object_id, summary = p["id"], f"应用方案「{b['name']}」，产生新修订并触发重新复核"
     elif action == "approve":

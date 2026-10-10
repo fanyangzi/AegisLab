@@ -266,6 +266,35 @@ class DomainTests(unittest.TestCase):
         w=fixture();p=w['plans'][0];branch={'id':'b','name':'方案','planId':p['id'],'baseRevision':1,'baseBasis':s.basis(w,p),'reservations':p['reservations'],'createdAt':s.now()}
         w=s.apply_operation(w,'save_branch',{'branch':branch},'负责人');w['equipment'][0]['status']='unavailable'
         with self.assertRaises(ValueError):s.apply_operation(w,'apply_branch',{'id':'b'},'负责人')
+    def test_branch_multifield_patch_records_resource_and_time_and_applies_together(self):
+        w=fixture();p=copy.deepcopy(w['plans'][0]);base=copy.deepcopy(p['reservations'][0]);candidate=copy.deepcopy(p['reservations'])
+        candidate[0]['equipmentId']='F-02';candidate[0]['start']='2026-10-09T08:20:00+08:00'
+        branch={
+            'id':'branch-multi-01','name':'替代资源并提前取用','planId':p['id'],'baseRevision':p['revision'],
+            'baseBasis':s.basis(w,p),'reservations':candidate,'createdAt':s.now(),
+            'patches':[
+                {'path':'reservation.equipmentId','targetId':base['id'],'before':base['equipmentId'],'after':'F-02','reason':'改用同实验室可登记资源'},
+                {'path':'reservation.start','targetId':base['id'],'before':base['start'],'after':candidate[0]['start'],'reason':'避开原预约冲突'},
+            ],
+        }
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        self.assertEqual(next(b for b in saved['branches'] if b['id']==branch['id'])['patches'],branch['patches'])
+        saved_plan=next(item for item in saved['plans'] if item['id']==p['id'])
+        self.assertEqual(saved_plan['reservations'][0]['equipmentId'],base['equipmentId'])
+        applied=s.apply_operation(saved,'apply_branch',{'id':branch['id']},'负责人')
+        applied_plan=next(item for item in applied['plans'] if item['id']==p['id'])
+        self.assertEqual(applied_plan['reservations'][0]['equipmentId'],'F-02')
+        self.assertEqual(applied_plan['reservations'][0]['start'],candidate[0]['start'])
+        self.assertEqual(applied_plan['revision'],p['revision']+1)
+
+    def test_branch_patch_must_match_candidate_snapshot(self):
+        w=fixture();p=w['plans'][0];base=copy.deepcopy(p['reservations'][0]);branch={
+            'id':'branch-multi-02','name':'不一致候选','planId':p['id'],'baseRevision':p['revision'],
+            'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),'createdAt':s.now(),
+            'patches':[{'path':'reservation.end','targetId':base['id'],'before':base['end'],'after':'2026-10-09T09:30:00+08:00','reason':'延长窗口'}],
+        }
+        with self.assertRaisesRegex(ValueError,'快照不一致'):
+            s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
     def test_typescript_python_parity(self):
         path=Path(__file__).with_name('web-parity.json')
         if not path.exists():self.skipTest('Generate with node scripts/test-web.mjs --parity')
@@ -488,6 +517,23 @@ class ApiTests(unittest.TestCase):
                 'payload':{'id':'task-1','newOwner':'不应写入','expectedOwner':'接收负责人','note':'研究者不应转交'},
             })
         self.assertEqual(response.status_code,403)
+    def test_branch_api_accepts_and_applies_a_multi_field_patch(self):
+        initialize(s.store())
+        workspace=s.store().read();plan=next(item for item in workspace['plans'] if item['id']=='EXP-001')
+        base=copy.deepcopy(plan['reservations'][0]);candidate=copy.deepcopy(plan['reservations'])
+        candidate[0]['equipmentId']='F-02';candidate[0]['start']='2026-10-09T08:20:00+08:00'
+        branch={'id':'api-branch-multi-01','name':'API 资源与时间候选','planId':plan['id'],'baseRevision':plan['revision'],'baseBasis':s.basis(workspace,plan),'reservations':candidate,'createdAt':s.now(),'patches':[
+            {'path':'reservation.equipmentId','targetId':base['id'],'before':base['equipmentId'],'after':'F-02','reason':'资源替代'},
+            {'path':'reservation.start','targetId':base['id'],'before':base['start'],'after':candidate[0]['start'],'reason':'时间调整'},
+        ]}
+        saved=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'api-branch-save-01','type':'save_branch','payload':{'branch':branch}})
+        self.assertEqual(saved.status_code,200,saved.text)
+        saved_state=saved.json()['workspace'];self.assertEqual(saved_state['plans'][0]['reservations'][0]['equipmentId'],base['equipmentId'])
+        stored=next(item for item in saved_state['branches'] if item['id']==branch['id']);self.assertEqual(len(stored['patches']),2)
+        applied=self.client.post('/api/spatial/actions',json={'expectedRevision':2,'requestId':'api-branch-apply-01','type':'apply_branch','payload':{'id':branch['id']}})
+        self.assertEqual(applied.status_code,200,applied.text)
+        applied_plan=next(item for item in applied.json()['workspace']['plans'] if item['id']==plan['id'])
+        self.assertEqual(applied_plan['reservations'][0]['equipmentId'],'F-02');self.assertEqual(applied_plan['reservations'][0]['start'],candidate[0]['start'])
     def test_clean_workspace_can_complete_web_lifecycle_without_examples(self):
         def act(revision, request_id, action, payload):
             response=self.client.post('/api/spatial/actions',json={'expectedRevision':revision,'requestId':request_id,'type':action,'payload':payload})
