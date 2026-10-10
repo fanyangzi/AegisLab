@@ -329,6 +329,8 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):r=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})
         self.assertEqual(r.status_code,200);self.assertEqual(s.store().read(),before);self.assertTrue(r.json()['degraded'])
         runs=self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs'];self.assertEqual(len(runs),1);self.assertEqual(runs[0]['trace']['runId'],r.json()['trace']['runId'])
+        evaluations=self.client.get('/api/spatial/plans/EXP-001/evaluations').json()['evaluations']
+        self.assertEqual(len(evaluations),1);self.assertEqual(evaluations[0]['evaluationId'],r.json()['evaluationId']);self.assertEqual(evaluations[0]['basis'],s.basis(before,before['plans'][0]))
     def test_job_cancel_api_persists_state_and_is_role_gated(self):
         job=s.store().begin_job(job_id='api-cancel-01',kind='analysis',plan_id='EXP-001',idempotency_key='api-cancel-01')
         response=self.client.post('/api/spatial/jobs/'+job['jobId']+'/cancel')

@@ -1019,6 +1019,11 @@ class WorkspaceStore:
                     generated_at TEXT NOT NULL, degraded INTEGER NOT NULL, payload TEXT NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS idx_spatial_analysis_plan ON spatial_analysis_runs(plan_id, generated_at DESC);
+                CREATE TABLE IF NOT EXISTS spatial_evaluation_runs(
+                    evaluation_id TEXT PRIMARY KEY, plan_id TEXT NOT NULL, plan_revision INTEGER NOT NULL,
+                    evaluated_at TEXT NOT NULL, basis TEXT NOT NULL, status TEXT NOT NULL, payload TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_evaluation_plan ON spatial_evaluation_runs(plan_id, evaluated_at DESC);
                 CREATE TABLE IF NOT EXISTS spatial_jobs(
                     job_id TEXT PRIMARY KEY, kind TEXT NOT NULL, plan_id TEXT,
                     idempotency_key TEXT NOT NULL UNIQUE, status TEXT NOT NULL,
@@ -1087,6 +1092,21 @@ class WorkspaceStore:
     def analysis_runs(self, plan_id: str, limit: int = 20) -> list[dict]:
         with self.connection() as conn:
             rows = conn.execute("SELECT payload FROM spatial_analysis_runs WHERE plan_id=? ORDER BY generated_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
+        return [json.loads(row[0]) for row in rows]
+    def save_evaluation_run(self, payload: dict) -> dict:
+        evaluation_id = str(payload.get("evaluationId") or uid("evaluation"))
+        record = {**payload, "evaluationId": evaluation_id}
+        with self.connection() as conn:
+            conn.execute(
+                """INSERT INTO spatial_evaluation_runs(evaluation_id,plan_id,plan_revision,evaluated_at,basis,status,payload)
+                   VALUES(?,?,?,?,?,?,?) ON CONFLICT(evaluation_id) DO UPDATE SET
+                   evaluated_at=excluded.evaluated_at,basis=excluded.basis,status=excluded.status,payload=excluded.payload""",
+                (evaluation_id, str(record.get("planId", "")), int(record.get("planRevision", 0)), str(record.get("evaluatedAt") or now()), str(record.get("basis", "")), str(record.get("status", "completed")), json.dumps(record, ensure_ascii=False)),
+            )
+        return record
+    def evaluation_runs(self, plan_id: str, limit: int = 20) -> list[dict]:
+        with self.connection() as conn:
+            rows = conn.execute("SELECT payload FROM spatial_evaluation_runs WHERE plan_id=? ORDER BY evaluated_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
         return [json.loads(row[0]) for row in rows]
     def begin_job(self, *, job_id: str, kind: str, plan_id: str | None, idempotency_key: str) -> dict:
         """Create or resume a durable job record.
@@ -1509,6 +1529,13 @@ def list_analysis_runs(plan_id: str, limit: int = 20, actor: str = Depends(local
         raise HTTPException(404, '计划不存在。')
     return {"planId": plan_id, "runs": store().analysis_runs(plan_id, limit)}
 
+@router.get('/plans/{plan_id}/evaluations')
+def list_evaluation_runs(plan_id: str, limit: int = 20, actor: str = Depends(local_owner)):
+    w = store().read()
+    if not any(plan["id"] == plan_id for plan in w["plans"]):
+        raise HTTPException(404, '计划不存在。')
+    return {"planId": plan_id, "evaluations": store().evaluation_runs(plan_id, limit)}
+
 @router.get('/plans/{plan_id}/jobs')
 def list_plan_jobs(plan_id: str, limit: int = 20, actor: str = Depends(local_owner)):
     if not any(plan["id"] == plan_id for plan in store().read()["plans"]):
@@ -1642,9 +1669,16 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
             'decision': {'state': decision_state, 'label': decision_label, 'approvalRequired': True, 'reason': 'AI 候选和规则结果不能替代机构审批或现场确认。'},
             'source_policy': '所有候选都绑定 SOP 行号、资源检查或证据记录；无法建立来源时保留为待确认。',
         }
+        evaluation_record = {
+            'evaluationId': uid('evaluation'), 'planId': p['id'], 'planRevision': p['revision'],
+            'evaluatedAt': now(), 'basis': basis(w, p), 'status': 'completed',
+            'ruleVersion': engine.version, 'results': [r.model_dump(mode='json') for r in evaluation.results],
+            'checkCounts': copilot['ruleSummary'], 'decisionState': decision_state,
+            'sourceRefs': [p['sourceName'], RULE_PACK],
+        }
         response = {'planId': p['id'], 'planRevision': p['revision'], 'ruleVersion': engine.version,
             'parser': 'model-enriched-deterministic-sop-v2' if model_used else 'deterministic-sop-v1', 'provider': result.provider, 'model': adapter.model or None,
-            'degraded': result.provider == 'offline' or result.degraded or not result.available,
+            'evaluationId': evaluation_record['evaluationId'], 'degraded': result.provider == 'offline' or result.degraded or not result.available,
             'degradedReason': result.reason,
             'summary': result.text, 'results': [r.model_dump(mode='json') for r in evaluation.results],
             'copilot': copilot,
@@ -1656,6 +1690,7 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
         current_job = store().job(job_id)
         if current_job and current_job["status"] == "cancelled":
             raise HTTPException(409, "分析任务已取消，未发布分析结果。")
+        store().save_evaluation_run(evaluation_record)
         store().save_analysis_run(response)
         job = store().finish_job(job_id, status="succeeded", result=response)
         return {**response, "job": job}
