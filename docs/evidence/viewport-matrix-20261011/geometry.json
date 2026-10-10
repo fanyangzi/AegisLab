@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-10-11",
+  "url": "http://127.0.0.1:5173/?page=space&view=space&lab=lab-201&object=equipment%3AB-01&date=2026-10-09",
+  "devicePixelRatio": 1,
+  "viewports": [
+    {"width": 1440, "height": 900, "bodyScrollWidth": 1440, "bodyScrollHeight": 900, "rootOverflow": false, "title": "AegisLab · 实验安全协同工作台", "hasWorkspaceCanvas": true, "buttonCount": 80},
+    {"width": 1600, "height": 1000, "bodyScrollWidth": 1600, "bodyScrollHeight": 1000, "rootOverflow": false, "title": "AegisLab · 实验安全协同工作台", "hasWorkspaceCanvas": true, "buttonCount": 80},
+    {"width": 1920, "height": 1080, "bodyScrollWidth": 1920, "bodyScrollHeight": 1080, "rootOverflow": false, "title": "AegisLab · 实验安全协同工作台", "hasWorkspaceCanvas": true, "buttonCount": 80}
+  ],
+  "api": {"path": "/api/spatial", "status": 200},
+  "build": {"npmRunBuild": "PASS", "npmRunTestParity": "PASS (30/30)"}
+}

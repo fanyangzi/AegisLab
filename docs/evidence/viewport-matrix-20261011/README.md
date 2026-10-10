@@ -23,7 +23,7 @@
 | 1600×1000 | 1600×1000 | 1600×1000 | 否 | 存在 | AegisLab / 有机分析与前处理实验室 · 201 | [space-1600x1000.png](./space-1600x1000.png) |
 | 1920×1080 | 1920×1080 | 1920×1080 | 否 | 存在 | AegisLab / 有机分析与前处理实验室 · 201 | [space-1920x1080.png](./space-1920x1080.png) |
 
-脚本返回的三档摘要（原始输出）为：
+脚本返回的三档摘要（原始输出）为；机器可读副本见 [`geometry.json`](./geometry.json)：
 
 ```json
 {"innerWidth":1440,"innerHeight":900,"bodyScrollWidth":1440,"bodyScrollHeight":900,"rootOverflow":false,"title":"AegisLab · 实验安全协同工作台","hasWorkspace":true,"buttons":80}
