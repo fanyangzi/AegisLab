@@ -48,7 +48,7 @@ export function Field({label,children,hint}: {label:string;children:ReactNode;hi
  const control=isValidElement(children)?cloneElement(children as ReactElement<{"aria-labelledby"?:string;"aria-describedby"?:string}>,{'aria-labelledby':id,'aria-describedby':hint?`${id}-hint`:undefined}):children
  return <label className="al-field"><span id={id}>{label}</span>{control}{hint&&<small id={`${id}-hint`}>{hint}</small>}</label>
 }
-export const toneFor = (state:string): Tone => state==='blocked'?'red':['unknown','draft','recheck','pending'].includes(state)?'amber':['approved','pass','verified','done'].includes(state)?'green':state==='ready'?'blue':'muted'
+export const toneFor = (state:string): Tone => state==='blocked'?'red':['unknown','draft','recheck','pending','returned'].includes(state)?'amber':['approved','pass','verified','done'].includes(state)?'green':['ready','reopened'].includes(state)?'blue':'muted'
 export const dateText=(value:string)=>new Date(value).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})
 export const timeText=(value:string)=>new Date(value).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})
 export const localDate=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`

@@ -194,7 +194,10 @@ class Task(StrictModel):
     equipmentId: str | None
     owner: str = Field(min_length=1, max_length=180)
     dueAt: str
-    status: Literal["open", "submitted", "done"]
+    # ``returned`` and ``cancelled`` are persisted business states.  ``reopened``
+    # is kept explicit so a completed/returned item can be reopened without
+    # erasing the preceding decision from the audit trail.
+    status: Literal["open", "submitted", "done", "returned", "cancelled", "reopened"]
     note: str = Field(max_length=5000)
     sourceId: str | None = Field(default=None, max_length=180)
     sourceLine: int | None = Field(default=None, ge=1)
@@ -939,17 +942,34 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
                 and existing.get("sourceId") == task.get("sourceId")
                 and existing.get("sourceLine") == task.get("sourceLine")
                 and existing.get("actionKind") == task.get("actionKind")
-                and existing.get("status") in {"open", "submitted"}), None)
+                and existing.get("status") in {"open", "submitted", "returned", "reopened"}), None)
             if duplicate:
                 raise ValueError("该 AI 建议已有未完成任务，请打开原任务继续处理。")
         upsert("tasks", task)
         object_id, summary = x["task"]["id"], "创建协作任务"
     elif action == "update_task":
         t = get("tasks", x["id"])
-        if x.get("status") not in ("open", "submitted", "done"):
+        requested = x.get("status")
+        allowed = {"open", "submitted", "done", "returned", "cancelled", "reopened"}
+        if requested not in allowed:
             raise ValueError("任务状态无效。")
-        t.update(status=x["status"], note=x.get("note", t["note"]))
-        summary = "更新任务进度，不自动改变证据或审批"
+        current = t["status"]
+        transitions = {
+            "open": {"open", "submitted", "done", "cancelled"},
+            "submitted": {"submitted", "done", "returned", "cancelled"},
+            "returned": {"returned", "reopened", "cancelled"},
+            "reopened": {"reopened", "submitted", "done", "cancelled"},
+            "done": {"done", "reopened"},
+            "cancelled": {"cancelled", "reopened"},
+        }
+        if requested not in transitions.get(current, set()):
+            raise ValueError(f"任务不能从“{current}”流转到“{requested}”。")
+        note = str(x.get("note", t["note"])).strip()
+        if requested in {"returned", "cancelled", "reopened"} and not note:
+            raise ValueError("退回、取消或重开任务必须填写处理说明。")
+        t.update(status=requested, note=note)
+        labels = {"returned": "退回补充", "cancelled": "取消任务", "reopened": "重新打开"}
+        summary = labels.get(requested, "更新任务进度") + "；不自动改变证据或审批"
     elif action == "save_branch":
         b = copy.deepcopy(x["branch"])
         p = get("plans", b["planId"])

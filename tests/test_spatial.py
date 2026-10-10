@@ -123,6 +123,26 @@ class DomainTests(unittest.TestCase):
     def test_task_does_not_verify_document(self):
         w=fixture();changed=s.apply_operation(w,'update_task',{'id':w['tasks'][0]['id'],'status':'done','note':'提交材料'},'负责人')
         self.assertEqual(w['documents'],changed['documents'])
+    def test_task_return_cancel_reopen_lifecycle_is_audited(self):
+        w=fixture(); task_id=w['tasks'][0]['id']
+        w=s.apply_operation(w,'update_task',{'id':task_id,'status':'submitted','note':'负责人已提交材料'},'负责人')
+        w=s.apply_operation(w,'update_task',{'id':task_id,'status':'returned','note':'请补充当前规格版本的检查记录'},'安全负责人')
+        self.assertEqual(w['tasks'][0]['status'],'returned')
+        self.assertIn('退回补充',w['events'][-1]['summary'])
+        w=s.apply_operation(w,'update_task',{'id':task_id,'status':'reopened','note':'已按退回意见重开'},'负责人')
+        self.assertEqual(w['tasks'][0]['status'],'reopened')
+        w=s.apply_operation(w,'update_task',{'id':task_id,'status':'cancelled','note':'实验已取消，不再补证'},'负责人')
+        self.assertEqual(w['tasks'][0]['status'],'cancelled')
+        w=s.apply_operation(w,'update_task',{'id':task_id,'status':'reopened','note':'需要重新执行该检查'},'负责人')
+        self.assertEqual(w['tasks'][0]['status'],'reopened')
+
+    def test_task_terminal_transition_and_reason_are_enforced(self):
+        w=fixture(); task_id=w['tasks'][0]['id']
+        with self.assertRaises(ValueError):
+            s.apply_operation(w,'update_task',{'id':task_id,'status':'returned','note':''},'负责人')
+        w=s.apply_operation(w,'update_task',{'id':task_id,'status':'done','note':'已完成'},'负责人')
+        with self.assertRaises(ValueError):
+            s.apply_operation(w,'update_task',{'id':task_id,'status':'submitted','note':'重新提交'},'负责人')
     def test_duplicate_ai_task_is_rejected(self):
         w=fixture(); task={'id':'ai-task-1','title':'补充检查证据','planId':'EXP-001','equipmentId':'F-01','owner':'陈同学','dueAt':'2026-10-09T18:00:00+08:00','status':'open','note':'来源 SOP L1','sourceId':'EXP-001:EVIDENCE:F-01','sourceLine':1,'documentIds':[],'actionKind':'evidence','actionTarget':{'type':'evidence','planId':'EXP-001','equipmentId':'F-01'}}
         w=s.apply_operation(w,'save_task',{'task':task},'负责人')

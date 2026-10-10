@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Check, Selection, Snapshot, Task } from './types'
-import { kindNames } from './types'
+import { kindNames, taskStatusNames } from './types'
 import { basis } from './domain'
 import { Icon, dateText, toneFor } from './ui'
 import { profileForKind } from './equipmentTaxonomy'
@@ -30,7 +30,7 @@ export function chemicalsFrom(source: string) {
   return CHEMICAL_TERMS.filter(term => source.includes(term)).filter((term, index, items) => !items.some((other, otherIndex) => otherIndex !== index && other.includes(term)))
 }
 function statusForChecks(checks: Check[]) { return !checks.length ? 'unknown' : checks.some(c => c.state === 'blocked') ? 'blocked' : checks.some(c => c.state === 'unknown') ? 'unknown' : 'pass' }
-function taskState(task: Task) { return task.status === 'done' ? 'pass' : 'unknown' }
+function taskState(task: Task) { return task.status === 'done' ? 'pass' : task.status === 'cancelled' ? 'muted' : 'unknown' }
 
 /** Build a graph only from relationships represented in the workspace snapshot. */
 export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): SafetyChainGraphModel {
@@ -170,7 +170,7 @@ export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): Safety
   })
 
   tasks.forEach(task => {
-    const taskNode = add({ id: nodeId('task', task.id), label: task.title, code: task.status === 'done' ? '已完成' : task.status === 'submitted' ? '待核验' : '待处理', type: 'task', icon: 'tasks', state: taskState(task), lane: 7, detail: `${task.owner} · 截止 ${dateText(task.dueAt)}${task.note ? ` · ${task.note}` : ''}`, selection: { type: 'task', id: task.id } })
+    const taskNode = add({ id: nodeId('task', task.id), label: task.title, code: taskStatusNames[task.status], type: 'task', icon: 'tasks', state: taskState(task), lane: 7, detail: `${task.owner} · 截止 ${dateText(task.dueAt)}${task.note ? ` · ${task.note}` : ''}`, selection: { type: 'task', id: task.id } })
     if (task.planId) {
       const planNode = nodesByPlan.get(task.planId)
       if (planNode) link(planNode.id, taskNode.id, '协同动作', `任务“${task.title}”的关联计划字段指向 ${planNode.code}。`, task.status === 'done' ? 'pass' : 'unknown')

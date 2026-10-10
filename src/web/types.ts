@@ -83,7 +83,8 @@ export interface DocumentRecord {
 }
 export interface Task {
   id: string; title: string; planId: string | null; equipmentId: string | null;
-  owner: string; dueAt: string; status: 'open' | 'submitted' | 'done'; note: string;
+  owner: string; dueAt: string;
+  status: 'open' | 'submitted' | 'done' | 'returned' | 'cancelled' | 'reopened'; note: string;
   sourceId?: string | null; sourceLine?: number | null; documentIds?: string[]; actionKind?: string | null; actionTarget?: Record<string, unknown> | null
 }
 export interface Decision { id: string; planId: string; revision: number; basis: string; actor: string; comment: string; at: string }
@@ -123,4 +124,7 @@ export const kindNames: Record<Kind, string> = {
  fluorescence_microscope: '荧光 / 共聚焦显微镜', cleanroom: '洁净室 / 负压操作间',
 }
 export const statusNames: Record<string, string> = { draft: '待确认', blocked: '存在阻断', unknown: '待补证', ready: '待复核', approved: '复核已记录', recheck: '需重新复核', archived: '已归档' }
+export const taskStatusNames: Record<Task['status'], string> = {
+  open: '待处理', reopened: '已重开', submitted: '待核验', returned: '退回补充', done: '已完成', cancelled: '已取消',
+}
 export const uid = (prefix: string) => `${prefix}-${crypto.randomUUID().slice(0, 8)}`

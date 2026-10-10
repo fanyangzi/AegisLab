@@ -3,6 +3,14 @@ import { uid, kindNames, equipmentFamilies, evidenceKinds } from './types'
 
 export const RULE_PACK = 'resource-prerequisites/1.0'
 export const emptyWorkspace = (): Workspace => ({ schemaVersion: 1, revision: 0, name: '我的实验工作区', provenance: 'user', laboratories: [], equipment: [], plans: [], documents: [], tasks: [], decisions: [], events: [], branches: [] })
+export const taskTransitions: Record<Task['status'], readonly Task['status'][]> = {
+  open: ['open', 'submitted', 'done', 'cancelled'],
+  submitted: ['submitted', 'done', 'returned', 'cancelled'],
+  returned: ['returned', 'reopened', 'cancelled'],
+  reopened: ['reopened', 'submitted', 'done', 'cancelled'],
+  done: ['done', 'reopened'],
+  cancelled: ['cancelled', 'reopened'],
+}
 export const millis = (value: string) => Date.parse(value)
 export const overlaps = (a: { start: string; end: string }, b: { start: string; end: string }) => millis(a.start) < millis(b.end) && millis(b.start) < millis(a.end)
 export function canonical(value: unknown): string {
@@ -111,7 +119,7 @@ export function assertWorkspace(w: Workspace): void {
     if (p.reservations.some((r,i) => p.reservations.slice(i+1).some(b => b.equipmentId === r.equipmentId && overlaps(r,b)))) fail('同一计划不能重复占用同一资源的重叠时段。')
   }
   for (const d of w.documents) { if (!d.name?.trim() || !d.content?.trim() || !d.source?.trim() || d.content.length > 200000 || (d.equipmentId !== null && !eqIds.has(d.equipmentId))) fail('资料名称、来源、内容或关联对象无效。'); interval(d.validFrom,d.validUntil) }
-  for (const t of w.tasks) if (!t.title?.trim() || !t.owner?.trim() || !Number.isFinite(millis(t.dueAt)) || (t.planId !== null && !planIds.has(t.planId)) || (t.equipmentId !== null && !eqIds.has(t.equipmentId))) fail('任务标题、负责人、期限或关联对象无效。')
+  for (const t of w.tasks) if (!t.title?.trim() || !t.owner?.trim() || !Number.isFinite(millis(t.dueAt)) || !Object.prototype.hasOwnProperty.call(taskTransitions, t.status) || (t.planId !== null && !planIds.has(t.planId)) || (t.equipmentId !== null && !eqIds.has(t.equipmentId))) fail('任务标题、负责人、期限或关联对象无效。')
   if (JSON.stringify(w).length > 5_000_000) fail('工作区超过当前容量，请先归档。')
 }
 export function prepareExample(template: Workspace, date: string): Workspace {
@@ -166,8 +174,17 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
       if (!['verified','rejected'].includes(x.status)) throw new Error('资料核验状态无效。'); d.status=x.status; d.reviewedAt=new Date().toISOString(); d.reviewedBy='本机操作者'
       summary=d.status==='verified'?'记录资料核验结果':'退回资料'; break
     }
-    case 'save_task': { const task=structuredClone(x.task) as Task; if (task.sourceId && task.actionKind && next.tasks.some(existing => existing.id!==task.id && existing.planId===task.planId && existing.sourceId===task.sourceId && existing.sourceLine===task.sourceLine && existing.actionKind===task.actionKind && (existing.status==='open'||existing.status==='submitted'))) throw new Error('该 AI 建议已有未完成任务，请打开原任务继续处理。'); upsert(next.tasks,task); objectId=task.id; summary='创建协作任务'; break }
-    case 'update_task': { const t=next.tasks.find(t=>t.id===x.id); if (!t || !['open','submitted','done'].includes(x.status)) throw new Error('任务状态无效'); t.status=x.status; t.note=x.note ?? t.note; summary='更新任务进度，不自动改变证据或审批'; break }
+    case 'save_task': { const task=structuredClone(x.task) as Task; if (task.sourceId && task.actionKind && next.tasks.some(existing => existing.id!==task.id && existing.planId===task.planId && existing.sourceId===task.sourceId && existing.sourceLine===task.sourceLine && existing.actionKind===task.actionKind && ['open','submitted','returned','reopened'].includes(existing.status))) throw new Error('该 AI 建议已有未完成任务，请打开原任务继续处理。'); upsert(next.tasks,task); objectId=task.id; summary='创建协作任务'; break }
+    case 'update_task': {
+      const t=next.tasks.find(t=>t.id===x.id), requested=x.status as Task['status']
+      if (!t || !Object.prototype.hasOwnProperty.call(taskTransitions, requested)) throw new Error('任务状态无效')
+      if (!taskTransitions[t.status].includes(requested)) throw new Error(`任务不能从“${t.status}”流转到“${requested}”。`)
+      const note=String(x.note ?? t.note).trim()
+      if (['returned','cancelled','reopened'].includes(requested) && !note) throw new Error('退回、取消或重开任务必须填写处理说明。')
+      t.status=requested; t.note=note
+      summary=({returned:'退回补充',cancelled:'取消任务',reopened:'重新打开'} as Record<string,string>)[requested] ? `${({returned:'退回补充',cancelled:'取消任务',reopened:'重新打开'} as Record<string,string>)[requested]}；不自动改变证据或审批` : '更新任务进度，不自动改变证据或审批'
+      break
+    }
     case 'save_branch': {
       const b=x.branch as Branch; const p=next.plans.find(p=>p.id===b.planId)
       if (!p || p.revision!==b.baseRevision || basis(next,p)!==b.baseBasis) throw new Error('方案基线已变化，请以当前计划重新创建。')
