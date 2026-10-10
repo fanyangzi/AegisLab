@@ -32,6 +32,7 @@ const paths: Record<string, ReactNode> = {
  eye: <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></>,
  layout: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16 M8 9h13"/></>,
  trash: <><path d="M3 6h18 M9 6V3h6v3 M6 6l1 15h10l1-15 M10 10v7 M14 10v7"/></>,
+ archive: <><path d="M4 5h16v4H4z M6 9v10h12V9 M9 13h6"/></>,
  spark: <><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z M20 2v4 M18 4h4"/></>,
 }
 export function Icon({name, size=20}: {name: string; size?: number}) { return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] ?? paths.file}</svg> }

@@ -35,7 +35,7 @@ function taskState(task: Task) { return task.status === 'done' ? 'pass' : task.s
 /** Build a graph only from relationships represented in the workspace snapshot. */
 export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): SafetyChainGraphModel {
   const w = snapshot.workspace
-  const plans = w.plans.filter(plan => !plan.archived && plan.labId === labId)
+  const plans = w.plans.filter(plan => !plan.archived && plan.lifecycle !== 'cancelled' && plan.labId === labId)
   const planIds = new Set(plans.map(plan => plan.id))
   const equipment = w.equipment.filter(item => item.labId === labId)
   const equipmentIds = new Set(equipment.map(item => item.id))

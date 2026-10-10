@@ -74,7 +74,9 @@ export interface Step { id: string; text: string; line: number; equipmentIds: st
 export interface Reservation { id: string; equipmentId: string; start: string; end: string }
 export interface Plan {
   id: string; code: string; labId: string; name: string; owner: string; revision: number;
-  source: string; sourceName: string; steps: Step[]; reservations: Reservation[]; archived: boolean
+  source: string; sourceName: string; steps: Step[]; reservations: Reservation[]; archived: boolean;
+  /** Server-backed lifecycle; older browser drafts omit it and are treated as draft. */
+  lifecycle?: 'draft' | 'submitted' | 'revising' | 'archived' | 'cancelled'
 }
 export interface DocumentRecord {
   id: string; name: string; kind: 'inspection' | 'sop' | 'reference'; equipmentId: string | null;
@@ -123,7 +125,7 @@ export const kindNames: Record<Kind, string> = {
  co2_incubator: '二氧化碳培养箱', gel_documentation: '凝胶成像系统', electrophoresis: '电泳系统', flow_cytometer: '流式细胞仪',
  fluorescence_microscope: '荧光 / 共聚焦显微镜', cleanroom: '洁净室 / 负压操作间',
 }
-export const statusNames: Record<string, string> = { draft: '待确认', blocked: '存在阻断', unknown: '待补证', ready: '待复核', approved: '复核已记录', recheck: '需重新复核', archived: '已归档' }
+export const statusNames: Record<string, string> = { draft: '待确认', blocked: '存在阻断', unknown: '待补证', ready: '待复核', approved: '复核已记录', recheck: '需重新复核', archived: '已归档', cancelled: '已取消' }
 export const taskStatusNames: Record<Task['status'], string> = {
   open: '待处理', reopened: '已重开', submitted: '待核验', returned: '退回补充', done: '已完成', cancelled: '已取消',
 }

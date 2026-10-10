@@ -33,7 +33,7 @@ export function basis(workspace: Workspace, plan: Plan): string {
     if (d.kind !== 'inspection') return true
     return reservations.some(r => relevant({ start: d.validFrom, end: d.validUntil }, r))
   }).map(d => ({ id: d.id, equipmentId: d.equipmentId, kind: d.kind, specVersion: d.specVersion, status: d.status, validFrom: d.validFrom, validUntil: d.validUntil, content: d.content, source: d.source, reviewedBy: d.reviewedBy, reviewedAt: d.reviewedAt })).sort((a, b) => `${a.equipmentId ?? ''}|${a.kind}|${a.id}`.localeCompare(`${b.equipmentId ?? ''}|${b.kind}|${b.id}`))
-  const otherReservations = workspace.plans.filter(p => p.id !== plan.id && !p.archived).flatMap(p => p.reservations.filter(r => ids.has(r.equipmentId) && reservations.some(current => relevant(r, current))).map(r => ({ planId: p.id, ...r }))).sort((a, b) => `${a.equipmentId}|${a.start}|${a.end}|${a.planId}|${a.id}`.localeCompare(`${b.equipmentId}|${b.start}|${b.end}|${b.planId}|${b.id}`))
+  const otherReservations = workspace.plans.filter(p => p.id !== plan.id && !p.archived && p.lifecycle !== 'cancelled').flatMap(p => p.reservations.filter(r => ids.has(r.equipmentId) && reservations.some(current => relevant(r, current))).map(r => ({ planId: p.id, ...r }))).sort((a, b) => `${a.equipmentId}|${a.start}|${a.end}|${a.planId}|${a.id}`.localeCompare(`${b.equipmentId}|${b.start}|${b.end}|${b.planId}|${b.id}`))
   const planFacts = { id: plan.id, labId: plan.labId, revision: plan.revision, sourceName: plan.sourceName, source: plan.source, steps: plan.steps.map(({ id, text, line, equipmentIds, confirmed }) => ({ id, text, line, equipmentIds, confirmed })).sort((a, b) => a.line - b.line || a.id.localeCompare(b.id)), reservations }
   return canonical({ rulePack: RULE_PACK, plan: planFacts, equipment, documents, otherReservations })
 }
@@ -42,7 +42,7 @@ export function parseSteps(source: string, equipment: Equipment[]) {
 }
 export function checkWorkspace(w: Workspace): Check[] {
   const all: Check[] = []
-  for (const p of w.plans.filter(p => !p.archived)) {
+  for (const p of w.plans.filter(p => !p.archived && p.lifecycle !== 'cancelled')) {
     const add = (code: string, state: Check['state'], title: string, detail: string, equipmentId: string | null = null, relatedPlanIds: string[] = [], documentIds: string[] = []) => all.push({ id: `${p.id}:${code}:${equipmentId ?? 'plan'}`, planId: p.id, code, state, title, detail, equipmentId, relatedPlanIds, documentIds, line: equipmentId ? p.steps.find(s => s.equipmentIds.includes(equipmentId))?.line ?? null : null })
     const confirmed = p.steps.length > 0 && p.steps.every(s => s.confirmed)
     add('SOURCE', confirmed ? 'pass' : 'unknown', confirmed ? '原文与步骤已确认' : '步骤提取需要人工确认', confirmed ? `${p.steps.length} 个步骤绑定到原文行号。` : '请核对原文、步骤及设备匹配；机器提取不代表事实已确认。')
@@ -55,7 +55,7 @@ export function checkWorkspace(w: Workspace): Check[] {
       const reservations = p.reservations.filter(r => r.equipmentId === id)
       const maintenance = e.status === 'unavailable' || reservations.some(r => e.maintenance.some(m => overlaps(r, m)))
       add('AVAILABILITY', maintenance ? 'blocked' : e.status === 'unknown' ? 'unknown' : 'pass', maintenance ? `${e.code} 在预约范围内不可用` : e.status === 'unknown' ? `${e.code} 的台账状态待确认` : `${e.code} 的预约不冲突于维护`, maintenance ? '当前停用状态或维护窗口与使用计划交叠；需更换资源或调整时段。' : '仅依据已登记的台账与维护窗口；不代表现场传感器状态。', id)
-      const assigned = w.plans.filter(q => !q.archived).flatMap(q => q.reservations.filter(r => r.equipmentId === id).map(r => ({ ...r, planId: q.id })))
+      const assigned = w.plans.filter(q => !q.archived && q.lifecycle !== 'cancelled').flatMap(q => q.reservations.filter(r => r.equipmentId === id).map(r => ({ ...r, planId: q.id })))
       let conflicts = new Set<string>()
       for (const r of reservations) {
         const active = assigned.filter(a => overlaps(a, r))
@@ -80,6 +80,7 @@ export function checkWorkspace(w: Workspace): Check[] {
 }
 export function planStatus(w: Workspace, p: Plan, checks: Check[] = checkWorkspace(w)): string {
   if (p.archived) return 'archived'
+  if (p.lifecycle === 'cancelled') return 'cancelled'
   const decision = w.decisions.filter(d => d.planId === p.id).at(-1)
   if (decision && decision.basis !== basis(w, p)) return 'recheck'
   if (!p.steps.length || p.steps.some(s => !s.confirmed)) return 'draft'
@@ -159,11 +160,46 @@ export function applyLocal(w: Workspace, op: Operation): Workspace {
     case 'save_plan': {
       const p=structuredClone(x.plan) as Plan, prev=next.plans.find(q=>q.id===p.id)
       if (prev && prev.revision !== x.expectedPlanRevision) throw new Error('计划已变更，请重新载入后保存。')
+      if (prev?.archived && !p.archived) throw new Error('已归档计划只能引用或复制，不能直接复活为当前计划。')
       p.revision=prev ? prev.revision+1 : 1
-      if (prev && prev.source !== p.source) p.steps.forEach(s=>s.confirmed=false)
+      if (prev && prev.source !== p.source) { p.steps.forEach(s=>s.confirmed=false); p.lifecycle='revising' }
+      else if (prev) p.lifecycle=prev.lifecycle || 'draft'
+      else p.lifecycle=p.lifecycle || 'draft'
+      if (p.lifecycle === 'submitted' && (!p.steps.length || p.steps.some(s=>!s.confirmed))) throw new Error('计划提交前必须完成全部步骤的人工确认。')
+      if (p.archived) {
+        if (!p.steps.length || p.steps.some(s=>!s.confirmed)) throw new Error('计划归档前必须完成全部步骤的人工确认。')
+        const candidate=structuredClone(next), candidatePlan=candidate.plans.find(q=>q.id===p.id)
+        if (candidatePlan) Object.assign(candidatePlan,structuredClone(p)); else candidate.plans.push(structuredClone(p))
+        const checkedPlan=candidate.plans.find(q=>q.id===p.id)!; checkedPlan.archived=false; checkedPlan.lifecycle='submitted'
+        const candidateChecks=checkWorkspace(candidate).filter(c=>c.planId===p.id)
+        if (!candidateChecks.length || candidateChecks.some(c=>c.state!=='pass')) throw new Error('计划仍有阻断或未知项，不能归档。')
+        const decisions=next.decisions.filter(d=>d.planId===p.id)
+        if (decisions.length && decisions.at(-1)!.basis !== basis(candidate,checkedPlan)) throw new Error('当前计划基线与最近复核不一致，请先重新复核后归档。')
+        p.lifecycle='archived'
+      } else if (p.lifecycle === 'archived') throw new Error('归档生命周期必须同时设置 archived=true。')
       upsert(next.plans,p); objectId=p.id; summary=`保存计划 ${p.code} · v${p.revision}`; break
     }
     case 'confirm_steps': { const p=next.plans.find(p=>p.id===x.planId); if (!p || !p.steps.length) throw new Error('计划不存在或没有可确认的步骤'); p.steps.forEach(s=>s.confirmed=true); p.revision++; summary='人工核对原文与全部步骤'; break }
+    case 'transition_plan': {
+      const p=next.plans.find(p=>p.id===x.planId), requested=x.lifecycle as Plan['lifecycle']
+      if (!p || !requested || !['draft','submitted','revising','archived','cancelled'].includes(requested)) throw new Error('计划生命周期无效。')
+      const current=(p.archived?'archived':p.lifecycle||'draft') as NonNullable<Plan['lifecycle']>
+      const transitions:Record<NonNullable<Plan['lifecycle']>,NonNullable<Plan['lifecycle'][]>>={draft:['draft','submitted','cancelled'],submitted:['submitted','revising','cancelled','archived'],revising:['revising','submitted','cancelled'],cancelled:['cancelled'],archived:['archived']}
+      if (!transitions[current].includes(requested)) throw new Error(`计划不能从“${current}”流转到“${requested}”。`)
+      if (requested==='submitted') { if (!p.steps.length || p.steps.some(s=>!s.confirmed)) throw new Error('计划提交前必须完成全部步骤的人工确认。'); p.lifecycle='submitted'; summary='提交当前计划版本，等待资源与证据复核' }
+      else if (requested==='revising') { p.lifecycle='revising'; summary='打开计划修订状态；正式版本未被候选覆盖' }
+      else if (requested==='cancelled') { p.lifecycle='cancelled'; p.archived=false; summary='取消计划；保留历史记录且不再参与当前资源检查' }
+      else if (requested==='archived') {
+        if (!p.steps.length || p.steps.some(s=>!s.confirmed)) throw new Error('计划归档前必须完成全部步骤的人工确认。')
+        const candidate=structuredClone(next), candidatePlan=candidate.plans.find(q=>q.id===p.id)!; candidatePlan.archived=false; candidatePlan.lifecycle='submitted'
+        const candidateChecks=checkWorkspace(candidate).filter(c=>c.planId===p.id)
+        if (!candidateChecks.length || candidateChecks.some(c=>c.state!=='pass')) throw new Error('计划仍有阻断或未知项，不能归档。')
+        const decisions=next.decisions.filter(d=>d.planId===p.id)
+        if (decisions.length && decisions.at(-1)!.basis !== basis(candidate,candidatePlan)) throw new Error('当前计划基线与最近复核不一致，请先重新复核后归档。')
+        p.lifecycle='archived'; p.archived=true; summary='归档当前计划版本；历史依据仍可追溯，不能直接复活'
+      } else { p.lifecycle=requested; summary='更新计划生命周期' }
+      break
+    }
     case 'save_document': {
       const d=structuredClone(x.document) as DocumentRecord
       d.status='pending'; d.reviewedAt=null; d.reviewedBy=null
