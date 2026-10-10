@@ -1006,6 +1006,13 @@ class WorkspaceStore:
                     result_payload TEXT, error TEXT
                 );
                 CREATE INDEX IF NOT EXISTS idx_spatial_jobs_plan ON spatial_jobs(plan_id, created_at DESC);
+                CREATE TABLE IF NOT EXISTS spatial_workspace_snapshots(
+                    snapshot_id TEXT PRIMARY KEY, revision INTEGER NOT NULL,
+                    saved_at TEXT NOT NULL, actor TEXT NOT NULL, reason TEXT NOT NULL,
+                    payload TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_workspace_snapshots_saved
+                    ON spatial_workspace_snapshots(saved_at DESC);
             """)
             conn.execute("INSERT OR IGNORE INTO spatial_workspace VALUES(1,0,?)", (json.dumps(empty_workspace(), ensure_ascii=False),))
     @contextmanager
@@ -1097,6 +1104,56 @@ class WorkspaceStore:
         with self.connection() as conn:
             rows = conn.execute("SELECT * FROM spatial_jobs WHERE plan_id=? ORDER BY created_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
         return [self._job_row(row) for row in rows]
+    def restore(self, *, expected_revision: int, request_id: str, candidate: dict, actor: str) -> dict:
+        """Replace the workspace only after validation and a durable pre-restore snapshot.
+
+        The imported revision is deliberately ignored.  Restore is an ordinary
+        optimistic-concurrency mutation: a stale browser cannot overwrite a
+        newer server state, and retrying the same request is idempotent.
+        """
+        fingerprint = hashlib.sha256(canonical(dict(type="restore_workspace", workspace=candidate)).encode()).hexdigest()
+        validate_workspace(candidate)
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute("SELECT revision,payload FROM spatial_workspace WHERE id=1").fetchone()
+            previous = conn.execute("SELECT request_hash FROM spatial_operations WHERE id=?", (request_id,)).fetchone()
+            if previous:
+                if previous[0] != fingerprint:
+                    raise HTTPException(409, "同一恢复操作标识不能用于不同存档。")
+                return json.loads(row[1])
+            if row[0] != expected_revision:
+                raise HTTPException(409, "工作区已被其他请求更新，请刷新后重试；未覆盖已有数据。")
+            before = json.loads(row[1])
+            snapshot_id = uid("snapshot")
+            saved_at = now()
+            conn.execute(
+                "INSERT INTO spatial_workspace_snapshots(snapshot_id,revision,saved_at,actor,reason,payload) VALUES(?,?,?,?,?,?)",
+                (snapshot_id, int(row[0]), saved_at, actor, "restore_workspace_before_replace", json.dumps(before, ensure_ascii=False)),
+            )
+            restored = copy.deepcopy(candidate)
+            restored["revision"] = int(row[0]) + 1
+            restored.setdefault("events", [])
+            restored["events"] = [*restored["events"], dict(
+                id=uid("event"), at=saved_at, actor=actor, action="restore_workspace",
+                objectId="workspace", summary=f"从服务端恢复文件替换工作区；恢复前快照 {snapshot_id}",
+            )]
+            validate_workspace(restored)
+            conn.execute("UPDATE spatial_workspace SET revision=?,payload=? WHERE id=1", (restored["revision"], json.dumps(restored, ensure_ascii=False)))
+            conn.execute("INSERT INTO spatial_operations VALUES(?,?,?)", (request_id, fingerprint, restored["revision"]))
+            return restored
+    def snapshots(self, limit: int = 20) -> list[dict]:
+        with self.connection() as conn:
+            rows = conn.execute(
+                "SELECT snapshot_id,revision,saved_at,actor,reason FROM spatial_workspace_snapshots ORDER BY saved_at DESC LIMIT ?",
+                (max(1, min(limit, 100)),),
+            ).fetchall()
+        return [dict(snapshotId=row[0], revision=row[1], savedAt=row[2], actor=row[3], reason=row[4]) for row in rows]
+    def snapshot(self, snapshot_id: str) -> dict | None:
+        with self.connection() as conn:
+            row = conn.execute("SELECT snapshot_id,revision,saved_at,actor,reason,payload FROM spatial_workspace_snapshots WHERE snapshot_id=?", (snapshot_id,)).fetchone()
+        if not row:
+            return None
+        return dict(snapshotId=row[0], revision=row[1], savedAt=row[2], actor=row[3], reason=row[4], workspace=json.loads(row[5]))
 
 
 _store: WorkspaceStore | None = None
@@ -1142,6 +1199,12 @@ class Mutation(StrictModel):
     requestId: str = Field(min_length=8, max_length=128)
     type: str = Field(max_length=60)
     payload: dict
+
+class RestoreRequest(StrictModel):
+    expectedRevision: int = Field(ge=0)
+    requestId: str = Field(min_length=8, max_length=128)
+    confirm: Literal["RESTORE"]
+    workspace: dict
 
 router = APIRouter(prefix="/api/spatial", tags=["web-workspace"])
 
@@ -1294,6 +1357,34 @@ def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
 def export_workspace(actor: str = Depends(local_owner)):
     w = store().read()
     return {"exportedAt": now(), "scope": "资源与证据审查记录，不是安全证书", "sha256": hashlib.sha256(canonical(w).encode()).hexdigest(), **envelope(w)}
+
+@router.post("/restore")
+def restore_workspace(body: RestoreRequest, actor: str = Depends(local_owner)):
+    """Restore a validated browser export with a durable rollback point.
+
+    This endpoint is intentionally role-gated and never trusts the imported
+    revision.  The current server payload is snapshotted before replacement;
+    a stale browser receives 409 instead of overwriting newer work.
+    """
+    if local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有恢复服务端存档的权限。")
+    try:
+        restored = store().restore(expected_revision=body.expectedRevision, request_id=body.requestId, candidate=body.workspace, actor=actor)
+        return envelope(restored)
+    except (ValidationError, ValueError, KeyError, TypeError) as error:
+        message = str(error) if not isinstance(error, ValidationError) else "恢复文件结构不符合工作区契约。"
+        raise HTTPException(422, message) from error
+
+@router.get("/snapshots")
+def list_workspace_snapshots(limit: int = 20, actor: str = Depends(local_owner)):
+    return {"snapshots": store().snapshots(limit)}
+
+@router.get("/snapshots/{snapshot_id}")
+def get_workspace_snapshot(snapshot_id: str, actor: str = Depends(local_owner)):
+    snapshot = store().snapshot(snapshot_id)
+    if not snapshot:
+        raise HTTPException(404, "恢复前快照不存在。")
+    return snapshot
 
 
 @router.post('/import-text')

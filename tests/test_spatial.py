@@ -177,6 +177,18 @@ class StoreTests(unittest.TestCase):
         initialize(self.store);before=self.store.read()
         with self.assertRaises(ValueError):self.store.mutate(1,'failed-001','approve',{'planId':'EXP-001','expectedPlanRevision':1,'comment':'bad'},'负责人')
         self.assertEqual(before,self.store.read())
+    def test_restore_snapshots_before_replace_and_ignores_imported_revision(self):
+        initialize(self.store);candidate=self.store.read();candidate['name']='恢复后的工作区';candidate['revision']=999
+        restored=self.store.restore(expected_revision=1,request_id='restore-0001',candidate=candidate,actor='测试负责人')
+        self.assertEqual(restored['revision'],2);self.assertEqual(restored['name'],'恢复后的工作区')
+        snapshots=self.store.snapshots();self.assertEqual(len(snapshots),1);self.assertEqual(snapshots[0]['revision'],1)
+        before=self.store.snapshot(snapshots[0]['snapshotId']);self.assertEqual(before['workspace']['name'],fixture()['name'])
+        retry=self.store.restore(expected_revision=1,request_id='restore-0001',candidate=candidate,actor='测试负责人')
+        self.assertEqual(retry,restored);self.assertEqual(len(self.store.snapshots()),1)
+    def test_restore_rejects_stale_revision_without_snapshot(self):
+        initialize(self.store);candidate=self.store.read();candidate['name']='过期恢复'
+        with self.assertRaises(HTTPException) as result:self.store.restore(expected_revision=0,request_id='restore-0002',candidate=candidate,actor='测试负责人')
+        self.assertEqual(result.exception.status_code,409);self.assertEqual(self.store.snapshots(),[])
 
 class ApiTests(unittest.TestCase):
     def setUp(self):
@@ -269,6 +281,17 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(all(edge['from'] in {node['id'] for node in graph['nodes']} and edge['to'] in {node['id'] for node in graph['nodes']} for edge in graph['edges']))
         self.assertEqual(self.client.get('/api/spatial/graph?dateFrom=bad').status_code,422)
         self.assertEqual(self.client.get('/api/spatial/graph?hops=3').status_code,422)
+    def test_restore_api_is_role_gated_and_creates_snapshot(self):
+        initialize(s.store());candidate=s.store().read();candidate['name']='服务端恢复验收';candidate['revision']=700
+        response=self.client.post('/api/spatial/restore',json={'expectedRevision':1,'requestId':'api-restore-01','confirm':'RESTORE','workspace':candidate})
+        self.assertEqual(response.status_code,200,response.text);self.assertEqual(response.json()['workspace']['revision'],2)
+        listed=self.client.get('/api/spatial/snapshots').json()['snapshots'];self.assertEqual(len(listed),1)
+        detail=self.client.get('/api/spatial/snapshots/'+listed[0]['snapshotId']);self.assertEqual(detail.status_code,200);self.assertEqual(detail.json()['workspace']['name'],fixture()['name'])
+        stale=self.client.post('/api/spatial/restore',json={'expectedRevision':1,'requestId':'api-restore-02','confirm':'RESTORE','workspace':candidate})
+        self.assertEqual(stale.status_code,409)
+        with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
+            denied=self.client.post('/api/spatial/restore',json={'expectedRevision':2,'requestId':'api-restore-03','confirm':'RESTORE','workspace':candidate})
+        self.assertEqual(denied.status_code,403)
     def test_review_endpoint_rejects_unanchored_model_reordering(self):
         with patch.object(self.service.llm, 'extract_sop', return_value={'steps':[{'order':2,'instruction':'第二步：完成转移操作'},{'order':1,'instruction':'第一步：准备样品'}]}):
             response=self.client.post('/reviews/from-sop',json={'title':'来源绑定测试','room':'测试室','sop_text':'第一步：准备样品\n第二步：完成转移操作'})

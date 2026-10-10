@@ -50,5 +50,12 @@ export function useWorkspace() {
  const connect=useCallback(async()=>{const data=await request<Snapshot>('/api/spatial');assertWorkspace(data.workspace);setSnapshot({...data,mode:'server'});setConnection('服务端 API 已连接');setError('')},[])
  const openLocal=useCallback(()=>{const data=readLocal();setSnapshot(localSnapshot(data.value));setError(data.error);setConnection('浏览器草稿 · 与服务器存档分离')},[])
  const refresh=useCallback(async()=>{if(current.current.mode==='server')await connect();else{const data=readLocal();setSnapshot(localSnapshot(data.value));setError(data.error)}},[connect])
- return {snapshot,busy,booting,connection,error,setError,mutate,connect,openLocal,refresh,exportRaw:()=>localStorage.getItem(KEY)}
+ const restoreServer=useCallback(async(workspace:Workspace)=>{
+  const s=current.current
+  if(s.mode!=='server')throw new Error('请先连接服务端，再恢复服务端存档。')
+  assertWorkspace(workspace)
+  const result=await request<Snapshot>('/api/spatial/restore',{expectedRevision:s.workspace.revision,requestId:uid('restore'),confirm:'RESTORE',workspace})
+  assertWorkspace(result.workspace);const next={...result,mode:'server' as const};setSnapshot(next);current.current=next
+ },[])
+ return {snapshot,busy,booting,connection,error,setError,mutate,connect,openLocal,refresh,restoreServer,exportRaw:()=>localStorage.getItem(KEY)}
 }
