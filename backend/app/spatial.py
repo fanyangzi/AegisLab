@@ -1673,6 +1673,19 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
     p = next((p for p in w['plans'] if p['id'] == plan_id), None)
     if p is None:
         raise HTTPException(404, '计划不存在。')
+    # A plan revision can have several immutable attempts after a provider
+    # timeout or an explicit rerun. Opening Copilot without `retry=true` should
+    # show the newest completed attempt for the current revision rather than
+    # resurrecting the first (possibly degraded) idempotency record.
+    if not retry:
+        latest = next((run for run in store().analysis_runs(p['id'], 100)
+                       if int(run.get('planRevision', -1)) == int(p['revision'])), None)
+        if latest:
+            run_id = str((latest.get('trace') or {}).get('runId') or '')
+            latest_job_id = run_id.removeprefix('copilot:')
+            latest_job = store().job(latest_job_id) if latest_job_id else None
+            if latest_job and latest_job.get('status') == 'succeeded':
+                return {**latest, 'job': latest_job}
     job_id = f"analysis:{p['id']}:v{p['revision']}"
     existing = store().job(job_id)
     if retry and existing and existing["status"] in {"failed", "cancelled", "succeeded"}:

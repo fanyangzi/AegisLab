@@ -471,6 +471,10 @@ class ApiTests(unittest.TestCase):
         self.assertNotEqual(first.json()['job']['jobId'],second.json()['job']['jobId'])
         self.assertEqual(second.json()['planRevision'],first.json()['planRevision'])
         self.assertEqual(len(self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs']),2)
+        latest=self.client.post('/api/spatial/plans/EXP-001/analysis')
+        self.assertEqual(latest.status_code,200,latest.text)
+        self.assertEqual(latest.json()['trace']['runId'],second.json()['trace']['runId'])
+        self.assertEqual(latest.json()['job']['jobId'],second.json()['job']['jobId'])
         self.assertEqual(s.store().read()['revision'],1)
     def test_relationship_graph_supports_plan_type_and_time_filters(self):
         initialize(s.store())
