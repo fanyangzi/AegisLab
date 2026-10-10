@@ -1452,6 +1452,12 @@ class RestoreRequest(StrictModel):
 
 router = APIRouter(prefix="/api/spatial", tags=["web-workspace"])
 
+# Keep this contract explicit instead of silently returning an empty graph for
+# a misspelled type.  The endpoint is intentionally limited to entities that
+# are persisted in the workspace snapshot; chemical/control candidates that
+# only exist in the AI parser are not promoted to server graph facts here.
+GRAPH_NODE_TYPES = frozenset({"plan", "step", "equipment", "document", "task", "check"})
+
 @router.get("")
 def get_workspace(actor: str = Depends(local_owner)):
     return envelope(store().read())
@@ -1489,6 +1495,9 @@ def get_relationship_graph(
     if planId and not plans:
         raise HTTPException(404, "计划不存在。")
     allowed_types = {item.strip() for item in (types or "").split(",") if item.strip()}
+    unknown_types = sorted(allowed_types - GRAPH_NODE_TYPES)
+    if unknown_types:
+        raise HTTPException(422, f"types 包含不支持的节点类型：{', '.join(unknown_types)}。")
     try:
         start_bound = dt(dateFrom) if dateFrom else None
         end_bound = dt(dateTo) if dateTo else None
@@ -1502,8 +1511,21 @@ def get_relationship_graph(
     def add_node(node_id: str, node_type: str, label: str, **extra: Any) -> None:
         if node_id not in nodes:
             nodes[node_id] = {"id": node_id, "type": node_type, "label": label, **extra}
-    def add_edge(edge_id: str, source: str, target: str, relation: str, **extra: Any) -> None:
-        edges.append({"id": edge_id, "from": source, "to": target, "relation": relation, **extra})
+    def canonical_edge_state(value: Any) -> str:
+        if value in {"pass", "unknown", "blocked"}:
+            return value
+        return {"verified": "pass", "rejected": "blocked", "done": "pass"}.get(value, "unknown")
+
+    def add_edge(edge_id: str, source: str, target: str, relation: str, *, state: str | None = None, provenance: str | None = None, **extra: Any) -> None:
+        # Consumers can render a single state vocabulary for every relation.
+        # Legacy status values are retained for evidence edges, while the
+        # canonical state makes unknown/rejected evidence explicit.
+        status = extra.get("status")
+        canonical_state = canonical_edge_state(state if state is not None else status)
+        edge = {"id": edge_id, "from": source, "to": target, "relation": relation, "state": canonical_state, **extra}
+        if provenance:
+            edge["provenance"] = provenance
+        edges.append(edge)
     def in_window(item: dict) -> bool:
         if not start_bound and not end_bound:
             return True
@@ -1518,18 +1540,25 @@ def get_relationship_graph(
     tasks = w.get("tasks", [])
     for plan in plans:
         pid = plan["id"]
-        add_node(f"plan:{pid}", "plan", plan.get("name", pid), planId=pid, labId=plan.get("labId"), revision=plan.get("revision"), state=plan.get("status", "current"))
+        window_reservations = [r for r in plan.get("reservations", []) if in_window(r)]
+        add_node(
+            f"plan:{pid}", "plan", plan.get("name", pid), planId=pid, labId=plan.get("labId"),
+            revision=plan.get("revision"), state=plan.get("status", "current"),
+            source=plan.get("sourceName") or plan.get("source"),
+            reservationCount=len(window_reservations),
+            timeFiltered=bool(start_bound or end_bound),
+        )
         used_equipment: set[str] = set()
         for index, step in enumerate(plan.get("steps", []), 1):
             sid = f"step:{plan['id']}:{step.get('line', index)}"
             add_node(sid, "step", step.get("text", f"步骤 {index}"), planId=pid, sourceLine=step.get("line"), state="confirmed" if step.get("confirmed") else "candidate")
-            add_edge(f"{pid}:step:{step.get('line', index)}", f"plan:{pid}", sid, "contains", sourceLine=step.get("line"))
+            add_edge(f"{pid}:step:{step.get('line', index)}", f"plan:{pid}", sid, "contains", state="pass" if step.get("confirmed") else "unknown", sourceLine=step.get("line"), provenance="SOP 原文")
             for equipment_id in step.get("equipmentIds", []):
                 if equipment_id not in equipment_by_id:
                     continue
                 used_equipment.add(equipment_id)
                 edge_id = f"{pid}:step:{step.get('line', index)}:equipment:{equipment_id}"
-                add_edge(edge_id, sid, f"equipment:{equipment_id}", "requires", sourceLine=step.get("line"))
+                add_edge(edge_id, sid, f"equipment:{equipment_id}", "requires", state="pass", sourceLine=step.get("line"), provenance="SOP 原文")
         for reservation in plan.get("reservations", []):
             if not in_window(reservation):
                 continue
@@ -1539,7 +1568,7 @@ def get_relationship_graph(
                 continue
             used_equipment.add(equipment_id)
             add_node(f"equipment:{equipment_id}", "equipment", equipment.get("name", equipment_id), equipmentId=equipment_id, labId=equipment.get("labId"), kind=equipment.get("kind"), state=equipment.get("status"), start=reservation.get("start"), end=reservation.get("end"))
-            add_edge(f"{pid}:reservation:{reservation.get('id', equipment_id)}", f"plan:{pid}", f"equipment:{equipment_id}", "reserves", start=reservation.get("start"), end=reservation.get("end"))
+            add_edge(f"{pid}:reservation:{reservation.get('id', equipment_id)}", f"plan:{pid}", f"equipment:{equipment_id}", "reserves", state="pass", start=reservation.get("start"), end=reservation.get("end"), provenance="计划预约")
         for equipment_id in used_equipment:
             equipment = equipment_by_id.get(equipment_id)
             if not equipment:
@@ -1549,24 +1578,24 @@ def get_relationship_graph(
                 if document.get("equipmentId") != equipment_id:
                     continue
                 did = f"document:{document['id']}"
-                add_node(did, "document", document.get("name", document["id"]), documentId=document["id"], equipmentId=equipment_id, state=document.get("status"), validFrom=document.get("validFrom"), validUntil=document.get("validUntil"))
-                add_edge(f"{equipment_id}:document:{document['id']}", f"equipment:{equipment_id}", did, "evidence", status=document.get("status"), specVersion=document.get("specVersion"))
+                add_node(did, "document", document.get("name", document["id"]), documentId=document["id"], equipmentId=equipment_id, state=document.get("status"), status=document.get("status"), validFrom=document.get("validFrom"), validUntil=document.get("validUntil"), source=document.get("source"), sourceType=document.get("sourceType"), sourceLocator=document.get("sourceLocator"), capturedAt=document.get("capturedAt"))
+                add_edge(f"{equipment_id}:document:{document['id']}", f"equipment:{equipment_id}", did, "evidence", status=document.get("status"), specVersion=document.get("specVersion"), provenance=document.get("source") or document.get("sourceType"))
         for task in tasks:
             if task.get("planId") != pid:
                 continue
             tid = f"task:{task['id']}"
             add_node(tid, "task", task.get("title", task["id"]), taskId=task["id"], planId=pid, equipmentId=task.get("equipmentId"), state=task.get("status"), dueAt=task.get("dueAt"))
-            add_edge(f"{pid}:task:{task['id']}", f"plan:{pid}", tid, "action", state=task.get("status"))
+            add_edge(f"{pid}:task:{task['id']}", f"plan:{pid}", tid, "action", state=task.get("status"), provenance="工作区任务")
             if task.get("equipmentId"):
-                add_edge(f"{task['id']}:equipment", tid, f"equipment:{task['equipmentId']}", "targets")
+                add_edge(f"{task['id']}:equipment", tid, f"equipment:{task['equipmentId']}", "targets", state="pass", provenance="任务关联字段")
         for check in check_workspace(w):
             if check.get("planId") != pid:
                 continue
             cid = f"check:{check['id']}"
             add_node(cid, "check", check.get("title", check["id"]), checkId=check["id"], planId=pid, equipmentId=check.get("equipmentId"), state=check.get("state"), code=check.get("code"), sourceLine=check.get("line"))
-            add_edge(f"{pid}:check:{check['id']}", f"plan:{pid}", cid, "evaluates", state=check.get("state"), code=check.get("code"))
+            add_edge(f"{pid}:check:{check['id']}", f"plan:{pid}", cid, "evaluates", state=check.get("state"), code=check.get("code"), sourceLine=check.get("line"), provenance="规则核验快照")
             if check.get("equipmentId"):
-                add_edge(f"{check['id']}:equipment", cid, f"equipment:{check['equipmentId']}", "evaluates")
+                add_edge(f"{check['id']}:equipment", cid, f"equipment:{check['equipmentId']}", "evaluates", state=check.get("state"), provenance="规则核验对象")
 
     if nodeId:
         adjacency: dict[str, set[str]] = {}
