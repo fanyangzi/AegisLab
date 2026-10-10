@@ -39,6 +39,11 @@ class LLMAdapter:
         self.base_url = os.getenv("LABSAFETY_LLM_BASE_URL", "").rstrip("/")
         self.model = os.getenv("LABSAFETY_LLM_MODEL", "")
         self.api_key = os.getenv("LABSAFETY_LLM_API_KEY", "")
+        try:
+            configured_timeout = float(os.getenv("LABSAFETY_LLM_TIMEOUT_SECONDS", "30"))
+        except ValueError:
+            configured_timeout = 30.0
+        self.timeout_seconds = min(max(configured_timeout, 5.0), 60.0)
         self.enabled = bool(self.api_key and self.base_url and self.model) and os.getenv("LABSAFETY_LLM_ENABLED", "1").lower() not in {"0", "false", "no"}
 
     def status(self) -> Dict[str, Any]:
@@ -151,7 +156,7 @@ class LLMAdapter:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=12) as response:
+            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
                 data = json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as error:
             # Do not read or expose the provider body; it may echo credentials
