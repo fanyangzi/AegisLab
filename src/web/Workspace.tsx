@@ -68,7 +68,7 @@ export function WebWorkspace(){
  useEffect(()=>{try{localStorage.setItem('aegis.nav.expanded',expanded?'1':'0')}catch{}},[expanded])
  const close=useCallback(()=>setForm(null),[]),select=(selection:Selection)=>navigate({selection,labId,ai:false,focusLine:null,...(selection?.type==='plan'?{planId:selection.id}:{})}),openPlan=(id:string,ai=false,focusLine?:number|null)=>navigate({page:'plans',planId:id,selection:{type:'plan',id},labId:w.plans.find(p=>p.id===id)?.labId||labId,ai,focusLine:focusLine??null})
  const act=async(op:Operation)=>{await api.mutate(op);setNotice('已保存，关联检查已重新计算。')}
- const openSpaceAi=useCallback((planId?:string)=>{const id=planId||route.planId||plans[0]?.id||'';setSpaceAiPlanId(id);setSpaceAiAnalysis(null);setSpaceAiError('');setSpaceAiOpen(true);if(!id){setSpaceAiError('当前实验室还没有可分析的实验计划。');return}setSpaceAiBusy(true);void request<Analysis>(`/api/spatial/plans/${encodeURIComponent(id)}/analysis`,{}).then(setSpaceAiAnalysis).catch(e=>setSpaceAiError(e instanceof Error?e.message:'AI 预审未完成，请稍后重试。')).finally(()=>setSpaceAiBusy(false))},[plans,route.planId])
+ const openSpaceAi=useCallback((planId?:string)=>{const id=planId||route.planId||plans[0]?.id||'';setSpaceAiPlanId(id);setSpaceAiAnalysis(null);setSpaceAiError('');setSpaceAiOpen(true);if(!id){setSpaceAiError('当前实验室还没有可分析的实验计划。');return}setSpaceAiBusy(true);void runAnalysisInBackground(id).then(setSpaceAiAnalysis).catch(e=>setSpaceAiError(e instanceof Error?e.message:'AI 预审未完成，请稍后重试。')).finally(()=>setSpaceAiBusy(false))},[plans,route.planId])
  useEffect(()=>{if(!notice)return;const t=setTimeout(()=>setNotice(''),3500);return()=>clearTimeout(t)},[notice])
  useEffect(()=>{const key=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();setSearchOpen(true)}};addEventListener('keydown',key);return()=>removeEventListener('keydown',key)},[])
  const initialize=async()=>{try{await act({type:'initialize',payload:{workspace:prepareExample(example as Workspace,route.date)}});navigate({labId:'lab-201',selection:{type:'equipment',id:'F-01'},page:'space',view:'space'})}catch{}}
@@ -186,15 +186,34 @@ interface CopilotRelation {id?:string;from:string;to:string;kind:string;label:st
 interface CopilotTrace {runId?:string;generatedAt?:string;stages:{id:string;label:string;status:string;detail:string;inputs?:string[];outputs?:string[]}[];model?:{configured:boolean;used:boolean;provider:string;name?:string|null};sources?:{kind:string;label:string;reference:string;detail:string;status:'used'|'degraded'|'missing'}[];decision?:{state:string;label:string;approvalRequired:boolean;reason:string};source_policy?:string}
 interface CopilotPacket {entities:{steps:number;hazards:CopilotItem[];substances:Record<string,unknown>[];ppe:string[];equipment:string[];wasteStreams:string[];ventilation:string|null};relations?:CopilotRelation[];riskSignals:CopilotItem[];conflicts:CopilotItem[];evidenceGaps:CopilotItem[];nextActions:CopilotItem[];scenarios:CopilotScenario[];ruleSummary:{total:number;blocked:number;unknown:number;pass:number;failedTextRules:string[]}}
 interface Analysis {planId:string;planRevision:number;ruleVersion:string;parser:string;provider:string;model?:string|null;evaluationId?:string;degraded:boolean;degradedReason?:string|null;summary:string;trace?:CopilotTrace;results:{rule_id:string;passed:boolean;message:string;recommended_control?:string;rule_version:string;source?:string}[];copilot?:CopilotPacket}
+type DurableJob<T=unknown>={jobId:string;kind:string;planId?:string|null;idempotencyKey:string;status:'queued'|'running'|'succeeded'|'failed'|'cancelled';createdAt:string;startedAt?:string|null;finishedAt?:string|null;result?:T|null;error?:string|null;context?:Record<string,unknown>}
+type AnalysisResponse=Analysis&{background?:boolean;job?:DurableJob<Analysis>}
 const aiStageStatus:Record<string,string>={model:'模型增强',deterministic:'规则降级',rule:'规则约束',required:'人工必需'}
 const aiSourceStatus:Record<string,string>={used:'已使用',degraded:'已降级',missing:'缺失'}
+const pause=(milliseconds:number)=>new Promise<void>(resolve=>setTimeout(resolve,milliseconds))
+async function waitForDurableJob<T>(jobId:string, label:string):Promise<DurableJob<T>>{
+ for(let attempt=0;attempt<240;attempt++){
+  const job=await request<DurableJob<T>>(`/api/spatial/jobs/${encodeURIComponent(jobId)}`)
+  if(job.status==='succeeded'||job.status==='failed'||job.status==='cancelled')return job
+  await pause(500)
+ }
+ throw new Error(`${label}超过 120 秒仍未完成，请到任务记录查看状态。`)
+}
+async function runAnalysisInBackground(planId:string,retry=false):Promise<Analysis>{
+ const query=retry?'&retry=true':''
+ const queued=await request<AnalysisResponse>(`/api/spatial/plans/${encodeURIComponent(planId)}/analysis?background=true${query}`,{})
+ if(!queued.job)return queued
+ const job=queued.job.status==='succeeded'?queued.job:await waitForDurableJob<Analysis>(queued.job.jobId,'AI 预审')
+ if(job.status!=='succeeded'||!job.result)throw new Error(job.error||`AI 预审任务${job.status==='cancelled'?'已取消':'失败'}。`)
+ return job.result
+}
  function PlanDetail({plan:p,snapshot,mutate,onBack,onEdit,onBranch,onApproval,onTask,onSelect,onOpenGraph,focusLine,autoAI=false}:{plan:Plan;snapshot:Snapshot;mutate:(op:Operation)=>Promise<void>;onBack:()=>void;onEdit:()=>void;onBranch:(seed?:{name?:string;reservations?:Reservation[]})=>void;onApproval:()=>void;onTask:(item?:CopilotItem)=>void;onSelect:(s:Selection)=>void;onOpenGraph:(selection?:Selection)=>void;focusLine?:number|null;autoAI?:boolean}){
  const w=snapshot.workspace,[tab,setTab]=useState(autoAI?'analysis':'review'),[line,setLine]=useState<number|null>(focusLine??null),[analysis,setAnalysis]=useState<Analysis|null>(null),[analysisRuns,setAnalysisRuns]=useState<Analysis[]>([]),[analyzing,setAnalyzing]=useState(false),[error,setError]=useState('')
   const checks=snapshot.checks.filter(c=>c.planId===p.id),status=snapshot.statuses[p.id],lifecycle=p.lifecycle||'draft'
  const run=async(op:Operation)=>{setError('');try{await mutate(op)}catch(e){setError(e instanceof Error?e.message:'操作未完成。')}}
   const transition=async(target:NonNullable<Plan['lifecycle']>)=>{const labels:{[key:string]:string}={submitted:'提交当前版本',revising:'开始修订当前版本',cancelled:'取消当前计划',archived:'归档当前版本'};if(target==='cancelled'&&!window.confirm('取消后计划会保留在历史记录中，并退出当前资源检查。确定继续吗？'))return;if(target==='archived'&&!window.confirm('归档会锁定当前版本，后续只能复制为新计划。确定继续吗？'))return;await run({type:'transition_plan',payload:{planId:p.id,lifecycle:target}});void loadAnalysisRuns()}
  const loadAnalysisRuns=async()=>{if(snapshot.mode!=='server')return;try{const response=await request<{planId:string;runs:Analysis[]}>(`/api/spatial/plans/${encodeURIComponent(p.id)}/analysis/runs`,{});setAnalysisRuns(response.runs||[])}catch(e){setError(e instanceof Error?e.message:'运行历史暂时不可用。')}}
- const analyze=async()=>{setError('');setAnalyzing(true);try{const query=analysis?'?retry=true':'';const response=await request<Analysis>(`/api/spatial/plans/${encodeURIComponent(p.id)}/analysis${query}`,{});setAnalysis(response);setAnalysisRuns(previous=>[response,...previous.filter(run=>run.trace?.runId!==response.trace?.runId)])}catch(e){setError(e instanceof Error?e.message:'预审未完成。')}finally{setAnalyzing(false)}}
+ const analyze=async()=>{setError('');setAnalyzing(true);try{const response=await runAnalysisInBackground(p.id,Boolean(analysis));setAnalysis(response);setAnalysisRuns(previous=>[response,...previous.filter(run=>run.trace?.runId!==response.trace?.runId)])}catch(e){setError(e instanceof Error?e.message:'预审未完成。')}finally{setAnalyzing(false)}}
  const openCopilot=()=>{setTab('analysis');if(!analysis&&!analyzing)void analyze()}
  const onCopilotAction=(item:CopilotItem)=>{const target=item.actionTarget;switch(target?.type){case 'source_line':setTab('review');setLine(target.line??item.line??null);return;case 'equipment':if(target.equipmentId||item.equipmentId){onSelect({type:'equipment',id:(target.equipmentId||item.equipmentId)!});return}break;case 'evidence':if(target.documentId){onSelect({type:'document',id:target.documentId});return}break;case 'task':if(target.taskId&&!target.taskId.startsWith('draft-')){onSelect({type:'task',id:target.taskId});return}onTask(item);return;case 'scenario':{const scenario=analysis?.copilot?.scenarios.find(candidate=>candidate.id===target.scenarioId);const changes=scenario?.changes||[];const reservations=p.reservations.map(reservation=>{const change=changes.find(item=>String(item.from||'')===reservation.equipmentId);return change?.to?{...reservation,equipmentId:String(change.to)}:reservation});onBranch({name:scenario?.name,reservations});return}case 'relationship':{const graphSelection=graphSelectionForCopilotTarget(target,item,w,{type:'plan',id:p.id});onOpenGraph(graphSelection);return}case 'rule':setTab('analysis');return;default:break}onTask(item)}
  useEffect(()=>{if(autoAI&&!analysis&&!analyzing)void analyze()},[autoAI,p.id])
@@ -240,7 +259,7 @@ type ExpiryReport={
  impactedPlans:Array<{planId:string;code:string;revision:number;status:string;reasonCodes:string[];expiredDocumentIds:string[];decisionInvalidated:boolean}>;
  counts:{expiredEvidence:number;overdueTasks:number;impactedPlans:number};
 }
-type ExpiryJob={jobId:string;kind:string;status:string;idempotencyKey:string;createdAt:string;finishedAt?:string|null;result?:ExpiryReport|null;error?:string|null}
+type ExpiryJob=DurableJob<ExpiryReport>
 const localDateTime=(date=new Date())=>`${localDate(date)}T${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`
 const asOfIso=(value:string)=>new Date(`${value}:00`).toISOString()
 
@@ -251,7 +270,7 @@ function ExpiryRecheckPanel({api}:{api:ReturnType<typeof useWorkspace>}){
   let id=requestId
   if(fresh){id=uid('expiry-ui');setRequestId(id);setJob(null)}
   setPending(true);setError('')
-  try{const response=await request<ExpiryJob>('/api/spatial/expiry/recheck',{requestId:id,asOf:asOfIso(asOf)});setJob(response)}catch(e){setError(e instanceof Error?e.message:'到期复核请求失败，请检查服务端连接。')}finally{setPending(false)}
+  try{const queued=await request<ExpiryJob>(`/api/spatial/expiry/recheck?background=true`,{requestId:id,asOf:asOfIso(asOf)});const response=queued.status==='succeeded'?queued:await waitForDurableJob<ExpiryReport>(queued.jobId,'到期复核');setJob(response)}catch(e){setError(e instanceof Error?e.message:'到期复核请求失败，请检查服务端连接。')}finally{setPending(false)}
  }
  const report=job?.result
  return <section className="al-settings-card al-expiry-card" aria-labelledby="expiry-recheck-title">

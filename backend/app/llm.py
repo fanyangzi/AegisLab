@@ -9,6 +9,7 @@ summary so review decisions remain available offline.
 import json
 import hashlib
 import os
+import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -32,6 +33,35 @@ class _LLMTransportError(Exception):
         super().__init__(reason)
         self.reason = reason
         self.unsupported = unsupported
+
+
+_UNSAFE_SUMMARY_REASON = "远程模型输出未通过解释性安全检查"
+
+# These are intentionally high-confidence patterns.  Ordinary findings such
+# as "规则检查未通过，建议人工复核" must remain visible; only direct
+# approval/role-change/execution assertions or imperative commands trigger a
+# deterministic downgrade.
+_SUMMARY_OUTPUT_UNSAFE_PATTERNS = (
+    re.compile(r"(?:请|立即|直接|现在)\s*(?:(?:立即|直接|现在)\s*)?(?:批准|通过|放行|准予|允许开工|开始实验|开始操作|执行|运行|调用|提交|删除|覆盖|修改|变更|设置)"),
+    re.compile(r"(?:已|现已|已经|可以|可直接|正式)\s*(?:批准|放行|准予|审批通过|允许开工|开始实验|开始操作)"),
+    re.compile(r"(?:已获批准|获准|获得批准|审批已通过|审批通过|通过审批|批准通过)"),
+    re.compile(r"(?:审批通过|批准|放行|准予|允许开工)\s*(?:本次|当前|该|此)?\s*(?:实验|操作|计划|申请|流程)"),
+    re.compile(r"(?:审批|批准请求)\s*(?:已|已经|现已)?\s*(?:通过|批准|放行)"),
+    re.compile(r"(?:建议|推荐|可|可以|应当|应该)\s*(?:直接\s*)?(?:批准|放行|准予|允许开工)"),
+    re.compile(r"(?:角色|身份)\s*(?:切换|变更|设为|改为)|(?:切换|变更|设为|改为|提升为|升级为|授予|赋予|成为)\s*(?:管理员|负责人|安全负责人|EHS|审核员|批准人|角色)"),
+    re.compile(r"(?:执行|运行|调用|提交|删除|覆盖|修改|变更)\s*(?:命令|指令|脚本|工具|接口|文件|计划|审批|操作)"),
+    re.compile(r"(?:please|immediately|now)\s+(?:approve|authorize|execute|run|call|invoke|submit|delete|overwrite|change\s+(?:the\s+)?role)\b", re.IGNORECASE),
+    re.compile(r"(?:approved|authorized|granted)\s+(?:the|this|current)?\s*(?:experiment|operation|plan|request|workflow)\b", re.IGNORECASE),
+    re.compile(r"(?:the\s+)?(?:experiment|operation|plan|request|workflow)\s+(?:is\s+)?(?:approved|authorized|granted)\b", re.IGNORECASE),
+    re.compile(r"(?:switch|change|set)\s+(?:the\s+)?(?:role|identity)\s+to\s+(?:admin|administrator|owner|reviewer|approver)\b", re.IGNORECASE),
+    re.compile(r"(?:make|set|grant|give)\s+(?:me|the\s+user)?\s*(?:an?\s+)?(?:admin|administrator|owner|reviewer|approver)\s*(?:access|privileges|role)?\b", re.IGNORECASE),
+    re.compile(r"(?:execute|run|call|invoke|submit|delete|overwrite)\s+(?:the\s+)?(?:command|instruction|script|tool|interface|file|plan|approval|operation)\b", re.IGNORECASE),
+    re.compile(r"[\"']?(?:approved|approval|action|role|decision|disposition|status|approval_status)[\"']?\s*[:=]\s*(?:true|[\"']?(?:approved|approve|grant|admin|administrator|execute))", re.IGNORECASE),
+)
+_SUMMARY_OUTPUT_SAFE_DISCLAIMERS = (
+    re.compile(r"(?:不|未|并非|不是|不能|不可|不得|禁止|尚未|无法).{0,10}(?:批准|放行|开工|执行|调用|角色|身份)"),
+    re.compile(r"(?:仅供|只能|请勿|不要).{0,10}(?:批准|放行|执行|调用|变更|切换)"),
+)
 
 
 class LLMAdapter:
@@ -78,6 +108,8 @@ class LLMAdapter:
                 user=json.dumps(prompt, ensure_ascii=False),
                 max_output_tokens=700,
             )
+            if self._summary_output_is_unsafe(text):
+                return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True, reason=_UNSAFE_SUMMARY_REASON)
             return LLMResult("openai-compatible", True, text)
         except _LLMTransportError as error:
             return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True, reason=error.reason)
@@ -162,6 +194,38 @@ class LLMAdapter:
             ],
         }
         return self._response_text(self._post_json("/chat/completions", chat_payload))
+
+    @classmethod
+    def _summary_output_is_unsafe(cls, text: str) -> bool:
+        """Return whether model prose crosses the summary-only safety boundary.
+
+        The summary endpoint is explanatory only.  A high-confidence direct
+        approval, role mutation, tool/command invocation, or structured action
+        payload is therefore rejected as a whole and replaced by the
+        deterministic summary.  Negated safety language is explicitly allowed
+        so normal findings such as "不能据此批准" do not get lost.
+        """
+        candidate = text.strip()
+        if not candidate:
+            return True
+        # A summary is prose, not a machine-readable action envelope.  Reject
+        # JSON/JSON fences before inspecting terms that may be quoted in it.
+        if candidate.startswith(("{", "[")) or re.match(r"^```(?:json)?\s*[\[{]", candidate, re.IGNORECASE):
+            return True
+        for fragment in re.split(r"(?<=[。！？!?；;\n])", candidate):
+            fragment = fragment.strip()
+            if not fragment:
+                continue
+            for pattern in _SUMMARY_OUTPUT_UNSAFE_PATTERNS:
+                for match in pattern.finditer(fragment):
+                    # Check only the short context immediately before this
+                    # match.  A disclaimer elsewhere in the same sentence
+                    # must not hide a second, executable command.
+                    context = f"{fragment[max(0, match.start() - 8):match.end()]}"
+                    if any(safe.search(context) for safe in _SUMMARY_OUTPUT_SAFE_DISCLAIMERS):
+                        continue
+                    return True
+        return False
 
     def _post_json(self, path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")

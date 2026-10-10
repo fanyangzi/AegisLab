@@ -18,7 +18,7 @@ from typing import Any, Literal
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 RULE_PACK = "resource-prerequisites/1.0"
@@ -1531,7 +1531,7 @@ class WorkspaceStore:
                     job_id TEXT PRIMARY KEY, kind TEXT NOT NULL, plan_id TEXT,
                     idempotency_key TEXT NOT NULL UNIQUE, status TEXT NOT NULL,
                     created_at TEXT NOT NULL, started_at TEXT, finished_at TEXT,
-                    result_payload TEXT, error TEXT
+                    result_payload TEXT, error TEXT, request_payload TEXT
                 );
                 CREATE INDEX IF NOT EXISTS idx_spatial_jobs_plan ON spatial_jobs(plan_id, created_at DESC);
                 CREATE TABLE IF NOT EXISTS spatial_workspace_snapshots(
@@ -1542,6 +1542,12 @@ class WorkspaceStore:
                 CREATE INDEX IF NOT EXISTS idx_spatial_workspace_snapshots_saved
                     ON spatial_workspace_snapshots(saved_at DESC);
             """)
+            # Upgrade local databases created before queued browser jobs kept
+            # their replay inputs.  The nullable column is intentionally
+            # additive so existing job IDs and terminal history remain intact.
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(spatial_jobs)").fetchall()}
+            if "request_payload" not in columns:
+                conn.execute("ALTER TABLE spatial_jobs ADD COLUMN request_payload TEXT")
             # There is no worker process in the browser-only deployment.  A
             # process that opens the database after a crash/restart therefore
             # must make an unfinished synchronous job explicit instead of
@@ -1550,8 +1556,8 @@ class WorkspaceStore:
                 """UPDATE spatial_jobs
                    SET status='failed', finished_at=COALESCE(finished_at, ?),
                        error=COALESCE(error, ?)
-                   WHERE status='running'""",
-                (now(), "服务重启时任务仍在运行；本地部署没有后台 Worker，任务已标记失败，可重新发起。"),
+                   WHERE status IN ('queued','running')""",
+                (now(), "服务重启时进程内任务未能继续；本地部署没有持久 Worker，任务已标记失败，可按幂等边界重新发起。"),
             )
             conn.execute("INSERT OR IGNORE INTO spatial_workspace VALUES(1,0,?)", (json.dumps(empty_workspace(), ensure_ascii=False),))
     @contextmanager
@@ -1611,27 +1617,30 @@ class WorkspaceStore:
         with self.connection() as conn:
             rows = conn.execute("SELECT payload FROM spatial_evaluation_runs WHERE plan_id=? ORDER BY evaluated_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
         return [json.loads(row[0]) for row in rows]
-    def begin_job(self, *, job_id: str, kind: str, plan_id: str | None, idempotency_key: str) -> dict:
+    def begin_job(self, *, job_id: str, kind: str, plan_id: str | None, idempotency_key: str, context: dict | None = None) -> dict:
         """Create or resume a durable job record.
 
-        Analysis is currently executed synchronously by the request handler. The
-        durable record still makes its lifecycle explicit and queryable after a
-        process restart; it does not claim a background worker exists.
+        ``context`` contains only bounded replay inputs (for example an expiry
+        ``asOf`` timestamp).  It lets duplicate queued requests compare their
+        inputs without pretending that a process-local runner is durable.
         """
         with self.connection() as conn:
             row = conn.execute("SELECT * FROM spatial_jobs WHERE idempotency_key=?", (idempotency_key,)).fetchone()
             if row:
                 return self._job_row(row)
             created = now()
-            conn.execute("INSERT INTO spatial_jobs(job_id,kind,plan_id,idempotency_key,status,created_at) VALUES(?,?,?,?,?,?)",
-                         (job_id, kind, plan_id, idempotency_key, "queued", created))
+            encoded_context = json.dumps(context, ensure_ascii=False, separators=(",", ":")) if context else None
+            conn.execute("INSERT INTO spatial_jobs(job_id,kind,plan_id,idempotency_key,status,created_at,request_payload) VALUES(?,?,?,?,?,?,?)",
+                         (job_id, kind, plan_id, idempotency_key, "queued", created, encoded_context))
             return self._job_row(conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone())
     @staticmethod
     def _job_row(row: sqlite3.Row | tuple) -> dict:
-        keys = ("jobId", "kind", "planId", "idempotencyKey", "status", "createdAt", "startedAt", "finishedAt", "result", "error")
+        keys = ("jobId", "kind", "planId", "idempotencyKey", "status", "createdAt", "startedAt", "finishedAt", "result", "error", "context")
         item = dict(zip(keys, row))
         if item.get("result"):
             item["result"] = json.loads(item["result"])
+        if item.get("context"):
+            item["context"] = json.loads(item["context"])
         return item
     def set_job_running(self, job_id: str) -> dict:
         with self.connection() as conn:
@@ -1701,7 +1710,11 @@ class WorkspaceStore:
         except (TypeError, ValueError) as error:
             raise ValueError("重检时间必须是带时区的 ISO 时间。") from error
         job_id = f"expiry-recheck:{request_id}"
-        job = self.begin_job(job_id=job_id, kind="expiry_recheck", plan_id=None, idempotency_key=request_id)
+        context = {"asOf": as_of}
+        job = self.begin_job(job_id=job_id, kind="expiry_recheck", plan_id=None, idempotency_key=request_id, context=context)
+        stored_context = job.get("context") or {}
+        if stored_context.get("asOf") and dt(stored_context["asOf"]) != dt(as_of):
+            raise HTTPException(409, "同一 requestId 不能用于不同的重检时间。")
         if job["status"] == "succeeded" and job.get("result"):
             stored_as_of = job["result"].get("asOf")
             if stored_as_of and dt(stored_as_of) != dt(as_of):
@@ -2120,7 +2133,17 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
             raise ValueError('没有提取到可用文本；扫描件请先转成文本后导入，不自动编造内容。')
         if len(text) > 100000:
             raise ValueError('提取文本超过 100,000 字符，请按实验计划拆分。')
-        return {'filename': Path(filename).name, 'text': text, 'sha256': hashlib.sha256(raw).hexdigest(), 'locator': 'extracted-text-lines', 'note': '原文定位对应提取后文本行；不是 PDF 版面坐标。'}
+        return {
+            'filename': Path(filename).name,
+            'text': text,
+            'sha256': hashlib.sha256(raw).hexdigest(),
+            'sourceType': 'upload',
+            'sourceLocator': 'extracted-text-lines',
+            'locator': 'extracted-text-lines',
+            'capturedAt': now(),
+            'contentLength': len(text),
+            'note': '原文定位对应提取后文本行；不是 PDF 版面坐标。上传成功不会自动核验或证明适用性。',
+        }
     except HTTPException:
         raise
     except ImportError as error:
@@ -2157,8 +2180,18 @@ def get_job(job_id: str, actor: str = Depends(local_owner)):
     return job
 
 
+def _run_expiry_background(request_id: str, as_of: str, actor: str) -> None:
+    """Execute one queued expiry job in the process-local FastAPI pool."""
+    try:
+        store().expiry_recheck(request_id=request_id, as_of=as_of, actor=actor)
+    except Exception:
+        # ``expiry_recheck`` persists failures; background callbacks cannot
+        # propagate an exception after the HTTP response has been sent.
+        return
+
+
 @router.post('/expiry/recheck')
-def recheck_expiry(body: ExpiryRecheckRequest, actor: str = Depends(local_owner)):
+def recheck_expiry(body: ExpiryRecheckRequest, background_tasks: BackgroundTasks = None, background: bool = False, actor: str = Depends(local_owner)):
     """Persist a manual expiry/overdue scan for review.
 
     The endpoint is deliberately explicit about its boundary: it evaluates
@@ -2169,6 +2202,26 @@ def recheck_expiry(body: ExpiryRecheckRequest, actor: str = Depends(local_owner)
     timestamp for reproducibility.
     """
     as_of = body.asOf or now()
+    if background:
+        try:
+            dt(as_of)
+        except (TypeError, ValueError) as error:
+            raise HTTPException(422, "重检时间必须是带时区的 ISO 时间。") from error
+        job_id = f"expiry-recheck:{body.requestId}"
+        existing = store().job(job_id)
+        if existing:
+            context = existing.get("context") or {}
+            if context.get("asOf") and dt(context["asOf"]) != dt(as_of):
+                raise HTTPException(409, "同一 requestId 不能用于不同的重检时间。")
+            if existing["status"] in {"failed", "cancelled"}:
+                raise HTTPException(409, f"该重检任务已处于 {existing['status']} 终态，请更换 requestId 重试。")
+            return existing
+        job = store().begin_job(job_id=job_id, kind="expiry_recheck", plan_id=None,
+                                idempotency_key=body.requestId, context={"asOf": as_of})
+        if background_tasks is None:
+            raise HTTPException(500, "后台任务调度器不可用。")
+        background_tasks.add_task(_run_expiry_background, body.requestId, as_of, actor)
+        return job
     try:
         return store().expiry_recheck(request_id=body.requestId, as_of=as_of, actor=actor)
     except HTTPException:
@@ -2192,8 +2245,7 @@ def cancel_job(job_id: str, actor: str = Depends(local_owner)):
     return store().cancel_job(job_id, reason=f"{actor} 取消任务")
 
 
-@router.post('/plans/{plan_id}/analysis')
-def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_owner)):
+def _run_analysis_sync(plan_id: str, retry: bool = False, actor: str = "本机负责人", job_id_override: str | None = None):
     """Reuse legacy parsing/rules and optional LLM explanation without approval."""
     from .parser import parse_sop
     from .llm import LLMAdapter
@@ -2207,7 +2259,7 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
     # timeout or an explicit rerun. Opening Copilot without `retry=true` should
     # show the newest completed attempt for the current revision rather than
     # resurrecting the first (possibly degraded) idempotency record.
-    if not retry:
+    if not retry and job_id_override is None:
         latest = next((run for run in store().analysis_runs(p['id'], 100)
                        if int(run.get('planRevision', -1)) == int(p['revision'])), None)
         if latest:
@@ -2216,9 +2268,9 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
             latest_job = store().job(latest_job_id) if latest_job_id else None
             if latest_job and latest_job.get('status') == 'succeeded':
                 return {**latest, 'job': latest_job}
-    job_id = f"analysis:{p['id']}:v{p['revision']}"
+    job_id = job_id_override or f"analysis:{p['id']}:v{p['revision']}"
     existing = store().job(job_id)
-    if retry and existing and existing["status"] in {"failed", "cancelled", "succeeded"}:
+    if job_id_override is None and retry and existing and existing["status"] in {"failed", "cancelled", "succeeded"}:
         # A retry/rerun is a new durable attempt. Terminal history stays
         # immutable, while the new idempotency key allows the same plan
         # revision to run again after a transient model failure or a provider
@@ -2350,3 +2402,91 @@ def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_o
         if current_job and current_job["status"] in {"queued", "running"}:
             store().finish_job(job_id, status="failed", error=f"{type(error).__name__}: {str(error)[:500]}")
         raise HTTPException(500, "分析任务失败；请查看任务记录后修改计划或重新发起。") from error
+
+
+def _prepare_background_analysis(plan_id: str, retry: bool) -> tuple[dict, dict | None, str | None, bool]:
+    """Create an idempotent analysis job without doing model work in-request.
+
+    The boolean return value indicates whether this request created the job;
+    only the creator may enqueue the process-local runner.  A completed run is
+    returned as ``job=None`` so opening Copilot remains read-only/idempotent.
+    """
+    workspace = store().read()
+    plan = next((item for item in workspace["plans"] if item["id"] == plan_id), None)
+    if plan is None:
+        raise HTTPException(404, "计划不存在。")
+    if not retry:
+        latest = next((run for run in store().analysis_runs(plan_id, 100)
+                       if int(run.get("planRevision", -1)) == int(plan["revision"])), None)
+        if latest:
+            run_id = str((latest.get("trace") or {}).get("runId") or "")
+            latest_job = store().job(run_id.removeprefix("copilot:")) if run_id else None
+            if latest_job and latest_job.get("status") == "succeeded":
+                return plan, {**latest, "job": latest_job}, None, False
+    base_id = f"analysis:{plan_id}:v{plan['revision']}"
+    job_id = base_id
+    existing = store().job(job_id)
+    if retry and existing and existing["status"] in {"failed", "cancelled", "succeeded"}:
+        job_id = f"{base_id}:{'rerun' if existing['status'] == 'succeeded' else 'retry'}:{str(uuid4())[:8]}"
+        existing = None
+    if existing and existing["status"] in {"failed", "cancelled"}:
+        raise HTTPException(409, f"该分析任务已处于 {existing['status']} 终态，请修改计划修订后使用 retry=true 重新发起。")
+    job = store().begin_job(job_id=job_id, kind="analysis", plan_id=plan_id, idempotency_key=job_id)
+    return plan, job, job_id, existing is None
+
+
+def _run_analysis_background(plan_id: str, job_id: str, actor: str) -> None:
+    """Run one durable analysis in FastAPI's process-local background pool.
+
+    This is deliberately not described as a multi-process Worker.  A restart
+    marks queued/running rows failed; the browser can inspect the error and
+    explicitly retry with a new immutable attempt.
+    """
+    try:
+        # The queued row already owns an immutable attempt ID.  Force the
+        # retry path so a completed attempt for the same plan revision cannot
+        # short-circuit this worker and leave the newly queued row unfinished.
+        _run_analysis_sync(plan_id, retry=True, actor=actor, job_id_override=job_id)
+    except Exception:
+        # The synchronous runner has already recorded the terminal error.  A
+        # background callback must not surface an exception after the response.
+        return
+
+
+@router.post('/plans/{plan_id}/analysis')
+def analyze_plan(
+    plan_id: str,
+    retry: bool = False,
+    background: bool = False,
+    background_tasks: BackgroundTasks = None,
+    actor: str = Depends(local_owner),
+):
+    """Analyze a plan synchronously or via an explicit process-local job.
+
+    ``background=true`` returns a durable queued job immediately.  It is
+    intended for the browser UI to poll; it does not claim a persistent worker
+    or survive a process restart.  The default remains synchronous for API
+    compatibility and deterministic command-line checks.
+    """
+    if not background:
+        return _run_analysis_sync(plan_id, retry=retry, actor=actor)
+    plan, prepared, job_id, created = _prepare_background_analysis(plan_id, retry)
+    if job_id is None:
+        return prepared
+    job = prepared
+    if job is None:
+        raise HTTPException(500, "分析任务创建失败。")
+    if created:
+        if background_tasks is None:
+            # Direct Python calls are useful in smoke tests and must fail with
+            # a meaningful HTTP error rather than an AttributeError.  The
+            # actual FastAPI route always injects BackgroundTasks here.
+            raise HTTPException(500, "后台任务调度器不可用。")
+        background_tasks.add_task(_run_analysis_background, plan_id, job_id, actor)
+    return {
+        "planId": plan_id,
+        "planRevision": plan["revision"],
+        "background": True,
+        "job": job,
+        "scope": "进程内后台执行；服务重启不会伪称任务继续，失败后需显式 retry。",
+    }

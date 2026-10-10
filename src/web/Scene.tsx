@@ -242,9 +242,22 @@ export default function LabScene(props:Props) {
       const world=new THREE.Vector3(e.x,mh+.35,e.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};points.set(e.id,v)
       const b=pointers.get(e.id)!;b.hidden=false
       const lw=b.offsetWidth||188,lh=b.offsetHeight||48
-      const offsets=[0]
+      // Try a small deterministic set of anchor positions before hiding a
+      // label. The scene can contain dozens of resources, so a single
+      // ``above the object`` slot made valid labels disappear whenever two
+      // benches were aligned. These candidates keep the card attached to the
+      // same projected point while avoiding zones, the AI anchor and earlier
+      // cards in the current frame.
+      const offsets:[number,number][]=[
+       [0,-lh-8],
+       [-lw/2-20,-lh/2],
+       [lw/2+20,-lh/2],
+       [0,18],
+       [-lw/2-20,-lh-8],
+       [lw/2+20,-lh-8],
+      ]
       let rect:Rect|undefined
-      for(const dx of offsets){const candidate={x:v.x+dx-lw/2,y:v.y-lh-8,w:lw,h:lh};if(inside(candidate)&&boxes.every(q=>!overlaps(candidate,q))){rect=candidate;break}}
+      for(const [dx,dy] of offsets){const candidate={x:v.x+dx-lw/2,y:v.y+dy,w:lw,h:lh};if(inside(candidate)&&boxes.every(q=>!overlaps(candidate,q))){rect=candidate;break}}
       // The selected object remains discoverable even in a dense view. If all
       // collision-free candidates are occupied, place it at the nearest valid
       // edge and let its selected styling establish the visual priority.

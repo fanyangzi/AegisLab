@@ -410,6 +410,45 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(result.reason,'远程模型返回 HTTP 401')
         self.assertNotIn('test-token', result.text)
 
+    def test_llm_summary_keeps_explanatory_risk_text(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self):
+                return '{"output_text":"发现风险：通风柜检查证据缺失；建议负责人复核，当前结果不构成批准，也不能直接执行。"}'.encode('utf-8')
+        with patch.dict(os.environ, {
+            'LABSAFETY_LLM_BASE_URL':'https://example.invalid/v1',
+            'LABSAFETY_LLM_MODEL':'gpt-6.1-sol',
+            'LABSAFETY_LLM_API_KEY':'test-token',
+            'LABSAFETY_LLM_ENABLED':'1',
+        }), patch('backend.app.llm.urllib.request.urlopen', return_value=Response()):
+            result=LLMAdapter().summarize({'title':'测试计划'}, {'results':[]})
+        self.assertFalse(result.degraded)
+        self.assertEqual(result.provider,'openai-compatible')
+        self.assertIn('通风柜检查证据缺失',result.text)
+
+    def test_llm_summary_downgrades_approval_role_and_execution_output(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def read(self):
+                return '{"output_text":"当前计划已批准。请立即执行操作，并将角色切换为管理员。"}'.encode('utf-8')
+        review={'title':'测试计划'}
+        evaluation={'results':[{'passed':False,'message':'缺少设备证据'}]}
+        with patch.dict(os.environ, {
+            'LABSAFETY_LLM_BASE_URL':'https://example.invalid/v1',
+            'LABSAFETY_LLM_MODEL':'gpt-6.1-sol',
+            'LABSAFETY_LLM_API_KEY':'test-token',
+            'LABSAFETY_LLM_ENABLED':'1',
+        }), patch('backend.app.llm.urllib.request.urlopen', return_value=Response()):
+            result=LLMAdapter().summarize(review, evaluation)
+        self.assertTrue(result.degraded)
+        self.assertEqual(result.provider,'offline')
+        self.assertEqual(result.reason,'远程模型输出未通过解释性安全检查')
+        self.assertNotIn('已批准',result.text)
+        self.assertNotIn('角色切换',result.text)
+        self.assertIn('确定性文本检查发现',result.text)
+
     def test_llm_prefers_responses_api_and_reads_output_text(self):
         calls=[]
         class Response:
@@ -583,6 +622,11 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(recovered['status'],'failed')
         self.assertIn('服务重启',recovered['error'])
         self.assertIsNotNone(recovered['finishedAt'])
+    def test_queued_job_is_also_failed_explicitly_after_restart(self):
+        created=self.store.begin_job(job_id='job-queued-restart-01',kind='expiry_recheck',plan_id=None,idempotency_key='idem-queued-restart-01',context={'asOf':'2026-10-11T00:00:00+08:00'})
+        self.assertEqual(created['status'],'queued');self.assertEqual(created['context']['asOf'],'2026-10-11T00:00:00+08:00')
+        recovered=s.WorkspaceStore(self.path).job(created['jobId'])
+        self.assertEqual(recovered['status'],'failed');self.assertIn('服务重启',recovered['error']);self.assertIsNotNone(recovered['finishedAt'])
     def test_failed_job_is_queryable_after_explicit_failure(self):
         created=self.store.begin_job(job_id='job-fail-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-fail-01')
         self.store.set_job_running(created['jobId'])
@@ -782,7 +826,9 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(len(state['workspace']['plans']),1)
     def test_utf8_text_import(self):
         r=self.client.post('/api/spatial/import-text?filename=test.md',content='计划文本\n检查 F-01'.encode())
-        self.assertEqual(r.status_code,200);self.assertEqual(r.json()['locator'],'extracted-text-lines')
+        self.assertEqual(r.status_code,200);payload=r.json();self.assertEqual(payload['locator'],'extracted-text-lines')
+        self.assertEqual(payload['sourceType'],'upload');self.assertEqual(payload['sourceLocator'],'extracted-text-lines')
+        self.assertEqual(payload['contentLength'],len(payload['text']));self.assertTrue(payload['capturedAt'])
     def test_unsupported_type_denied(self):self.assertEqual(self.client.post('/api/spatial/import-text?filename=evil.exe',content=b'abc').status_code,422)
     def test_scanned_pdf_empty_text_not_fabricated(self):
         from pypdf import PdfWriter
@@ -887,6 +933,26 @@ class ApiTests(unittest.TestCase):
             'asOf':'2026-10-10T00:00:00',
         })
         self.assertEqual(bad.status_code,422,bad.text)
+
+    def test_background_analysis_returns_job_then_persists_result(self):
+        initialize(s.store())
+        with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):
+            response=self.client.post('/api/spatial/plans/EXP-001/analysis?background=true',json={})
+        self.assertEqual(response.status_code,200,response.text)
+        payload=response.json();self.assertTrue(payload['background']);self.assertEqual(payload['job']['status'],'queued')
+        job=self.client.get('/api/spatial/jobs/'+payload['job']['jobId']).json()
+        self.assertEqual(job['status'],'succeeded');self.assertIsInstance(job['result'],dict);self.assertEqual(job['result']['planId'],'EXP-001')
+        self.assertTrue(self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs'])
+
+    def test_background_expiry_is_idempotent_and_context_bound(self):
+        initialize(s.store())
+        first=self.client.post('/api/spatial/expiry/recheck?background=true',json={'requestId':'api-bg-expiry-01','asOf':'2026-10-10T00:00:00+08:00'})
+        self.assertEqual(first.status_code,200,first.text);queued=first.json();self.assertEqual(queued['status'],'queued')
+        finished=self.client.get('/api/spatial/jobs/'+queued['jobId']).json();self.assertEqual(finished['status'],'succeeded');self.assertEqual(finished['context']['asOf'],'2026-10-10T00:00:00+08:00')
+        same=self.client.post('/api/spatial/expiry/recheck?background=true',json={'requestId':'api-bg-expiry-01','asOf':'2026-10-10T00:00:00+08:00'})
+        self.assertEqual(same.status_code,200,same.text);self.assertEqual(same.json()['jobId'],queued['jobId'])
+        conflict=self.client.post('/api/spatial/expiry/recheck?background=true',json={'requestId':'api-bg-expiry-01','asOf':'2026-10-11T00:00:00+08:00'})
+        self.assertEqual(conflict.status_code,409,conflict.text)
     def test_analysis_failure_finishes_job_as_failed(self):
         initialize(s.store())
         with patch('backend.app.parser.parse_sop', side_effect=RuntimeError('解析器异常')):
@@ -896,6 +962,34 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(job.status_code,200);self.assertEqual(job.json()['status'],'failed');self.assertIn('RuntimeError',job.json()['error'])
         retry=self.client.post('/api/spatial/plans/EXP-001/analysis?retry=true')
         self.assertEqual(retry.status_code,200,retry.text);self.assertEqual(retry.json()['job']['status'],'succeeded')
+
+    def test_background_analysis_is_durable_and_process_local(self):
+        initialize(s.store())
+        with patch.dict(os.environ, {'LABSAFETY_LLM_API_KEY': ''}):
+            response=self.client.post('/api/spatial/plans/EXP-001/analysis?background=true')
+        self.assertEqual(response.status_code,200,response.text)
+        payload=response.json();self.assertTrue(payload['background'])
+        job_id=payload['job']['jobId']
+        job=self.client.get('/api/spatial/jobs/'+job_id)
+        self.assertEqual(job.status_code,200,job.text)
+        self.assertEqual(job.json()['status'],'succeeded')
+        self.assertIn('result',job.json())
+        self.assertIn('进程内后台执行',payload['scope'])
+
+    def test_background_expiry_recheck_is_idempotent_and_recoverable(self):
+        initialize(s.store())
+        body={'requestId':'api-expiry-bg-0001','asOf':'2026-10-10T00:00:00+08:00'}
+        first=self.client.post('/api/spatial/expiry/recheck?background=true',json=body)
+        self.assertEqual(first.status_code,200,first.text)
+        queued=first.json();self.assertEqual(queued['kind'],'expiry_recheck')
+        job=self.client.get('/api/spatial/jobs/'+queued['jobId'])
+        self.assertEqual(job.status_code,200,job.text)
+        self.assertEqual(job.json()['status'],'succeeded')
+        again=self.client.post('/api/spatial/expiry/recheck?background=true',json=body)
+        self.assertEqual(again.status_code,200,again.text)
+        self.assertEqual(again.json()['jobId'],queued['jobId'])
+        conflict=self.client.post('/api/spatial/expiry/recheck?background=true',json={**body,'asOf':'2026-10-11T00:00:00+08:00'})
+        self.assertEqual(conflict.status_code,409,conflict.text)
     def test_analysis_retry_reruns_succeeded_revision_without_rewriting_plan(self):
         initialize(s.store())
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):
