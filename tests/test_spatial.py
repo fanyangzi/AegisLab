@@ -990,6 +990,16 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(again.json()['jobId'],queued['jobId'])
         conflict=self.client.post('/api/spatial/expiry/recheck?background=true',json={**body,'asOf':'2026-10-11T00:00:00+08:00'})
         self.assertEqual(conflict.status_code,409,conflict.text)
+
+    def test_direct_expiry_handler_has_safe_dependency_defaults(self):
+        """Calling the handler directly must not persist a Depends marker."""
+        initialize(s.store())
+        result = s.recheck_expiry(s.ExpiryRecheckRequest(
+            requestId='direct-expiry-default-01',
+            asOf='2026-10-10T00:00:00+08:00',
+        ))
+        self.assertEqual(result['status'], 'succeeded')
+        self.assertEqual(result['result']['actor'], '本机负责人')
     def test_analysis_retry_reruns_succeeded_revision_without_rewriting_plan(self):
         initialize(s.store())
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):

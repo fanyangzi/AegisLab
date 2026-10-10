@@ -1625,6 +1625,11 @@ class WorkspaceStore:
         inputs without pretending that a process-local runner is durable.
         """
         with self.connection() as conn:
+            # Serialize the idempotency check and insert.  Without an
+            # immediate transaction two browser clicks can both observe a
+            # missing key and race into the UNIQUE constraint, even though
+            # their eventual job state is supposed to be the same record.
+            conn.execute("BEGIN IMMEDIATE")
             row = conn.execute("SELECT * FROM spatial_jobs WHERE idempotency_key=?", (idempotency_key,)).fetchone()
             if row:
                 return self._job_row(row)
