@@ -11,14 +11,14 @@
 | [北京大学分析测试中心](https://www.lab.pku.edu.cn/info/3151/45321.htm) | 光谱、质谱、色谱、X 射线衍射、透射电镜、核磁；6 台液体 NMR、固体 NMR、9 台质谱（高分辨、轨道阱、三重四极杆、飞行时间） | 高校化学平台通常是多平台、多规格的共享仪器集群，而不是“一个分析仪器” |
 | [清华大学分析中心设备入口](http://ac.tsinghua.edu.cn/yqsb1.htm) | 设备列表、平台信息、共享预约、培训与服务体系 | 设备应有平台、房间、预约、培训和服务状态等运营字段 |
 | [中央民族大学大型仪器共享平台](https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm) | 液质、气质、超导 NMR、ICP-MS、FTIR、荧光、HPLC、GC、高速逆流/制备色谱、快速溶剂萃取、Flash、DNA、荧光显微镜、酶标仪；并分为分离、光谱、质谱、色谱、蛋白、核酸、凝胶成像、离心、元素分析、核磁等仪器室 | 设备空间应呈现“仪器室/平台”层级和共享资源关系 |
-| [中山大学化学国家级实验教学示范中心](https://ce.sysu.edu.cn/chemexperiment/deviceEnviron/devicecategory/sepu) | GC（FID/ECD/TCD/FPD 等）、HPLC、色谱质谱及具体品牌型号、价格、安装地点、责任人、预约地址、参数、附件和功能 | 设备卡片必须有型号、地点、责任人、附件、能力和预约/审查状态，不能只显示一个名称 |
+| [中山大学化学国家级实验教学示范中心仪器设备索引](https://ce.sysu.edu.cn/chemexperiment/device) / [色谱与质谱详情](https://ce.sysu.edu.cn/chemexperiment/node/756) | 原子光谱与质谱、分子光谱、色谱与质谱、X 射线衍射与吸收等分类；详情页列出 GC、HPLC/UPLC/SFC/GPC、离子色谱、GC-MS/LC-MS、MALDI-TOF、电泳和设备型号/地点/联系人/预约信息 | 设备卡片必须有型号、地点、责任人、附件、能力和预约/审查状态，不能只显示一个名称 |
 | [山东大学现代分析测试中心](https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm) | 结构/物性/有机/无机/生物五大平台；LC-MS/MS、HR-LCMS、HR-GCMS、离子色谱、二维液相、XPS、FTIR、拉曼、酶标仪、EPR、ICP-MS/OES、AAS、TOC、接触角、qPCR、共聚焦、AFM、元素分析、惰性气体吸附、流式、荧光显微镜等 | AegisLab 需要覆盖化学、材料、环境和生物交叉平台，否则实验室看起来不真实 |
 | [中国科学院理化技术研究所化学分析室](https://ipc.cas.cn/jgsz/zcbm/ggjsfwzx/hxfxs/) / [仪器列表](https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/) | 三重四极杆 LC-MS/MS、三重四极杆 GC-MS、超临界液相、NMR、ESR/EPR、GC/HR-TOF-MS、MALDI-TOF、LC-MS、UV-Vis-NIR、FTIR、光散射、BET、UPLC、ICP-OES | 研究院平台会同时拥有高端表征、材料表面和孔结构设备；需要风险标签与配套公用工程字段 |
 | [中国科学院上海有机化学研究所分析测试中心](https://sioc.cas.cn/fxcs/team/zpjc/) | 面向有机合成和先进材料研发的质谱测试团队与多台套质谱 | 有机合成审查要把反应、淬灭、纯化和质谱/色谱表征串成一条链 |
 | [MIT Department of Chemistry Instrumentation Facility](https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/) | 6 台质谱、7 台 400–600 MHz NMR、X-band EPR、FTIR、HPLC、极化计、ICP-MS；有培训、预约、计费和 24/7 使用规则 | 设备是共享运营对象，有培训状态、预约、访问权限和运行时段，不只是 3D 模型 |
 | [CMU Chemistry Facilities](https://www.cmu.edu/chemistry/research/facilities/index.html) | NMR 设施、化学电离质谱、高分辨飞行时间气溶胶质谱、X-band EPR、表面等离子共振、量热、DNA/RNA 固相合成、材料表征和洁净室资源 | 可以把跨平台实验路线和仪器依赖做成关系图/方案推演，而不是单页 CRUD |
 | [UCLA Magnetic Resonance Facility](https://mic.chem.ucla.edu/nmr/) / [WSU NMR 安全规则](https://nsc.wsu.edu/nmr/) | 溶液 NMR、固体 NMR、EPR；明确磁场、铁磁物品、样品破裂、样品制备和废弃物规则 | NMR 不只是一个分析仪器，必须带禁带区、样品前处理边界、培训和危险控制 |
-| [清华大学实验室化学安全管理实施办法](https://lab.env.tsinghua.edu.cn/info/1567/2795.htm) | 试剂柜/防爆柜/酸碱柜、SDS、危险品台账、气体与气路、通风柜、尾气吸收、应急喷淋、洗眼器、灭火器/灭火毯/消防砂、急救箱、PPE、高温高压设备评估 | 安全设施和公用工程必须进入设备图谱，且能被 AI 审查检查 |
+| [清华大学实验室化学安全管理实施办法](https://lab.env.tsinghua.edu.cn/info/1567/2795.htm) | 试剂柜/防爆柜/酸碱柜、SDS、危险品台账、气体与气路、通风柜、尾气吸收、应急喷淋、洗眼器、灭火器/灭火毯/消防砂、急救箱、PPE、高温高压设备评估；第三十三条的 30 米、月启动、周检查是清华校内条款 | 安全设施和公用工程必须进入设备图谱；制度中的数值只能作为来源机构的示例，不得直接变成普适自动放行规则 |
 | [兰州大学转发 T/CCSAS 005-2019](https://geoscience.lzu.edu.cn/info/1174/2676.htm) | 化学化工实验室安全管理规范入口 | 可作为规则来源字段，和设备控制点关联 |
 
 ## 2. 建议的领域模型
@@ -70,7 +70,7 @@ interface EquipmentOperationalProfile {
 | 高氯酸通风柜 | 高氯酸及强氧化性体系 | 专用管路、清洗记录、禁用有机残留 |
 | 放射性/同位素通风柜 | 放射性示踪实验 | 许可、污染监测、专用废物链 |
 | 无管式过滤通风柜 | 小量、特定吸附过滤场景 | 滤芯寿命、适用化学品清单，不能替代普通排风 |
-| 生物安全柜 II 级 | 细胞/微生物相关操作 | 生物气溶胶、HEPA、年检与消毒 |
+| 生物安全柜 II 级 | 细胞/微生物相关操作 | 生物气溶胶、HEPA、认证/检查与消毒；频次按适用机构和设备要求确认 |
 | 洁净工作台 | 非危险样品的洁净操作 | 不可用于有毒挥发物；压差、HEPA、紫外灯管理 |
 | 手套箱/惰性气氛箱 | 无水无氧合成、敏感材料 | O2/H2O 指标、再生记录、气密性、溶剂兼容性 |
 | 局部排风臂/捕集罩 | 局部源头捕集 | 风量、覆盖范围、软管完整性 |
@@ -212,8 +212,8 @@ interface EquipmentOperationalProfile {
 
 | subtype | 典型用途 | 主要风险/控制点 |
 |---|---|---|
-| 紧急喷淋 | 强酸强碱/腐蚀性暴露应急 | 30 m 内可达、常开阀、月检、无遮挡 |
-| 洗眼器 | 眼部化学品暴露 | 周检、水质、水压、防尘盖 |
+| 紧急喷淋 | 强酸强碱/腐蚀性暴露应急 | 位置可达、常开阀、通道无遮挡；清华办法示例为与工作区域不超过 30 m、每月至少启动一次，不能替代本机构适用制度 |
+| 洗眼器 | 眼部化学品暴露 | 接入合适水源、流量/水质和防尘盖；清华办法示例为每周检查，频次按本机构制度确认 |
 | 灭火器/灭火毯/消防砂 | 初期火灾处置 | 介质匹配、定检、可达性 |
 | 急救箱/化学灼伤箱 | 人员初步救护 | 药品效期、补充台账 |
 | 可燃/有毒气体探测器 | 气体泄漏预警 | 校准、联动排风、报警记录 |
@@ -259,3 +259,42 @@ interface EquipmentOperationalProfile {
 - 页面上的品牌型号、数量、价格和参数属于各校/研究院在页面发布时的具体实例，不能直接当作 AegisLab 的机构事实；项目内可作为“示例资产来源”展示。
 - 安全控制点来自高校公开制度和仪器实验室规则，具体阈值要以所在机构制度、厂家手册和现行标准复核。
 - 数据模型应保留 `sourceRefs`，让评委点击设备时能看到“设备为何存在、哪一类真实平台使用它、审查结论依据是什么”。
+
+## 7. 2026-10-10 公开页面复核记录
+
+本轮对下列公开页面进行了可访问性和正文关键词复核。北京大学、清华大学分析中心、山东大学、理化所、中央民族大学、MIT、CMU、UCLA、清华化学安全办法和兰州大学转发页可直接读取；中山大学旧分类 URL 和 WSU NMR 安全 URL 对自动抓取返回访问限制，因此分别改用同校官方仪器索引/详情页与 NMR 培训页交叉核对，并在 `data/knowledge_sources.json` 中记录访问边界。链接是公开网页，页面内容可能随学校改版变化。这里记录的是“公开平台出现过的设备/管理机制”，不是 AegisLab 所属机构的真实资产台账。`data/spatial-example.json` 的 `sourceRefs` 仅用于让设备画像回到这些公开类别来源。
+
+| 公开来源 | 页面正文观察到的类别或机制 | 在 AegisLab 中对应的画像字段 |
+|---|---|---|
+| [北京大学分析测试中心](https://www.lab.pku.edu.cn/info/3151/45321.htm) | 正文逐项列出液/固体 NMR、质谱、TEM/SEM、XPS、单晶/粉末 XRD、ICP/ICP-MS/XRF/元素分析、UV-Vis/荧光、TGA/DSC、FTIR/拉曼、共聚焦、UPLC/GC-MS、BET 与洁净区 | `family`、`subtype`、`typicalUse`、`sourceRefs`；用于支撑多平台共享仪器集群 |
+| [清华大学分析中心仪器设备](http://ac.tsinghua.edu.cn/yqsb1.htm) | 页面当前正文是能谱、无机分析、有机分析、无机分析和化学生物学四个平台入口，未在该页展开具体型号 | `owner`、`typicalUse` 中的平台标签；支撑“共享仪器平台”而非单台孤立设备 |
+| [山东大学现代分析测试中心](https://www.huanke.sdu.edu.cn/kypt/xdfxcszx.htm) | 当前正文明确列出透射/扫描电镜、能谱、粉末 XRD、NMR、拉曼、红外、元素分析、AAS、UV-Vis、GC、HPLC 和 GC-MS；未把页面未逐项出现的 XPS、ICP、AFM、BET 等当作直接证据 | `family`、`hazardTags`、`controlTags`、`calibrationOrInspection` |
+| [中国科学院理化技术研究所化学分析室仪器](https://ipc.cas.cn/kyzb/ggjsfwzx/hxfxsyq/) | 清单逐项列出三重四级杆 LC/GC、超临界/超高效液相、NMR、ESR/EPR、GC-HR-TOF-MS、MALDI-TOF、LC-MS、UV-Vis-NIR、FTIR、光散射、BET 和 ICP 发射光谱 | `aliases`、`typicalUse`、质谱/波谱的风险与公用工程索引 |
+| [清华大学实验室化学安全管理实施办法](https://lab.env.tsinghua.edu.cn/info/1567/2795.htm) | 条款 11–16 涉及台账、SDS、分类储存、腐蚀品柜和防爆冰箱；条款 27–33 涉及培训准入、风险评估、通风柜、尾气处理、喷淋和洗眼器；30 米/每月/每周是该校条款 | 通风、储存、应急和尾气设备的 `controlTags`、`evidenceKinds`；数值需保留来源机构边界 |
+| [中山大学化学国家级实验教学示范中心仪器设备索引](https://ce.sysu.edu.cn/chemexperiment/device) / [色谱与质谱详情](https://ce.sysu.edu.cn/chemexperiment/node/756) | 官方索引列出原子光谱与质谱、分子光谱、色谱与质谱、X 射线衍射与吸收、样品前处理等分类；详情页列出 GC、HPLC/UPLC/SFC/GPC、离子色谱、GC-MS/LC-MS、MALDI-TOF、电泳等 | `requiredTraining`、`calibrationOrInspection`、`sourceRefs` |
+| [中央民族大学大型仪器共享平台](https://cles.muc.edu.cn/smhx/yqygl/yqgxpt.htm) | LC-MS、GC-MS、超导 NMR、ICP-MS、FTIR、荧光、HPLC/GC、高速逆流/制备色谱、快速溶剂萃取、Flash、DNA、显微镜、酶标仪 | 分离、光谱、质谱、生物交叉设备的 `aliases` 与用途画像 |
+| [MIT Department of Chemistry Instrumentation Facility](https://chemistry.mit.edu/facilities-and-centers/department-of-chemistry-instrumentation-facility-dcif/) | 400–600 MHz NMR、X-band EPR、FTIR、HPLC、ICP-MS；页面明确培训申请与预约/开放时段 | NMR/EPR/ICP 的 `requiredTraining`、`evidenceKinds`、`controlTags` |
+| [Carnegie Mellon Chemistry Facilities](https://www.cmu.edu/chemistry/research/facilities/index.html) | NMR、化学电离质谱、飞行时间气溶胶质谱、X-band EPR、SPR、量热和材料表征；页面提供培训与费率入口 | `structure_material`、`spectroscopy`、`mass_analysis` 的平台化来源 |
+| [UCLA Magnetic Resonance Facility](https://mic.chem.ucla.edu/nmr/) / [WSU NMR 培训与实验室规则](https://nsc.wsu.edu/nmrtraining/) | UCLA 页面明确六台溶液 NMR、一台固体 NMR 和一台 EPR，并有培训与磁场/样品安全；WSU 培训页明确新用户培训、准入和高级技术审批，关联 NMR 页面给出 5-gauss、铁磁物品和低温规则 | NMR/EPR 的 `hazardTags`、`controlTags`、`requiredTraining`；WSU 来源只支持 `nmr` |
+| [兰州大学转发 T/CCSAS 005-2019](https://geoscience.lzu.edu.cn/info/1174/2676.htm) | 页面只提供标准标题、实施日期和 PDF 附件入口，本页未逐项呈现设备类别或阈值 | 作为安全规则来源指针，不把规范正文硬编码成设备结论 |
+
+### 本轮数据落地方式
+
+由于现有 Pydantic/TypeScript 合同只允许既定设备字段，本轮没有擅自加入 `room`、`zone`、`platform` 等新键。空间信息落在已有 `description`、`typicalUse` 和 `owner`：每台设备现在带有实验室编号、区域标签、共享平台和运行画像；设备详情仍可通过 `sourceRefs` 回到公开页面。这样旧导入、后端严格校验和三维场景的 `kind` 映射保持兼容。
+
+已保留 80 台设备和 `EXP-007`。当前 TypeScript/Pydantic 合同允许 73 个 `kind`、13 个设备族；示例台账实际使用 67 个不同 `subtype`。设备画像补充了：
+
+- 67 个可区分的 `subtype` 类别（含 NMR、EPR、XPS、TEM、ICP、SPR、BET、光化学、微波合成、低温冷阱、喷雾干燥和凝胶成像等交叉平台）；
+- 每台设备的中英文检索别名、用途、危险标签、控制锚点、培训主题和检查/校准关注项；
+- 201/301 两个实验室的前处理、共享分析、材料表征、气体联用、储存废物和应急区域标签；
+- 至少 5 条、最多 8 条可点击公开来源指针；其中来源只证明类别和运营机制，不冒充本校实物台账。
+
+这些字段会被 AI 预审作为候选上下文：模型可以从计划文本抽取设备与操作条件，再把设备的 `hazardTags`、`controlTags`、`utilityRequirements` 和 `evidenceKinds` 组合成“缺证据/需要人工复核”的解释；它们不等价于自动批准，也不替代现场安全负责人。
+
+## 8. 本轮证据边界与待补项
+
+- `data/knowledge_sources.json` 的 `supports_kinds` 现在只保留来源页面明确列出的类别，并使用 AegisLab 的合法 `kind` 值；二级整理记录和只提供标准转发入口的页面保持空列表，避免把“有链接”误写成“已证明设备类别”。
+- 清华办法第三十三条确实写有“距离不超过 30 米”“每月至少启动一次”和“每周检查”等校内要求，但这些数值只能在其机构语境内显示。AegisLab 的设备画像应把它们作为来源注释，不能在没有适用机构制度、设备说明书或检查记录时自动判定通过。
+- 山东大学当前正文抓取只明确列出电镜、能谱、XRD、NMR、拉曼、红外、元素分析、AAS、UV-Vis、GC、HPLC 和 GC-MS；XPS、ICP-MS/OES、AFM、BET、PCR、荧光显微、DLS 等若要保留，应补充对应官方设备清单或详情页。
+- 中山大学旧分类链接和 WSU NMR 安全链接可能对自动抓取返回 403；数据记录改用同校官方仪器索引/详情页或培训页，并保留访问限制说明。页面可访问性变化不应被解释为设备类别消失。
+- 兰州大学页面仅是 T/CCSAS 005-2019 的公开转发入口；未下载并逐条核对标准正文前，不把标准中的任何距离、周期或设备要求写成 AegisLab 规则。

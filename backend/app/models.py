@@ -69,6 +69,14 @@ class LabStep(BaseModel):
     ventilation: Optional[str] = None
     temperature_boundary: Optional[str] = None
     evidence_refs: List[str] = Field(default_factory=list)
+    # Source identity is carried with the candidate instead of inferred from
+    # the position of a model-produced step in an array.  These fields are
+    # optional for legacy records but are populated by the deterministic
+    # parser and the spatial plan adapter.
+    document_revision_id: Optional[str] = None
+    source_line: Optional[int] = Field(default=None, ge=1)
+    source_text_hash: Optional[str] = None
+    control_assertions: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class Substance(BaseModel):

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Check, Selection, Snapshot, Task } from './types'
 import { kindNames } from './types'
+import { basis } from './domain'
 import { Icon, dateText, toneFor } from './ui'
 import { profileForKind } from './equipmentTaxonomy'
 import './safetyChainGraph.css'
@@ -28,7 +29,7 @@ const safeText = (value: string) => value.replace(/\s+/g, ' ').trim()
 export function chemicalsFrom(source: string) {
   return CHEMICAL_TERMS.filter(term => source.includes(term)).filter((term, index, items) => !items.some((other, otherIndex) => otherIndex !== index && other.includes(term)))
 }
-function statusForChecks(checks: Check[]) { return checks.some(c => c.state === 'blocked') ? 'blocked' : checks.some(c => c.state === 'unknown') ? 'unknown' : 'pass' }
+function statusForChecks(checks: Check[]) { return !checks.length ? 'unknown' : checks.some(c => c.state === 'blocked') ? 'blocked' : checks.some(c => c.state === 'unknown') ? 'unknown' : 'pass' }
 function taskState(task: Task) { return task.status === 'done' ? 'pass' : 'unknown' }
 
 /** Build a graph only from relationships represented in the workspace snapshot. */
@@ -67,13 +68,17 @@ export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): Safety
   })
 
   const nodesByPlan = new Map<string, ChainNode>()
+  // Create every plan node before traversing facts. Relationship edges must
+  // not depend on the order in which plans happen to arrive from the API.
   plans.forEach(plan => {
-    const planChecks = checks.filter(check => check.planId === plan.id)
-    const planNode = add({
+    nodesByPlan.set(plan.id, add({
       id: nodeId('plan', plan.id), label: plan.name, code: plan.code, type: 'plan', icon: 'flask', state: snapshot.statuses[plan.id] || 'unknown', lane: 0, detail: `计划 v${plan.revision} · ${plan.owner}`,
       selection: { type: 'plan', id: plan.id },
-    })
-    nodesByPlan.set(plan.id, planNode)
+    }))
+  })
+  plans.forEach(plan => {
+    const planChecks = checks.filter(check => check.planId === plan.id)
+    const planNode = nodesByPlan.get(plan.id)!
 
     const stepNodes = plan.steps.map((step, index) => add({
       id: nodeId('step', `${plan.id}-${step.id}`), label: safeText(step.text), code: `步骤 ${index + 1} · 原文 L${step.line}`, type: 'step', icon: 'plans', state: step.confirmed ? 'pass' : 'unknown', lane: 1,
@@ -118,7 +123,9 @@ export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): Safety
       check.documentIds.forEach(documentId => {
         if (documentIds.has(documentId)) {
           const document = documents.find(item => item.id === documentId)!
-          link(ruleNode.id, nodeId('document', document.id), '支持依据', `规则 ${check.code} 明确引用资料“${document.name}”；资料状态为 ${document.status}。`, document.status === 'verified' ? 'pass' : 'unknown')
+          const applicability = check.evidenceApplicability?.find(item => item.documentId === document.id)
+          const evidenceState = applicability?.state === 'supports' ? 'pass' : 'unknown'
+          link(ruleNode.id, nodeId('document', document.id), '支持依据', `规则 ${check.code} 明确引用资料“${document.name}”；当前适用性为 ${applicability?.state || document.status}。`, evidenceState)
         }
       })
       check.relatedPlanIds.filter(relatedPlanId => planIds.has(relatedPlanId) && relatedPlanId !== plan.id).forEach(relatedPlanId => {
@@ -130,8 +137,10 @@ export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): Safety
     const planDecisions = decisions.filter(decision => decision.planId === plan.id)
     if (planDecisions.length) {
       planDecisions.forEach(decision => {
-        const approvalNode = add({ id: nodeId('approval', decision.id), label: decision.comment || '人工决策已记录', code: decision.basis || '审批记录', type: 'approval', icon: 'shield', state: 'approved', lane: 8, detail: `${decision.actor} · ${dateText(decision.at)}` })
-        link(planNode.id, approvalNode.id, '人工决策', `计划 ${plan.code} 的人工记录由 ${decision.actor} 于 ${dateText(decision.at)} 写入。`)
+        const latest = planDecisions.at(-1)
+        const current = latest?.id === decision.id && snapshot.statuses[plan.id] === 'approved' && decision.basis === basis(w, plan)
+        const approvalNode = add({ id: nodeId('approval', decision.id), label: current ? (decision.comment || '人工决策已记录') : '历史复核 · 当前需重新核对', code: current ? '当前适用' : '历史记录', type: 'approval', icon: 'shield', state: current ? 'pass' : 'unknown', lane: 8, detail: `${decision.actor} · ${dateText(decision.at)}${current ? '' : ' · 计划条件已变化，历史批准不代表当前有效'}` })
+        link(planNode.id, approvalNode.id, '人工决策', `计划 ${plan.code} 的人工记录由 ${decision.actor} 于 ${dateText(decision.at)} 写入；当前状态为 ${snapshot.statuses[plan.id] || 'unknown'}。`, current ? 'pass' : 'unknown')
       })
     } else {
       const approvalNode = add({ id: `chain-approval-${plan.id}-pending`, label: '等待人工放行', code: '审批前提', type: 'approval', icon: 'shield', state: 'unknown', lane: 8, detail: '当前没有该计划的人工决策记录；AI 与规则都不能替代负责人最终复核。' })

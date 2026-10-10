@@ -83,7 +83,8 @@ export interface DocumentRecord {
 }
 export interface Task {
   id: string; title: string; planId: string | null; equipmentId: string | null;
-  owner: string; dueAt: string; status: 'open' | 'submitted' | 'done'; note: string
+  owner: string; dueAt: string; status: 'open' | 'submitted' | 'done'; note: string;
+  sourceId?: string | null; sourceLine?: number | null; documentIds?: string[]; actionKind?: string | null; actionTarget?: Record<string, unknown> | null
 }
 export interface Decision { id: string; planId: string; revision: number; basis: string; actor: string; comment: string; at: string }
 export interface AuditEvent { id: string; at: string; actor: string; action: string; objectId: string; summary: string }
@@ -99,6 +100,7 @@ export interface Check {
   id: string; planId: string; equipmentId: string | null; code: string;
   state: 'pass' | 'unknown' | 'blocked'; title: string; detail: string;
   relatedPlanIds: string[]; documentIds: string[]; line: number | null
+  evidenceApplicability?: Array<{documentId: string; state: 'candidate' | 'supports' | 'expired' | 'mismatched'; specVersion: number; validFrom: string; validUntil: string}>
 }
 export interface Operation { type: string; payload: Record<string, unknown> }
 export interface Snapshot { workspace: Workspace; checks: Check[]; statuses: Record<string, string>; mode: 'local' | 'server' }
