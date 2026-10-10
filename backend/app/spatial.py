@@ -1101,6 +1101,131 @@ def get_source_registry(actor: str = Depends(local_owner)):
     sources = read_source_registry()
     return {"sources": sources, "scope": "公开类别与管理机制参考，不是机构资产台账"}
 
+@router.get("/graph")
+def get_relationship_graph(
+    planId: str | None = None,
+    types: str | None = None,
+    nodeId: str | None = None,
+    dateFrom: str | None = None,
+    dateTo: str | None = None,
+    hops: int = 0,
+    actor: str = Depends(local_owner),
+):
+    """Return a server-derived relationship subgraph for the current snapshot.
+
+    The browser graph is a projection, while this endpoint is the queryable
+    source of truth: every edge is derived from a plan, step, reservation,
+    document, task or deterministic check in the workspace payload.  ``types``
+    filters node types (comma separated), ``nodeId`` plus ``hops`` requests a
+    local neighbourhood, and date bounds retain reservations intersecting the
+    requested interval.  Unknown or missing evidence is represented as a node
+    state and is never promoted to a pass result.
+    """
+    if hops < 0 or hops > 2:
+        raise HTTPException(422, "hops 必须在 0 到 2 之间。")
+    w = store().read()
+    plans = [p for p in w.get("plans", []) if not planId or p.get("id") == planId]
+    if planId and not plans:
+        raise HTTPException(404, "计划不存在。")
+    allowed_types = {item.strip() for item in (types or "").split(",") if item.strip()}
+    try:
+        start_bound = dt(dateFrom) if dateFrom else None
+        end_bound = dt(dateTo) if dateTo else None
+    except ValueError as error:
+        raise HTTPException(422, "dateFrom/dateTo 必须是带时区的 ISO 时间。") from error
+    if start_bound and end_bound and start_bound >= end_bound:
+        raise HTTPException(422, "dateFrom 必须早于 dateTo。")
+
+    nodes: dict[str, dict] = {}
+    edges: list[dict] = []
+    def add_node(node_id: str, node_type: str, label: str, **extra: Any) -> None:
+        if node_id not in nodes:
+            nodes[node_id] = {"id": node_id, "type": node_type, "label": label, **extra}
+    def add_edge(edge_id: str, source: str, target: str, relation: str, **extra: Any) -> None:
+        edges.append({"id": edge_id, "from": source, "to": target, "relation": relation, **extra})
+    def in_window(item: dict) -> bool:
+        if not start_bound and not end_bound:
+            return True
+        try:
+            item_start, item_end = dt(item["start"]), dt(item["end"])
+        except (KeyError, ValueError):
+            return False
+        return (not end_bound or item_start < end_bound) and (not start_bound or item_end > start_bound)
+
+    equipment_by_id = {e["id"]: e for e in w.get("equipment", [])}
+    documents = w.get("documents", [])
+    tasks = w.get("tasks", [])
+    for plan in plans:
+        pid = plan["id"]
+        add_node(f"plan:{pid}", "plan", plan.get("name", pid), planId=pid, labId=plan.get("labId"), revision=plan.get("revision"), state=plan.get("status", "current"))
+        used_equipment: set[str] = set()
+        for index, step in enumerate(plan.get("steps", []), 1):
+            sid = f"step:{plan['id']}:{step.get('line', index)}"
+            add_node(sid, "step", step.get("text", f"步骤 {index}"), planId=pid, sourceLine=step.get("line"), state="confirmed" if step.get("confirmed") else "candidate")
+            add_edge(f"{pid}:step:{step.get('line', index)}", f"plan:{pid}", sid, "contains", sourceLine=step.get("line"))
+            for equipment_id in step.get("equipmentIds", []):
+                if equipment_id not in equipment_by_id:
+                    continue
+                used_equipment.add(equipment_id)
+                edge_id = f"{pid}:step:{step.get('line', index)}:equipment:{equipment_id}"
+                add_edge(edge_id, sid, f"equipment:{equipment_id}", "requires", sourceLine=step.get("line"))
+        for reservation in plan.get("reservations", []):
+            if not in_window(reservation):
+                continue
+            equipment_id = reservation.get("equipmentId")
+            equipment = equipment_by_id.get(equipment_id)
+            if not equipment:
+                continue
+            used_equipment.add(equipment_id)
+            add_node(f"equipment:{equipment_id}", "equipment", equipment.get("name", equipment_id), equipmentId=equipment_id, labId=equipment.get("labId"), kind=equipment.get("kind"), state=equipment.get("status"), start=reservation.get("start"), end=reservation.get("end"))
+            add_edge(f"{pid}:reservation:{reservation.get('id', equipment_id)}", f"plan:{pid}", f"equipment:{equipment_id}", "reserves", start=reservation.get("start"), end=reservation.get("end"))
+        for equipment_id in used_equipment:
+            equipment = equipment_by_id.get(equipment_id)
+            if not equipment:
+                continue
+            add_node(f"equipment:{equipment_id}", "equipment", equipment.get("name", equipment_id), equipmentId=equipment_id, labId=equipment.get("labId"), kind=equipment.get("kind"), state=equipment.get("status"))
+            for document in documents:
+                if document.get("equipmentId") != equipment_id:
+                    continue
+                did = f"document:{document['id']}"
+                add_node(did, "document", document.get("name", document["id"]), documentId=document["id"], equipmentId=equipment_id, state=document.get("status"), validFrom=document.get("validFrom"), validUntil=document.get("validUntil"))
+                add_edge(f"{equipment_id}:document:{document['id']}", f"equipment:{equipment_id}", did, "evidence", status=document.get("status"), specVersion=document.get("specVersion"))
+        for task in tasks:
+            if task.get("planId") != pid:
+                continue
+            tid = f"task:{task['id']}"
+            add_node(tid, "task", task.get("title", task["id"]), taskId=task["id"], planId=pid, equipmentId=task.get("equipmentId"), state=task.get("status"), dueAt=task.get("dueAt"))
+            add_edge(f"{pid}:task:{task['id']}", f"plan:{pid}", tid, "action", state=task.get("status"))
+            if task.get("equipmentId"):
+                add_edge(f"{task['id']}:equipment", tid, f"equipment:{task['equipmentId']}", "targets")
+        for check in check_workspace(w):
+            if check.get("planId") != pid:
+                continue
+            cid = f"check:{check['id']}"
+            add_node(cid, "check", check.get("title", check["id"]), checkId=check["id"], planId=pid, equipmentId=check.get("equipmentId"), state=check.get("state"), code=check.get("code"), sourceLine=check.get("line"))
+            add_edge(f"{pid}:check:{check['id']}", f"plan:{pid}", cid, "evaluates", state=check.get("state"), code=check.get("code"))
+            if check.get("equipmentId"):
+                add_edge(f"{check['id']}:equipment", cid, f"equipment:{check['equipmentId']}", "evaluates")
+
+    if nodeId:
+        adjacency: dict[str, set[str]] = {}
+        for edge in edges:
+            adjacency.setdefault(edge["from"], set()).add(edge["to"])
+            adjacency.setdefault(edge["to"], set()).add(edge["from"])
+        if nodeId not in nodes:
+            raise HTTPException(404, "关系图对象不存在。")
+        visible = {nodeId}
+        frontier = {nodeId}
+        for _ in range(hops):
+            frontier = {linked for item in frontier for linked in adjacency.get(item, set())} - visible
+            visible.update(frontier)
+        nodes = {key: value for key, value in nodes.items() if key in visible}
+    if allowed_types:
+        nodes = {key: value for key, value in nodes.items() if value["type"] in allowed_types}
+    visible_ids = set(nodes)
+    edges = [edge for edge in edges if edge["from"] in visible_ids and edge["to"] in visible_ids]
+    return {"revision": w.get("revision", 0), "planId": planId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops}}
+
 @router.post("/actions")
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
     if body.type == "approve" and local_role() not in {"safety_owner", "ehs_manager", "administrator"}:

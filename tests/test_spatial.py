@@ -253,6 +253,22 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):r=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})
         self.assertEqual(r.status_code,200);self.assertEqual(s.store().read(),before);self.assertTrue(r.json()['degraded'])
         runs=self.client.get('/api/spatial/plans/EXP-001/analysis/runs').json()['runs'];self.assertEqual(len(runs),1);self.assertEqual(runs[0]['trace']['runId'],r.json()['trace']['runId'])
+    def test_relationship_graph_supports_plan_type_and_time_filters(self):
+        initialize(s.store())
+        response=self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,equipment&dateFrom=2026-10-09T09:00:00%2B08:00&dateTo=2026-10-09T09:30:00%2B08:00')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json();self.assertEqual(graph['planId'],'EXP-001')
+        self.assertTrue(graph['nodes']);self.assertTrue(all(node['type'] in {'plan','step','equipment'} for node in graph['nodes']))
+        self.assertTrue(any(edge['relation']=='reserves' for edge in graph['edges']))
+        self.assertTrue(any(node['id']=='equipment:C-01' for node in graph['nodes']))
+    def test_relationship_graph_local_neighbourhood_and_invalid_filters(self):
+        initialize(s.store())
+        response=self.client.get('/api/spatial/graph?planId=EXP-001&nodeId=plan:EXP-001&hops=1')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json();self.assertIn('plan:EXP-001',{node['id'] for node in graph['nodes']})
+        self.assertTrue(all(edge['from'] in {node['id'] for node in graph['nodes']} and edge['to'] in {node['id'] for node in graph['nodes']} for edge in graph['edges']))
+        self.assertEqual(self.client.get('/api/spatial/graph?dateFrom=bad').status_code,422)
+        self.assertEqual(self.client.get('/api/spatial/graph?hops=3').status_code,422)
     def test_review_endpoint_rejects_unanchored_model_reordering(self):
         with patch.object(self.service.llm, 'extract_sop', return_value={'steps':[{'order':2,'instruction':'第二步：完成转移操作'},{'order':1,'instruction':'第一步：准备样品'}]}):
             response=self.client.post('/reviews/from-sop',json={'title':'来源绑定测试','room':'测试室','sop_text':'第一步：准备样品\n第二步：完成转移操作'})
