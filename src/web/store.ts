@@ -8,7 +8,11 @@ let token=''
 export const setSessionToken=(value:string)=>{token=value}
 export const authHeaders=()=>token?{Authorization:`Bearer ${token}`}:{Authorization:''}
 export async function request<T>(path:string, body?:unknown):Promise<T> {
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path.endsWith("/analysis")||path.includes("/ai-preview")?45000:10000)
+ // A full Copilot run may perform SOP extraction and summary generation as two
+ // sequential Responses API calls. Keep the browser request alive beyond the
+ // server's per-call timeout so a valid remote result is not shown as an
+ // aborted request while the server is still completing the run.
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path.endsWith("/analysis")||path.includes("/ai-preview")?120000:10000)
  try {const response=await fetch(`${API_BASE}${path}`,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal});const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:`请求失败（${response.status}），请检查输入或连接。`);return data} finally {clearTimeout(timer)}
 }
 const localSnapshot=(workspace:Workspace):Snapshot=>{const checks=checkWorkspace(workspace);return {workspace,checks,statuses:Object.fromEntries(workspace.plans.map(p=>[p.id,planStatus(workspace,p,checks)])),mode:'local'}}
