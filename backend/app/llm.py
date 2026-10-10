@@ -21,6 +21,8 @@ class LLMResult:
     available: bool
     text: str
     degraded: bool = False
+    # Secret-free reason for a degraded response; never expose provider body.
+    reason: str | None = None
 
 
 class LLMAdapter:
@@ -71,8 +73,14 @@ class LLMAdapter:
             if not text:
                 raise ValueError("empty model response")
             return LLMResult("openai-compatible", True, text)
-        except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError, KeyError, IndexError):
-            return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True)
+        except urllib.error.HTTPError as error:
+            return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True, reason=f"远程模型返回 HTTP {error.code}")
+        except urllib.error.URLError:
+            return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True, reason="远程模型网络不可达")
+        except TimeoutError:
+            return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True, reason="远程模型请求超时")
+        except (ValueError, json.JSONDecodeError, KeyError, IndexError):
+            return LLMResult("offline", True, self._offline_summary(review, evaluation), degraded=True, reason="远程模型响应格式无效")
 
     def extract_sop(self, sop_text: str) -> Dict[str, Any]:
         """Optionally extract ambiguous SOP structure with the configured model.

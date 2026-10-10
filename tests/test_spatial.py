@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
@@ -12,6 +13,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from backend.app import spatial as s
 from backend.app.parser import parse_sop
+from backend.app.llm import LLMAdapter
 
 TEMPLATE = json.loads((Path(__file__).resolve().parents[1] / 'data/spatial-example.json').read_text())
 
@@ -175,6 +177,21 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(js['basis'],[s.basis(w,p) for p in w['plans']])
         self.assertEqual(js['checks'],[{'id':c['id'],'state':c['state']} for c in py['checks']])
         self.assertEqual(js['statuses'],[py['statuses'][p['id']] for p in w['plans']])
+
+    def test_llm_http_failure_is_secret_free_and_explained(self):
+        with patch.dict(os.environ, {
+            'LABSAFETY_LLM_BASE_URL':'https://example.invalid/v1',
+            'LABSAFETY_LLM_MODEL':'gpt-6.1-sol',
+            'LABSAFETY_LLM_API_KEY':'test-token',
+            'LABSAFETY_LLM_ENABLED':'1',
+        }), patch('backend.app.llm.urllib.request.urlopen', side_effect=urllib.error.HTTPError(
+            'https://example.invalid/v1/chat/completions', 401, 'Invalid token', {}, None
+        )):
+            result=LLMAdapter().summarize({'title':'测试计划'}, {'results':[]})
+        self.assertTrue(result.degraded)
+        self.assertEqual(result.provider,'offline')
+        self.assertEqual(result.reason,'远程模型返回 HTTP 401')
+        self.assertNotIn('test-token', result.text)
 
 class StoreTests(unittest.TestCase):
     def setUp(self):
