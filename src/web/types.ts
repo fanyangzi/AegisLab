@@ -81,7 +81,10 @@ export interface Plan {
 export interface DocumentRecord {
   id: string; name: string; kind: 'inspection' | 'sop' | 'reference'; equipmentId: string | null;
   specVersion: number; status: 'pending' | 'verified' | 'rejected'; validFrom: string; validUntil: string;
-  content: string; source: string; reviewedBy: string | null; reviewedAt: string | null
+  content: string; source: string; reviewedBy: string | null; reviewedAt: string | null;
+  sourceType?: 'upload' | 'manual' | 'external' | 'system' | null;
+  sourceLocator?: string | null; capturedAt?: string | null; contentLength?: number | null;
+  provenanceNote?: string | null;
 }
 export interface Task {
   id: string; title: string; planId: string | null; equipmentId: string | null;
