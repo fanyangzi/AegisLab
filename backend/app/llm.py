@@ -56,6 +56,9 @@ class LLMAdapter:
             "available": bool(self.enabled and configured),
             "mode": "remote" if self.enabled and configured else "offline",
             "base_url": self.base_url,
+            "api_format": "responses-first",
+            "reasoning_effort": self.reasoning_effort,
+            "timeout_seconds": self.timeout_seconds,
         }
 
     def summarize(self, review: Dict[str, Any], evaluation: Dict[str, Any]) -> LLMResult:
