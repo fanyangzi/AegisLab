@@ -161,3 +161,32 @@
 .al-space-ai-contract{margin:14px 22px 0;padding:13px;border:1px solid #d9e6f4;border-radius:10px;background:linear-gradient(135deg,#f5f9ff,#fff);display:flex;align-items:center;justify-content:space-between;gap:12px}.al-space-ai-contract>div:first-child{min-width:150px}.al-space-ai-contract .al-eyebrow{display:block;font-size:8px;color:#8499b5;letter-spacing:.1em}.al-space-ai-contract b{display:block;margin-top:5px;font-size:10px;color:#58749a}.al-space-ai-contract-stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;color:#7f96b1;font-size:9px}.al-space-ai-contract-stats span{white-space:nowrap}.al-space-ai-contract-stats strong{font-size:14px;color:#609477;margin-right:3px}.al-space-ai-contract-stats .warn strong{color:#c0934e}.al-space-ai-contract-stats .danger strong{color:#c96e78}.al-space-ai-action{align-items:flex-start}.al-space-ai-source{display:block;margin-top:5px;font-size:9px;line-height:1.5;color:#8da2ba}.al-space-ai-link{align-self:center;flex:none;border:1px solid #d5e2f1;background:#f8fbff;color:#557cad;border-radius:6px;padding:6px 8px;font-size:9px;cursor:pointer}.al-space-ai-link:hover{background:#edf5ff;border-color:#b9d1ec;color:#3d6da8}
 .al-source-citations{margin-top:18px;padding-top:14px;border-top:1px solid #e4ebf4}.al-source-citations header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:9px}.al-source-citations header>b{font-size:10px;color:#6681a3}.al-source-citations header>span{font-size:10px;color:#8ba0ba}.al-source-citations a{display:block;padding:9px 10px;margin-top:6px;border:1px solid #e0e9f4;border-radius:8px;background:#fbfdff;text-decoration:none}.al-source-citations a:hover{border-color:#b9d1ed;background:#f4f8ff}.al-source-citations strong,.al-source-citations span,.al-source-citations small{display:block}.al-source-citations strong{font-size:10px;color:#5579aa}.al-source-citations span{margin-top:2px;font-size:10px;color:#6e85a3}.al-source-citations small{margin-top:4px;font-size:9px;line-height:1.5;color:#91a4ba}.al-source-citations em{display:block;margin-top:8px;font-size:9px;line-height:1.6;color:#9aaaba;font-style:normal}
 .al-button.disabled{opacity:.55;pointer-events:none}.al-button input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Manual expiry report: read-only operator surface. */
+.al-expiry-card{grid-column:1 / -1}
+.al-expiry-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.al-expiry-card-head>div:first-child{min-width:0}
+.al-expiry-card-head h2{display:inline-block;margin:0 0 10px 12px;vertical-align:middle}
+.al-expiry-card-head p{max-width:760px;margin:0 0 0 2px}
+.al-expiry-controls{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-top:22px;padding-top:18px;border-top:1px solid #edf2f8}
+.al-expiry-controls .al-field{max-width:270px;flex:1}
+.al-expiry-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.al-expiry-error{display:flex;align-items:center;gap:8px;margin-top:16px;padding:11px 13px;border:1px solid #f3d4d5;background:#fff7f7;border-radius:8px;color:#b55f64;font-size:12px}
+.al-expiry-result{margin-top:20px;border:1px solid #e5ecf5;background:#fbfdff;border-radius:10px;padding:17px}
+.al-expiry-result>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:15px}
+.al-expiry-result>header>div{display:flex;flex-direction:column;gap:5px}
+.al-expiry-result>header b{font-size:13px;color:#5c7596}
+.al-expiry-result>header small{color:#9aaec6;font-size:10px;word-break:break-all}
+.al-expiry-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}
+.al-expiry-metrics>div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid #e7edf6;border-radius:8px;background:#fff}
+.al-expiry-metrics strong{font-size:22px;font-weight:600;color:#57759a}
+.al-expiry-metrics span{color:#91a5bf;font-size:11px}
+.al-expiry-lists{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.al-expiry-lists>div{display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border:1px solid #edf1f7;border-radius:8px;background:#fff}
+.al-expiry-lists>div>b{font-size:11px;color:#7189a8}
+.al-expiry-lists>div>span{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:6px;align-items:center;color:#607c9d;font-size:11px;line-height:1.45}
+.al-expiry-lists>div>span svg{grid-row:span 2;color:#87a5ce}
+.al-expiry-lists>div>span small{grid-column:2;color:#a1b2c8;font-size:10px}
+.al-expiry-lists>div>em{font-style:normal;color:#a0b1c6;font-size:11px;line-height:1.55}
+.al-expiry-result>.al-note{margin:15px 0 0}
+@media (max-width:900px){.al-expiry-controls{align-items:stretch;flex-direction:column}.al-expiry-controls .al-field{max-width:none}.al-expiry-actions{justify-content:flex-start}.al-expiry-metrics,.al-expiry-lists{grid-template-columns:1fr}.al-expiry-card-head{flex-direction:column}}
