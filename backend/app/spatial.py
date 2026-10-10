@@ -2201,6 +2201,11 @@ def recheck_expiry(body: ExpiryRecheckRequest, background_tasks: BackgroundTasks
     instant; tests and incident reviews should pass a fixed, timezone-aware
     timestamp for reproducibility.
     """
+    # FastAPI injects a string actor at request time.  Keeping a concrete
+    # fallback makes direct Python calls (used by smoke tools and notebooks)
+    # safe as well; a ``Depends`` marker must never leak into persisted JSON.
+    if not isinstance(actor, str):
+        actor = "本机负责人"
     as_of = body.asOf or now()
     if background:
         try:
