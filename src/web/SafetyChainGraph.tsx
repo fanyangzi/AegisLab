@@ -33,11 +33,17 @@ function statusForChecks(checks: Check[]) { return !checks.length ? 'unknown' : 
 function taskState(task: Task) { return task.status === 'done' ? 'pass' : task.status === 'cancelled' ? 'muted' : 'unknown' }
 
 /** Build a graph only from relationships represented in the workspace snapshot. */
-export function buildSafetyChainGraph(snapshot: Snapshot, labId: string): SafetyChainGraphModel {
+export function buildSafetyChainGraph(snapshot: Snapshot, labId: string, planId?: string): SafetyChainGraphModel {
   const w = snapshot.workspace
-  const plans = w.plans.filter(plan => !plan.archived && plan.lifecycle !== 'cancelled' && plan.labId === labId)
+  const plans = w.plans.filter(plan => !plan.archived && plan.lifecycle !== 'cancelled' && plan.labId === labId && (!planId || plan.id === planId))
   const planIds = new Set(plans.map(plan => plan.id))
-  const equipment = w.equipment.filter(item => item.labId === labId)
+  // A plan selection is a real workspace scope, not just a highlighted node.
+  // Keep the graph on the same plan/resource slice as the space and timeline
+  // views so changing views cannot silently reintroduce unrelated objects.
+  const scopedEquipmentIds = planId
+    ? new Set(plans.flatMap(plan => [...plan.reservations.map(item => item.equipmentId), ...plan.steps.flatMap(step => step.equipmentIds)]))
+    : null
+  const equipment = w.equipment.filter(item => item.labId === labId && (!scopedEquipmentIds || scopedEquipmentIds.has(item.id)))
   const equipmentIds = new Set(equipment.map(item => item.id))
   const checks = snapshot.checks.filter(check => planIds.has(check.planId))
   const referencedDocumentIds = new Set(checks.flatMap(check => check.documentIds))
@@ -194,15 +200,15 @@ export function localGraphIds(nodes: ChainNode[], edges: ChainEdge[], anchors: s
   return visible
 }
 
-export interface SafetyChainGraphProps { snapshot: Snapshot; labId: string; selection: Selection; onSelect: (selection: Selection) => void; all?: boolean }
+export interface SafetyChainGraphProps { snapshot: Snapshot; labId: string; selection: Selection; onSelect: (selection: Selection) => void; all?: boolean; planId?: string }
 const laneNames = ['实验计划', '步骤', '化学品 / 物料', '设备', '控制措施', '规则', '证据', '协同任务', '人工审批']
 
-export function SafetyChainGraph({ snapshot, labId, selection, onSelect, all = false }: SafetyChainGraphProps) {
+export function SafetyChainGraph({ snapshot, labId, selection, onSelect, all = false, planId }: SafetyChainGraphProps) {
   const [insight, setInsight] = useState('点击节点或关系线，查看这条安全链路的含义。')
   const [hops, setHops] = useState<1 | 2>(2)
   const [enabledTypes, setEnabledTypes] = useState<Set<ChainNodeType>>(() => new Set(CHAIN_NODE_TYPES))
   const [pinned, setPinned] = useState<Set<string>>(() => new Set())
-  const model = useMemo(() => buildSafetyChainGraph(snapshot, labId), [snapshot, labId])
+  const model = useMemo(() => buildSafetyChainGraph(snapshot, labId, planId), [snapshot, labId, planId])
   const selectedNodeIds = useMemo(() => model.nodes.filter(node => node.selection && selection && node.selection.type === selection.type && node.selection.id === selection.id).map(node => node.id), [model.nodes, selection])
   const fallbackAnchor = model.nodes.find(node => node.type === 'plan')?.id || model.nodes[0]?.id
   const anchors = unique([...selectedNodeIds, ...pinned, ...(selectedNodeIds.length || pinned.size ? [] : fallbackAnchor ? [fallbackAnchor] : [])])

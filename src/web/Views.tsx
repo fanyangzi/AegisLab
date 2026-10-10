@@ -11,12 +11,14 @@ type PublicSource = { id?: string; name: string; source_url: string; organizatio
 const publicSources = new Map((sourceRegistry as PublicSource[]).filter(item => item.id).map(item => [item.id!, item]))
 const publicSourcesByUrl = new Map((sourceRegistry as PublicSource[]).filter(item => item.source_url).map(item => [item.source_url, item]))
 
-export function Timeline({workspace:w,labId,date,selection,onSelect,compact=false}: {workspace:Workspace;labId:string;date:string;selection:Selection;onSelect:(s:Selection)=>void;compact?:boolean}) {
+export function Timeline({workspace:w,labId,date,selection,onSelect,compact=false,planId}: {workspace:Workspace;labId:string;date:string;selection:Selection;onSelect:(s:Selection)=>void;compact?:boolean;planId?:string}) {
  const base=new Date(`${date}T07:00:00`).getTime(), end=new Date(`${date}T21:00:00`).getTime(),duration=end-base
  const day={start:new Date(base).toISOString(),end:new Date(end).toISOString()}
- const equipment=w.equipment.filter(e=>e.labId===labId)
- const rows=compact?equipment.filter(e=>selection?.type==='equipment'?e.id===selection.id:w.plans.some(p=>!p.archived&&p.lifecycle!=='cancelled'&&p.labId===labId&&p.reservations.some(r=>r.equipmentId===e.id&&overlaps(r,day)))).slice(0,2):equipment
- const bars=(e:Equipment)=>w.plans.filter(p=>!p.archived&&p.lifecycle!=='cancelled').flatMap(p=>p.reservations.filter(r=>r.equipmentId===e.id&&overlaps(r,day)).map(r=>({p,r}))).sort((a,b)=>Date.parse(a.r.start)-Date.parse(b.r.start))
+ const visiblePlans=w.plans.filter(p=>!p.archived&&p.lifecycle!=='cancelled'&&p.labId===labId&&(!planId||p.id===planId))
+ const visiblePlanIds=new Set(visiblePlans.map(p=>p.id))
+ const equipment=w.equipment.filter(e=>e.labId===labId&&(!planId||visiblePlans.some(p=>p.reservations.some(r=>r.equipmentId===e.id))))
+ const rows=compact?equipment.filter(e=>selection?.type==='equipment'?e.id===selection.id:visiblePlans.some(p=>p.reservations.some(r=>r.equipmentId===e.id&&overlaps(r,day)))).slice(0,2):equipment
+ const bars=(e:Equipment)=>visiblePlans.filter(p=>visiblePlanIds.has(p.id)).flatMap(p=>p.reservations.filter(r=>r.equipmentId===e.id&&overlaps(r,day)).map(r=>({p,r}))).sort((a,b)=>Date.parse(a.r.start)-Date.parse(b.r.start))
  const range=(start:string,finish:string)=>({left:`${Math.max(0,(Date.parse(start)-base)/duration*100)}%`,width:`${Math.max(0,(Math.min(end,Date.parse(finish))-Math.max(base,Date.parse(start)))/duration*100)}%`})
  return <div className={`al-timeline ${compact?'compact':''}`}>
   <div className="al-time-header"><span>资源 / 使用计划</span><div>{Array.from({length:8},(_,i)=><span key={i}>{String(7+i*2).padStart(2,'0')}:00</span>)}</div></div>
@@ -36,9 +38,9 @@ export function Timeline({workspace:w,labId,date,selection,onSelect,compact=fals
   <div className="al-time-legend"><span><i/>计划使用</span><span><i className="red"/>容量需核对</span><span><i className="striped"/>维护窗口</span><small>计划安排，非实时遥测 · 浏览器本地时区</small></div>
  </div>
 }
-export function RelationshipGraph({snapshot,labId,selection,onSelect}: {snapshot:Snapshot;labId:string;selection:Selection;onSelect:(s:Selection)=>void}) {
+export function RelationshipGraph({snapshot,labId,selection,onSelect,planId}: {snapshot:Snapshot;labId:string;selection:Selection;onSelect:(s:Selection)=>void;planId?:string}) {
  const [all,setAll]=useState(false)
- return <div className="al-graph-page"><div className="al-view-toolbar"><div><span className="al-eyebrow">DEPENDENCY & EVIDENCE</span><h2>关系与依据</h2><p>把计划、原文步骤、物料线索、空间资源、规则证据和人工动作放到同一条可回溯链路中。线条表达业务依赖，不代表物质流动或安全结论。</p></div><div className="al-actions"><Button icon="filter" onClick={()=>setAll(!all)}>{all?'查看局部':'展开全图'}</Button></div></div><SafetyChainGraph snapshot={snapshot} labId={labId} selection={selection} onSelect={onSelect} all={all}/></div>
+ return <div className="al-graph-page"><div className="al-view-toolbar"><div><span className="al-eyebrow">DEPENDENCY & EVIDENCE</span><h2>关系与依据</h2><p>把计划、原文步骤、物料线索、空间资源、规则证据和人工动作放到同一条可回溯链路中。线条表达业务依赖，不代表物质流动或安全结论。</p></div><div className="al-actions"><Button icon="filter" onClick={()=>setAll(!all)}>{all?'查看局部':'展开全图'}</Button></div></div><SafetyChainGraph snapshot={snapshot} labId={labId} planId={planId} selection={selection} onSelect={onSelect} all={all}/></div>
 }
 export function EquipmentPicture({equipment:e}:{equipment:Equipment}) {
  const family=e.family||'utility'
