@@ -1517,7 +1517,7 @@ def cancel_job(job_id: str, actor: str = Depends(local_owner)):
 
 
 @router.post('/plans/{plan_id}/analysis')
-def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
+def analyze_plan(plan_id: str, retry: bool = False, actor: str = Depends(local_owner)):
     """Reuse legacy parsing/rules and optional LLM explanation without approval."""
     from .parser import parse_sop
     from .llm import LLMAdapter
@@ -1528,11 +1528,17 @@ def analyze_plan(plan_id: str, actor: str = Depends(local_owner)):
     if p is None:
         raise HTTPException(404, '计划不存在。')
     job_id = f"analysis:{p['id']}:v{p['revision']}"
+    existing = store().job(job_id)
+    if retry and existing and existing["status"] in {"failed", "cancelled"}:
+        # A retry is a new durable attempt.  Terminal history stays immutable,
+        # while the new idempotency key allows the same plan revision to run
+        # again after a transient parser/model failure.
+        job_id = f"{job_id}:retry:{str(uuid4())[:8]}"
     job = store().begin_job(job_id=job_id, kind="analysis", plan_id=p['id'], idempotency_key=job_id)
     if job["status"] == "succeeded" and job.get("result"):
         return {**job["result"], "job": job}
     if job["status"] in {"cancelled", "failed"}:
-        raise HTTPException(409, f"该分析任务已处于 {job['status']} 终态，请修改计划修订后重新发起。")
+        raise HTTPException(409, f"该分析任务已处于 {job['status']} 终态，请修改计划修订后使用 retry=true 重新发起。")
     store().set_job_running(job_id)
     try:
         parsed = parse_sop(p['source'])

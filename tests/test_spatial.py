@@ -307,6 +307,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code,500,response.text)
         job=self.client.get('/api/spatial/jobs/analysis:EXP-001:v1')
         self.assertEqual(job.status_code,200);self.assertEqual(job.json()['status'],'failed');self.assertIn('RuntimeError',job.json()['error'])
+        retry=self.client.post('/api/spatial/plans/EXP-001/analysis?retry=true')
+        self.assertEqual(retry.status_code,200,retry.text);self.assertEqual(retry.json()['job']['status'],'succeeded')
     def test_relationship_graph_supports_plan_type_and_time_filters(self):
         initialize(s.store())
         response=self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,equipment&dateFrom=2026-10-09T09:00:00%2B08:00&dateTo=2026-10-09T09:30:00%2B08:00')
