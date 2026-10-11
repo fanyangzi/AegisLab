@@ -89,7 +89,7 @@ export function useWorkspace() {
  const restoreServerZip=useCallback(async(file:File)=>{
   const s=current.current
   if(s.mode!=='server')throw new Error('请先连接服务端，再恢复 ZIP 存档。')
-  const response=await binaryRequest('/api/spatial/restore.zip',{method:'POST',headers:{'Content-Type':'application/zip'},body:file})
+  const response=await binaryRequest(`/api/spatial/restore.zip?expectedRevision=${encodeURIComponent(String(s.workspace.revision))}&requestId=${encodeURIComponent(uid('zip-restore'))}`,{method:'POST',headers:{'Content-Type':'application/zip'},body:file})
   const result=await response.json() as Snapshot
   assertWorkspace(result.workspace);const next={...result,mode:'server' as const};setSnapshot(next);current.current=next
  },[])

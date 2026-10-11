@@ -1286,6 +1286,8 @@ class ApiTests(unittest.TestCase):
             'expectedRevision': current['revision'], 'requestId': 'zip-before-restore-change', 'type': 'save_document', 'payload': {'document': changed},
         })
         self.assertEqual(changed_response.status_code, 200, changed_response.text)
+        stale = self.client.post('/api/spatial/restore.zip?expectedRevision=1&requestId=zip-stale-01', content=exported.content, headers={'content-type': 'application/zip'})
+        self.assertEqual(stale.status_code, 409, stale.text)
         restored = self.client.post('/api/spatial/restore.zip', content=exported.content, headers={'content-type': 'application/zip'})
         self.assertEqual(restored.status_code, 200, restored.text)
         self.assertEqual(restored.json()['archive']['artifacts'], 1)

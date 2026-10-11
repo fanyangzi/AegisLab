@@ -3882,12 +3882,24 @@ async def restore_workspace_zip(request: Request, actor: str = Depends(local_own
     """Restore workspace and source bytes from an authenticated raw ZIP body."""
     if local_role(request) not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有恢复服务端存档的权限。")
+    expected_raw = request.query_params.get("expectedRevision")
+    expected_revision: int | None = None
+    if expected_raw is not None:
+        try:
+            expected_revision = int(expected_raw)
+        except (TypeError, ValueError) as error:
+            raise HTTPException(422, "expectedRevision 必须是非负整数。") from error
+        if expected_revision < 0:
+            raise HTTPException(422, "expectedRevision 必须是非负整数。")
+    request_id = request.query_params.get("requestId") or ""
+    if len(request_id) > 180:
+        raise HTTPException(422, "requestId 过长。")
     raw = await _bounded_archive_body(request)
     workspace, artifacts = _read_workspace_zip(raw)
     current = store().read()
     restored = store().restore_with_artifacts(
-        expected_revision=int(current.get("revision", 0)),
-        request_id=f"zip-{hashlib.sha256(raw).hexdigest()[:32]}",
+        expected_revision=int(current.get("revision", 0)) if expected_revision is None else expected_revision,
+        request_id=request_id or f"zip-{hashlib.sha256(raw).hexdigest()[:32]}",
         candidate=workspace,
         artifacts=artifacts,
         actor=actor,
