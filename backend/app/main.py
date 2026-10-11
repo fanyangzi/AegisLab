@@ -5,7 +5,7 @@ import os
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from .spatial import _merge_model_parse, local_owner, local_role
+from .spatial import _merge_model_parse, local_owner, local_principal, local_role
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -235,7 +235,7 @@ def add_evidence(review_id: str, evidence: Evidence, actor: str = "requester") -
 @app.post("/reviews/{review_id}/decision", response_model=Review, tags=["workflow"])
 def decide_review(review_id: str, request: DecisionRequest, http_request: Request) -> Review:
     try:
-        request.actor = http_request.state.workspace_identity["principal"]
+        request.actor = local_principal(http_request)
         return service.decide_review(review_id, request)
     except KeyError as error:
         raise _not_found(error)
@@ -250,7 +250,7 @@ def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest, http
         # from server-side workspace configuration rather than a client role
         # selector.
         request.actor_role = local_role(http_request)
-        request.actor = http_request.state.workspace_identity["principal"]
+        request.actor = local_principal(http_request)
         return service.decide_gate(review_id, gate_id, request)
     except KeyError as error:
         raise _not_found(error)
@@ -262,7 +262,7 @@ def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest, http
 def override_review(review_id: str, request: OverrideRequest, http_request: Request) -> Review:
     try:
         request.actor_role = local_role(http_request)
-        request.actor = http_request.state.workspace_identity["principal"]
+        request.actor = local_principal(http_request)
         return service.override_review(review_id, request)
     except KeyError as error:
         raise _not_found(error)
