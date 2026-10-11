@@ -91,7 +91,7 @@ export interface DocumentRecord {
   sourceType?: 'upload' | 'manual' | 'external' | 'system' | null;
   sourceLocator?: string | null; capturedAt?: string | null; contentLength?: number | null;
   provenanceNote?: string | null; sourceFileName?: string | null; sourceFileSize?: number | null;
-  sourceMediaType?: string | null; sourceLocations?: DocumentLocation[];
+  sourceMediaType?: string | null; sourceLocations?: DocumentLocation[]; sourceArtifactId?: string | null;
 }
 export interface Task {
   id: string; title: string; planId: string | null; equipmentId: string | null;

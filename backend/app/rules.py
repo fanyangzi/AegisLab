@@ -44,7 +44,7 @@ class ReviewRuleEngine:
             passed=sop_ok,
             message="Approved SOP is attached" if sop_ok else "A written SOP is required for a chemical experiment",
             severity=Severity.HIGH if not sop_ok else Severity.LOW,
-            recommended_control="附加当前版本 SOP，并保留输入哈希" if not sop_ok else None,
+            recommended_control="附加当前版本 SOP，并保留来源记录" if not sop_ok else None,
         ))
 
         step_failures = [step.order for step in review.steps if not step.controls or (step.hazard and not step.requires_ppe)]

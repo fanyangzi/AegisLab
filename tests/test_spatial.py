@@ -1230,6 +1230,23 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(payload['contentLength'],len(payload['text']));self.assertTrue(payload['capturedAt'])
         self.assertEqual(payload['sourceFileName'],'test.md');self.assertEqual(payload['sourceFileSize'],len('计划文本\n检查 F-01'.encode()))
         self.assertEqual([(row['lineStart'],row['lineEnd']) for row in payload['sourceLocations']],[(1,1),(2,2)])
+    def test_source_artifact_is_attached_and_reopenable(self):
+        initialize(s.store())
+        raw='A-01 原始检查记录\n联锁状态：待人工核验'.encode()
+        imported=self.client.post('/api/spatial/import-text?filename=A-01.md&documentId=doc-F-01',content=raw)
+        self.assertEqual(imported.status_code,200,imported.text)
+        payload=imported.json();self.assertTrue(payload['sourceArtifactId']);self.assertEqual(payload['sourceArtifactVersion'],1)
+        workspace=s.store().read();document=next(item for item in workspace['documents'] if item['id']=='doc-F-01')
+        document['sourceArtifactId']=payload['sourceArtifactId'];document['sourceFileName']='A-01.md';document['sourceFileSize']=len(raw);document['sourceMediaType']='text/markdown';document['sourceType']='upload';document['sourceLocator']='extracted-text-lines';document['capturedAt']=s.now();document['content']=payload['text'];document['contentLength']=len(payload['text']);document['sourceLocations']=payload['sourceLocations']
+        saved=self.client.post('/api/spatial/actions',json={'expectedRevision':workspace['revision'],'requestId':'artifact-doc-0001','type':'save_document','payload':{'document':document}})
+        self.assertEqual(saved.status_code,200,saved.text)
+        meta=self.client.get('/api/spatial/documents/doc-F-01/source');self.assertEqual(meta.status_code,200);self.assertEqual(meta.json()['artifactId'],payload['sourceArtifactId'])
+        content=self.client.get('/api/spatial/documents/doc-F-01/source/content');self.assertEqual(content.status_code,200);self.assertEqual(content.content,raw);self.assertIn('text/markdown',content.headers.get('content-type',''))
+    def test_source_artifact_requires_supported_suffix_and_is_bounded(self):
+        initialize(s.store())
+        self.assertEqual(self.client.post('/api/spatial/import-text?filename=unsafe.exe&documentId=doc-F-01',content=b'nope').status_code,422)
+        self.assertEqual(self.client.post('/api/spatial/import-text?filename=missing.md&documentId=missing-doc',content=b'nope').status_code,404)
+        self.assertEqual(self.client.get('/api/spatial/documents/doc-F-01/source').status_code,404)
     def test_unsupported_type_denied(self):self.assertEqual(self.client.post('/api/spatial/import-text?filename=evil.exe',content=b'abc').status_code,422)
     def test_scanned_pdf_empty_text_not_fabricated(self):
         from pypdf import PdfWriter

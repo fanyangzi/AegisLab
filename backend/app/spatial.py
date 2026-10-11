@@ -20,12 +20,31 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from .parser import parse_sop
 
 RULE_PACK = "resource-prerequisites/1.0"
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_REGISTRY_PATH = ROOT / "data" / "knowledge_sources.json"
+
+# Original uploads are retained only as explicitly attached, bounded source
+# artifacts.  The text extractor remains the authority for the workspace
+# document; this volume lets a reviewer reopen the bytes that produced that
+# text without exposing filesystem paths or accepting arbitrary file types.
+ARTIFACT_MAX_BYTES = 8 * 1024 * 1024
+ARTIFACT_SUFFIXES = frozenset({".txt", ".md", ".docx", ".pdf"})
+
+def artifact_root_for_db(db_path: str) -> Path:
+    configured = os.getenv("AEGIS_SPATIAL_ARTIFACT_DIR", "").strip()
+    root = Path(configured).expanduser() if configured else Path(db_path).with_suffix(".artifacts")
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+def _artifact_filename(filename: str) -> str:
+    """Return a display filename without allowing path components through."""
+    clean = Path(str(filename or "source")).name.strip() or "source"
+    return clean[:240]
 
 WORKSPACE_ROLES = frozenset({"instructor", "researcher", "safety_owner", "ehs_manager", "administrator"})
 
@@ -483,6 +502,9 @@ class Document(StrictModel):
     sourceFileSize: int | None = Field(default=None, ge=0, strict=True)
     sourceMediaType: str | None = Field(default=None, max_length=180)
     sourceLocations: list[DocumentLocation] = Field(default_factory=list, max_length=2000)
+    # Optional link to the controlled original-byte volume.  Older workspace
+    # exports omit this field; text-only records remain valid and explicit.
+    sourceArtifactId: str | None = Field(default=None, max_length=180)
 
 class Task(StrictModel):
     id: str
@@ -686,7 +708,7 @@ def migrate_workspace_import(payload: dict) -> tuple[dict, dict[str, Any]]:
         "captured_at": "capturedAt", "content_length": "contentLength",
         "provenance_note": "provenanceNote", "source_file_name": "sourceFileName",
         "source_file_size": "sourceFileSize", "source_media_type": "sourceMediaType",
-        "source_locations": "sourceLocations",
+        "source_locations": "sourceLocations", "source_artifact_id": "sourceArtifactId",
     }
     for document in raw.get("documents", []):
         if not isinstance(document, dict):
@@ -1809,7 +1831,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         # Metadata records where the text came from; it never asserts source
         # authority. Reviewers still verify source, object, version and time.
         if previous:
-            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote", "sourceFileName", "sourceFileSize", "sourceMediaType", "sourceLocations"):
+            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote", "sourceFileName", "sourceFileSize", "sourceMediaType", "sourceLocations", "sourceArtifactId"):
                 if d.get(field) is None and previous.get(field) is not None:
                     d[field] = previous[field]
         d.setdefault("sourceType", "manual")
@@ -2200,6 +2222,20 @@ class WorkspaceStore:
                     principal TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS spatial_source_artifacts(
+                    artifact_id TEXT PRIMARY KEY,
+                    document_id TEXT NOT NULL,
+                    filename TEXT NOT NULL,
+                    media_type TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    storage_key TEXT NOT NULL UNIQUE,
+                    uploaded_by TEXT NOT NULL,
+                    uploaded_at TEXT NOT NULL,
+                    version INTEGER NOT NULL DEFAULT 1,
+                    status TEXT NOT NULL DEFAULT 'stored'
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_source_artifacts_document
+                    ON spatial_source_artifacts(document_id, uploaded_at DESC);
             """)
             # Upgrade local databases created before queued browser jobs kept
             # their replay inputs.  The nullable column is intentionally
@@ -2231,6 +2267,89 @@ class WorkspaceStore:
     def read(self) -> dict:
         with self.connection() as conn:
             return json.loads(conn.execute("SELECT payload FROM spatial_workspace WHERE id=1").fetchone()[0])
+
+    @staticmethod
+    def _artifact_row(row: sqlite3.Row | tuple | None) -> dict | None:
+        if row is None:
+            return None
+        keys = ("artifactId", "documentId", "filename", "mediaType", "size", "storageKey", "uploadedBy", "uploadedAt", "version", "status")
+        item = dict(zip(keys, row))
+        item.pop("storageKey", None)
+        return item
+
+    def save_source_artifact(self, *, document_id: str, filename: str, media_type: str, data: bytes, actor: str) -> dict:
+        """Atomically retain one bounded source file for a workspace document."""
+        document_id = str(document_id or "").strip()
+        safe_name = _artifact_filename(filename)
+        suffix = Path(safe_name).suffix.lower()
+        if not document_id:
+            raise HTTPException(422, "来源文件必须关联一条资料记录。")
+        if suffix not in ARTIFACT_SUFFIXES:
+            raise HTTPException(422, "仅支持 TXT、Markdown、DOCX 和 PDF 来源文件。")
+        if len(data) > ARTIFACT_MAX_BYTES:
+            raise HTTPException(413, "文件不能超过 8 MB。")
+        if not data:
+            raise HTTPException(422, "来源文件不能为空。")
+        artifact_id = uid("artifact")
+        storage_key = f"{artifact_id}{suffix}"
+        root = artifact_root_for_db(self.path)
+        final_path = root / storage_key
+        temporary = root / f".{storage_key}.upload"
+        try:
+            temporary.write_bytes(data)
+            os.replace(temporary, final_path)
+            with self.connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                workspace_row = conn.execute("SELECT payload FROM spatial_workspace WHERE id=1").fetchone()
+                workspace = json.loads(workspace_row[0]) if workspace_row else empty_workspace()
+                # DocumentForm uploads before its first save so the extracted
+                # text and original bytes can travel together in one submit.
+                # The document mutation later records this ID. Only the
+                # documented client-side draft prefix can be provisional;
+                # arbitrary missing document IDs are rejected.
+                if not any(item.get("id") == document_id for item in workspace.get("documents", [])) and not document_id.startswith("document-"):
+                    raise HTTPException(404, "关联资料不存在，未保留来源文件。")
+                previous = conn.execute(
+                    "SELECT version FROM spatial_source_artifacts WHERE document_id=? ORDER BY version DESC LIMIT 1",
+                    (document_id,),
+                ).fetchone()
+                version = int(previous[0]) + 1 if previous else 1
+                conn.execute(
+                    "INSERT INTO spatial_source_artifacts(artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (artifact_id, document_id, safe_name, str(media_type or "application/octet-stream")[:180], len(data), storage_key, str(actor or "本机负责人")[:180], now(), version, "stored"),
+                )
+                row = conn.execute("SELECT artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status FROM spatial_source_artifacts WHERE artifact_id=?", (artifact_id,)).fetchone()
+            return self._artifact_row(row) or {}
+        except Exception:
+            final_path.unlink(missing_ok=True)
+            temporary.unlink(missing_ok=True)
+            raise
+
+    def source_artifact(self, artifact_id: str, *, document_id: str | None = None) -> dict | None:
+        with self.connection() as conn:
+            query = "SELECT artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status FROM spatial_source_artifacts WHERE artifact_id=?"
+            params: tuple[Any, ...] = (artifact_id,)
+            if document_id:
+                query += " AND document_id=?"
+                params += (document_id,)
+            row = conn.execute(query, params).fetchone()
+        return self._artifact_row(row)
+
+    def source_artifact_path(self, artifact_id: str, *, document_id: str | None = None) -> tuple[dict, Path] | None:
+        with self.connection() as conn:
+            query = "SELECT artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status FROM spatial_source_artifacts WHERE artifact_id=?"
+            params: tuple[Any, ...] = (artifact_id,)
+            if document_id:
+                query += " AND document_id=?"
+                params += (document_id,)
+            row = conn.execute(query, params).fetchone()
+        metadata = self._artifact_row(row)
+        if not metadata or not row:
+            return None
+        path = artifact_root_for_db(self.path) / str(row[5])
+        if not path.is_file():
+            raise HTTPException(410, "来源文件记录存在，但原始文件已不可用。")
+        return metadata, path
 
     @staticmethod
     def _membership_record(row: tuple | sqlite3.Row, *, token: str | None = None) -> dict:
@@ -3295,7 +3414,7 @@ def mutate_workspace(body: Mutation, request: Request, actor: str = Depends(loca
 @router.get("/export")
 def export_workspace(actor: str = Depends(local_owner)):
     w = store().read()
-    return {"exportedAt": now(), "scope": "资源与证据审查记录，不是安全证书", "sha256": hashlib.sha256(canonical(w).encode()).hexdigest(), **envelope(w)}
+    return {"exportedAt": now(), "scope": "资源与证据审查记录，不是安全证书", "sourceRecord": "workspace snapshot", **envelope(w)}
 
 @router.post("/restore")
 def restore_workspace(body: RestoreRequest, request: Request, actor: str = Depends(local_owner)):
@@ -3396,12 +3515,13 @@ def _line_locations(text: str) -> list[dict[str, Any]]:
 
 
 @router.post('/import-text')
-async def import_text(request: Request, filename: str, actor: str = Depends(local_owner)):
+async def import_text(request: Request, filename: str, documentId: str | None = None, actor: str = Depends(local_owner)):
     """Bounded document extraction with explicit source coordinates.
 
-    The service keeps only extracted text and provenance metadata.  It does
-    not retain the uploaded binary, execute macros, or claim that extraction
-    itself verifies the source or its safety applicability.
+    Unless ``documentId`` is supplied, the service keeps only extracted text
+    and provenance metadata.  A document upload may explicitly retain the
+    original bytes in the controlled artifact volume; this never executes
+    macros or claims that extraction itself verifies source applicability.
     """
     from io import BytesIO
     import zipfile
@@ -3413,6 +3533,10 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
     suffix = Path(filename).suffix.lower()
     source_file_name = Path(filename).name
     source_media_type = request.headers.get("content-type") or "application/octet-stream"
+    if source_media_type == "application/octet-stream":
+        source_media_type = {
+            ".txt": "text/plain", ".md": "text/markdown", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".pdf": "application/pdf",
+        }.get(Path(filename).suffix.lower(), source_media_type)
     source_locations: list[dict[str, Any]] = []
     locator = "extracted-text-lines"
     try:
@@ -3455,6 +3579,15 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
             raise ValueError('没有提取到可用文本；扫描件请先转成文本后导入，不自动编造内容。')
         if len(text) > 100000:
             raise ValueError('提取文本超过 100,000 字符，请按实验计划拆分。')
+        artifact = None
+        if documentId:
+            artifact = store().save_source_artifact(
+                document_id=documentId,
+                filename=source_file_name,
+                media_type=source_media_type,
+                data=bytes(raw),
+                actor=actor,
+            )
         return {
             'filename': source_file_name,
             'text': text,
@@ -3467,6 +3600,8 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
             'sourceFileSize': len(raw),
             'sourceMediaType': source_media_type,
             'sourceLocations': source_locations,
+            'sourceArtifactId': artifact.get('artifactId') if artifact else None,
+            'sourceArtifactVersion': artifact.get('version') if artifact else None,
             'note': '原文定位对应提取后的行、段落或 PDF 文本层；不是未经 OCR 验证的版面坐标。上传成功不会自动核验或证明适用性。',
         }
     except HTTPException:
@@ -3475,6 +3610,37 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
         raise HTTPException(503, '服务端缺少文档解析依赖，请安装 backend/requirements.txt。') from error
     except Exception as error:
         raise HTTPException(422, f'文件无法提取：{str(error)[:180]}') from error
+
+
+@router.get('/documents/{document_id}/source')
+def source_artifact_metadata(document_id: str, actor: str = Depends(local_owner)):
+    """Return metadata for the original file associated with one document."""
+    document = next((item for item in store().read().get('documents', []) if item.get('id') == document_id), None)
+    if not document:
+        raise HTTPException(404, '资料不存在。')
+    artifact_id = document.get('sourceArtifactId')
+    if not artifact_id:
+        raise HTTPException(404, '该资料没有保留原始文件。')
+    metadata = store().source_artifact(str(artifact_id), document_id=document_id)
+    if not metadata:
+        raise HTTPException(404, '该资料的原始文件记录不存在。')
+    return metadata
+
+
+@router.get('/documents/{document_id}/source/content')
+def source_artifact_content(document_id: str, actor: str = Depends(local_owner)):
+    """Stream the retained original only through the authenticated workspace."""
+    document = next((item for item in store().read().get('documents', []) if item.get('id') == document_id), None)
+    if not document:
+        raise HTTPException(404, '资料不存在。')
+    artifact_id = document.get('sourceArtifactId')
+    if not artifact_id:
+        raise HTTPException(404, '该资料没有保留原始文件。')
+    resolved = store().source_artifact_path(str(artifact_id), document_id=document_id)
+    if not resolved:
+        raise HTTPException(404, '该资料的原始文件记录不存在。')
+    metadata, path = resolved
+    return FileResponse(path, media_type=metadata['mediaType'], filename=metadata['filename'], headers={'X-Source-Artifact-Version': str(metadata['version'])})
 
 
 @router.get('/plans/{plan_id}/analysis/runs')

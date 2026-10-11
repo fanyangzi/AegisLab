@@ -40,7 +40,7 @@ def _markdown_summary(review: Any, evaluation: Any, events: Any) -> str:
         f"- Review: {review_data.get('title', '')}",
         f"- Protocol type: {review_data.get('protocol_type', '')}",
         f"- Room: {review_data.get('room', '')}",
-        f"- Input SHA-256: {review_data.get('metadata', {}).get('input_sha256', 'not recorded')}",
+        f"- Input source record: {'recorded' if review_data.get('metadata', {}).get('input_sha256') else 'not recorded'}",
         f"- Rule recommendation: {evaluation_data.get('recommendation', '')}",
         f"- Risk score: {evaluation_data.get('risk_score', '')}",
         "",
