@@ -540,6 +540,110 @@ class Document(StrictModel):
     sourceArtifactId: str | None = Field(default=None, max_length=180)
     sourceArtifactVersion: int | None = Field(default=None, ge=1, strict=True)
 
+
+def _source_span(
+    *,
+    document_id: str | None = None,
+    source_artifact_id: str | None = None,
+    source_artifact_version: int | None = None,
+    locator: str | None = None,
+    line: int | None = None,
+    page: int | None = None,
+    quoted_text: str | None = None,
+    confirmed_by: str | None = None,
+    confirmed_at: str | None = None,
+) -> dict[str, Any]:
+    """Build a sparse, JSON-safe source span without filling unknown facts.
+
+    A span is intentionally sparse: a source artifact version is only useful
+    when its artifact id is present, and confirmation metadata is only copied
+    when both reviewer fields were recorded.  Callers can therefore attach
+    ``sourceSpan: {}`` to every graph object while never inventing a location.
+    """
+    span: dict[str, Any] = {}
+    if document_id:
+        span["documentId"] = str(document_id)
+    if source_artifact_id:
+        span["sourceArtifactId"] = str(source_artifact_id)
+        if source_artifact_version is not None:
+            span["sourceArtifactVersion"] = int(source_artifact_version)
+    if locator:
+        span["locator"] = str(locator)
+    if line is not None and int(line) > 0:
+        span["line"] = int(line)
+    if page is not None and int(page) > 0:
+        span["page"] = int(page)
+    if quoted_text is not None:
+        span["quotedText"] = str(quoted_text)
+    if confirmed_by and confirmed_at:
+        span["confirmedBy"] = str(confirmed_by)
+        span["confirmedAt"] = str(confirmed_at)
+    return span
+
+
+def _plan_source_span(plan: dict[str, Any], line: int | None) -> dict[str, Any]:
+    """Return an exact line anchor into the saved plan revision, if valid."""
+    if line is None:
+        return {}
+    try:
+        line_number = int(line)
+    except (TypeError, ValueError):
+        return {}
+    lines = str(plan.get("source") or "").splitlines()
+    if line_number < 1 or line_number > len(lines):
+        return {}
+    # The plan revision is part of the locator so a stale Copilot result does
+    # not silently point at a different saved source revision.
+    locator = f"plan:{plan.get('id')}@revision:{plan.get('revision')}#line:{line_number}"
+    return _source_span(locator=locator, line=line_number, quoted_text=lines[line_number - 1])
+
+
+def _document_source_span(document: dict[str, Any], *, line: int | None = None, page: int | None = None) -> dict[str, Any]:
+    """Resolve a document's recorded extraction coordinate without guessing."""
+    locations = [item for item in (document.get("sourceLocations") or []) if isinstance(item, dict)]
+    selected: dict[str, Any] | None = None
+    if line is not None:
+        try:
+            line_number = int(line)
+        except (TypeError, ValueError):
+            return {}
+        selected = next((item for item in locations if item.get("lineStart") is not None and item.get("lineEnd") is not None and int(item["lineStart"]) <= line_number <= int(item["lineEnd"])), None)
+        if selected is None:
+            return {}
+    elif page is not None:
+        try:
+            page_number = int(page)
+        except (TypeError, ValueError):
+            return {}
+        selected = next((item for item in locations if item.get("page") == page_number), None)
+        if selected is None:
+            return {}
+    elif locations:
+        selected = locations[0]
+
+    line_number = line
+    page_number = page
+    quoted_text: str | None = None
+    if selected:
+        page_number = page_number if page_number is not None else selected.get("page")
+        if line_number is None and selected.get("lineStart") == selected.get("lineEnd"):
+            line_number = selected.get("lineStart")
+        if line_number is not None:
+            lines = str(document.get("content") or "").splitlines()
+            if 1 <= int(line_number) <= len(lines):
+                quoted_text = lines[int(line_number) - 1]
+    return _source_span(
+        document_id=document.get("id"),
+        source_artifact_id=document.get("sourceArtifactId"),
+        source_artifact_version=document.get("sourceArtifactVersion"),
+        locator=document.get("sourceLocator"),
+        line=line_number,
+        page=page_number,
+        quoted_text=quoted_text,
+        confirmed_by=document.get("reviewedBy") if document.get("status") == "verified" else None,
+        confirmed_at=document.get("reviewedAt") if document.get("status") == "verified" else None,
+    )
+
 class Task(StrictModel):
     id: str
     title: str = Field(min_length=1, max_length=240)
@@ -1438,6 +1542,19 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
         # plan or bypasses a revision/approval check.
         target = dict(target)
         target.setdefault("type", kind)
+        # Resolve a source span from the authoritative current plan/document
+        # only.  Copilot prose never supplies coordinates; absent coordinates
+        # remain absent so a model cannot fabricate a citation.
+        span = target.get("sourceSpan")
+        if not isinstance(span, dict) or not span:
+            document_id = target.get("documentId")
+            if document_id:
+                document = next((item for item in w.get("documents", []) if item.get("id") == document_id), None)
+                span = _document_source_span(document) if document else {}
+            else:
+                span = _plan_source_span(plan, target.get("line"))
+        if span:
+            target["sourceSpan"] = span
         return {"actionKind": kind, "actionTarget": target}
 
     def task_draft(item: dict[str, Any], title: str, note: str, owner: str, kind: str, target: dict[str, Any]) -> dict[str, Any]:
@@ -1450,6 +1567,15 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
         """
         draft_target = dict(target)
         draft_target.setdefault("type", kind)
+        if not draft_target.get("sourceSpan"):
+            document_id = draft_target.get("documentId")
+            if document_id:
+                document = next((item for item in w.get("documents", []) if item.get("id") == document_id), None)
+                span = _document_source_span(document) if document else {}
+            else:
+                span = _plan_source_span(plan, draft_target.get("line"))
+            if span:
+                draft_target["sourceSpan"] = span
         return {
             "itemId": item.get("id"),
             "sourceId": item.get("sourceId") or item.get("id"),
@@ -1496,13 +1622,13 @@ def _copilot_packet(w: dict, plan: dict, parsed: dict, evaluation: Any) -> dict:
             substance_name = str(substance.get("name", "")).strip()
             if substance_name and substance_name in str(step.get("instruction", "")):
                 relation_id = f"step-{step.get('order', index)}:substance-{substance_name}:uses"
-                relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "kind": "uses", "label": "使用化学品", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "relation": "uses"})})
+            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "kind": "uses", "label": "使用化学品", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "line": step.get("line"), "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"substance-{substance_name}", "relation": "uses"})})
         for equipment in step.get("equipment", []):
             relation_id = f"step-{step.get('order', index)}:equipment-{equipment}:requires"
-            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "kind": "requires", "label": "需要设备", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "relation": "requires"})})
+            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "kind": "requires", "label": "需要设备", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "line": step.get("line"), "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"equipment-{equipment}", "relation": "requires"})})
         for control in step.get("controls", []):
             relation_id = f"step-{step.get('order', index)}:control-{control}:controlled-by"
-            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"control-{control}", "kind": "controlled-by", "label": "控制措施", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"control-{control}", "relation": "controlled-by"})})
+            relations.append({"id": relation_id, "from": f"step-{step.get('order', index)}", "to": f"control-{control}", "kind": "controlled-by", "label": "控制措施", "source": f"SOP L{step.get('line')}" if step.get('line') else "SOP 原文", **action("relationship", {"planId": plan["id"], "line": step.get("line"), "relationId": relation_id, "from": f"step-{step.get('order', index)}", "to": f"control-{control}", "relation": "controlled-by"})})
     # If a plan uses generic wording rather than a known substance, retain a
     # signal from the deterministic rule engine instead of pretending the
     # parser identified a chemical that was not present in the source.
@@ -3372,9 +3498,33 @@ def get_relationship_graph(
 
     nodes: dict[str, dict] = {}
     edges: list[dict] = []
+    documents = w.get("documents", [])
+    documents_by_id = {str(item.get("id")): item for item in documents}
+
+    def graph_plan_id(*ids: str) -> str | None:
+        for value in ids:
+            parts = str(value or "").split(":")
+            if len(parts) >= 2 and parts[0] in {"plan", "step", "chemical", "control", "task", "check", "approval"}:
+                return parts[1]
+        return None
+
+    def graph_source_span(*, plan_id: str | None = None, line: int | None = None, document_id: str | None = None) -> dict[str, Any]:
+        if document_id and document_id in documents_by_id:
+            return _document_source_span(documents_by_id[document_id])
+        if plan_id:
+            source_plan = next((item for item in plans if item.get("id") == plan_id), None)
+            if source_plan is not None:
+                return _plan_source_span(source_plan, line)
+        return {}
+
     def add_node(node_id: str, node_type: str, label: str, **extra: Any) -> None:
         if node_id not in nodes:
-            nodes[node_id] = {"id": node_id, "type": node_type, "label": label, **extra}
+            payload = {"id": node_id, "type": node_type, "label": label, **extra}
+            if not payload.get("sourceSpan"):
+                payload["sourceSpan"] = graph_source_span(
+                    plan_id=payload.get("planId"), line=payload.get("sourceLine"), document_id=payload.get("documentId")
+                )
+            nodes[node_id] = payload
     def canonical_edge_state(value: Any) -> str:
         if value in {"pass", "unknown", "blocked"}:
             return value
@@ -3387,6 +3537,12 @@ def get_relationship_graph(
         status = extra.get("status")
         canonical_state = canonical_edge_state(state if state is not None else status)
         edge = {"id": edge_id, "from": source, "to": target, "relation": relation, "state": canonical_state, **extra}
+        if not edge.get("sourceSpan"):
+            edge["sourceSpan"] = graph_source_span(
+                plan_id=edge.get("planId") or graph_plan_id(source, target),
+                line=edge.get("sourceLine"),
+                document_id=edge.get("documentId") or (target.split(":", 1)[1] if target.startswith("document:") else None),
+            )
         if provenance:
             edge["provenance"] = provenance
         edges.append(edge)
@@ -3411,7 +3567,6 @@ def get_relationship_graph(
         return None
 
     equipment_by_id = {e["id"]: e for e in w.get("equipment", [])}
-    documents = w.get("documents", [])
     tasks = w.get("tasks", [])
     all_checks = check_workspace(w)
     for plan in plans:
@@ -4124,6 +4279,38 @@ def source_artifact_metadata(document_id: str, actor: str = Depends(local_owner)
     if not metadata:
         raise HTTPException(404, '该资料的原始文件记录不存在。')
     return metadata
+
+
+@router.get('/documents/{document_id}/source/span')
+def source_span_metadata(
+    document_id: str,
+    line: int | None = None,
+    page: int | None = None,
+    sourceArtifactVersion: int | None = None,
+    actor: str = Depends(local_owner),
+):
+    """Resolve one recorded document coordinate with version protection.
+
+    A caller may ask for a line or PDF page, but the coordinate must already
+    exist in ``sourceLocations``.  Supplying a stale artifact version is
+    rejected instead of returning a span into another uploaded file.
+    """
+    if line is not None and line < 1:
+        raise HTTPException(422, "line 必须为正整数。")
+    if page is not None and page < 1:
+        raise HTTPException(422, "page 必须为正整数。")
+    if line is not None and page is not None:
+        raise HTTPException(422, "line 与 page 不能同时提供。")
+    document = next((item for item in store().read().get("documents", []) if item.get("id") == document_id), None)
+    if not document:
+        raise HTTPException(404, "资料不存在。")
+    current_version = document.get("sourceArtifactVersion")
+    if sourceArtifactVersion is not None and sourceArtifactVersion != current_version:
+        raise HTTPException(409, "资料来源版本已变化，拒绝跨版本回链。")
+    span = _document_source_span(document, line=line, page=page)
+    if not span:
+        raise HTTPException(422, "资料没有与请求坐标匹配的来源定位。")
+    return {"documentId": document_id, "sourceSpan": span}
 
 
 @router.get('/documents/{document_id}/source/content')

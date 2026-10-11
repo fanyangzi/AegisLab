@@ -1412,6 +1412,74 @@ class ApiTests(unittest.TestCase):
             if kind=='relationship': self.assertTrue(target.get('relationId') or (target.get('from') and target.get('to')),item)
         self.assertEqual(s.store().read(),before)
 
+    def test_analysis_actions_include_exact_revision_source_spans(self):
+        """AI navigation targets must return to the saved plan revision."""
+        initialize(s.store())
+        with patch.dict(os.environ, {'LABSAFETY_LLM_API_KEY': ''}):
+            response = self.client.post('/api/spatial/plans/EXP-001/analysis', json={})
+        self.assertEqual(response.status_code, 200, response.text)
+        plan = next(item for item in s.store().read()['plans'] if item['id'] == 'EXP-001')
+        lines = plan['source'].splitlines()
+        packet = response.json()['copilot']
+        anchored = [
+            item for item in packet['riskSignals'] + packet['conflicts'] + packet['evidenceGaps'] + packet['nextActions'] + packet.get('relations', [])
+            if item.get('actionTarget', {}).get('sourceSpan')
+        ]
+        self.assertTrue(anchored)
+        for item in anchored:
+            span = item['actionTarget']['sourceSpan']
+            self.assertTrue(span.get('locator') or span.get('documentId'), span)
+            if 'line' in span:
+                self.assertEqual(span['locator'].split('#line:')[0], f"plan:EXP-001@revision:{plan['revision']}")
+                self.assertGreaterEqual(span['line'], 1)
+                self.assertLessEqual(span['line'], len(lines))
+                self.assertEqual(span['quotedText'], lines[span['line'] - 1])
+            if span.get('documentId'):
+                self.assertNotIn('sourceArtifactVersion', span)
+
+    def test_relationship_graph_provides_source_spans_for_derived_entities(self):
+        initialize(s.store())
+        response = self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,chemical,control')
+        self.assertEqual(response.status_code, 200, response.text)
+        graph = response.json()
+        plan_node = next(node for node in graph['nodes'] if node['id'] == 'plan:EXP-001')
+        self.assertEqual(plan_node['sourceSpan'], {})
+        chemical = next(node for node in graph['nodes'] if node['type'] == 'chemical' and node['label'] == '甲苯')
+        self.assertEqual(chemical['sourceSpan']['line'], 1)
+        self.assertIn('甲苯', chemical['sourceSpan']['quotedText'])
+        mention = next(edge for edge in graph['edges'] if edge['relation'] == 'mentions' and edge['to'] == chemical['id'])
+        self.assertEqual(mention['sourceSpan']['line'], 1)
+        self.assertEqual(mention['sourceSpan']['quotedText'], chemical['sourceSpan']['quotedText'])
+
+    def test_document_source_span_endpoint_rejects_missing_or_stale_coordinates(self):
+        initialize(s.store())
+        document = copy.deepcopy(fixture()['documents'][0])
+        document.update({
+            'id': 'doc-source-span-api',
+            'sourceType': 'upload',
+            'sourceLocator': 'extracted-text-lines',
+            'sourceLocations': [{'kind': 'line', 'lineStart': 1, 'lineEnd': 1, 'label': 'L1'}],
+            'content': 'A-01 原文检查记录',
+            'contentLength': len('A-01 原文检查记录'),
+            'sourceArtifactId': 'artifact-source-span-api',
+            'sourceArtifactVersion': 3,
+            'sourceFileName': 'inspection.txt',
+            'sourceFileSize': 18,
+            'sourceMediaType': 'text/plain',
+        })
+        saved = self.client.post('/api/spatial/actions', json={
+            'expectedRevision': 1, 'requestId': 'source-span-save-01', 'type': 'save_document', 'payload': {'document': document},
+        })
+        self.assertEqual(saved.status_code, 200, saved.text)
+        resolved = self.client.get('/api/spatial/documents/doc-source-span-api/source/span?line=1&sourceArtifactVersion=3')
+        self.assertEqual(resolved.status_code, 200, resolved.text)
+        self.assertEqual(resolved.json()['sourceSpan']['sourceArtifactVersion'], 3)
+        self.assertEqual(resolved.json()['sourceSpan']['quotedText'], 'A-01 原文检查记录')
+        stale = self.client.get('/api/spatial/documents/doc-source-span-api/source/span?line=1&sourceArtifactVersion=2')
+        self.assertEqual(stale.status_code, 409, stale.text)
+        missing = self.client.get('/api/spatial/documents/doc-source-span-api/source/span?line=2&sourceArtifactVersion=3')
+        self.assertEqual(missing.status_code, 422, missing.text)
+
     def test_plan_lifecycle_api_rechecks_transition(self):
         initialize(s.store())
         response=self.client.post('/api/spatial/actions',json={
