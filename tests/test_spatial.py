@@ -1,6 +1,7 @@
 """Regression tests for the browser workspace (not evidence of field safety)."""
 import copy
 import io
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import tempfile
@@ -715,6 +716,38 @@ class StoreTests(unittest.TestCase):
     def test_request_id_cannot_be_reused_for_different_payload(self):
         initialize(self.store);self.store.mutate(1,'repeat-0002','confirm_steps',{'planId':'EXP-004'},'负责人')
         with self.assertRaises(HTTPException):self.store.mutate(2,'repeat-0002','confirm_steps',{'planId':'EXP-003'},'负责人')
+
+    def test_membership_token_is_hashed_and_idempotent_one_time(self):
+        created = self.store.create_membership(principal='成员甲', role='researcher', request_id='member-create-01')
+        self.assertTrue(created['tokenIssued']);self.assertTrue(created['token']);clear_token=created['token']
+        self.assertNotIn('tokenHash', self.store.memberships()[0]);self.assertNotIn(clear_token, json.dumps(self.store.memberships(), ensure_ascii=False))
+        self.assertEqual(self.store.membership_for_token(clear_token)['principal'], '成员甲')
+        replay = self.store.create_membership(principal='成员甲', role='researcher', request_id='member-create-01')
+        self.assertFalse(replay['tokenIssued']);self.assertIsNone(replay['token'])
+        with self.assertRaises(HTTPException) as error:
+            self.store.create_membership(principal='成员乙', role='researcher', request_id='member-create-01')
+        self.assertEqual(error.exception.status_code, 409)
+
+    def test_membership_create_serializes_concurrent_principal_writes(self):
+        def attempt(index):
+            try:
+                return self.store.create_membership(principal='并发成员', role='researcher', request_id=f'member-race-{index:02d}')
+            except HTTPException as error:
+                return error
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(attempt, range(4)))
+        successes = [result for result in results if isinstance(result, dict)]
+        conflicts = [result for result in results if isinstance(result, HTTPException)]
+        self.assertEqual(len(successes), 1);self.assertEqual(len(conflicts), 3)
+        self.assertEqual(len(self.store.memberships()), 1)
+
+    def test_disabled_membership_stays_disabled_and_token_lookup_is_rejected(self):
+        created = self.store.create_membership(principal='成员乙', role='researcher', request_id='member-create-02')
+        disabled = self.store.disable_membership('成员乙')
+        self.assertFalse(disabled['enabled']);self.assertIsNotNone(disabled['disabledAt'])
+        self.assertFalse(self.store.disable_membership('成员乙')['enabled'])
+        self.assertFalse(self.store.membership_for_token(created['token'])['enabled'])
+
     def test_mutation_outbox_is_atomic_idempotent_and_acknowledgeable(self):
         initialize(self.store)
         workspace = self.store.read()
@@ -869,6 +902,47 @@ class ApiTests(unittest.TestCase):
         initialize(s.store())
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
             response=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'role-deny-0001','type':'approve','payload':{'planId':'EXP-003','expectedPlanRevision':1,'comment':'尝试越权复核'}})
+        self.assertEqual(response.status_code,403)
+
+    def test_membership_routes_resolve_principal_role_and_disable_token(self):
+        created=self.client.post('/api/spatial/members',json={'principal':'成员 API','role':'researcher','requestId':'api-member-create-01'})
+        self.assertEqual(created.status_code,200,created.text)
+        body=created.json();token=body['member']['token']
+        self.assertTrue(body['tokenShownOnce']);self.assertNotIn('tokenHash',body['member'])
+        listed=self.client.get('/api/spatial/members')
+        self.assertEqual(listed.status_code,200,listed.text);self.assertNotIn(token,listed.text);self.assertNotIn('tokenHash',listed.text)
+        replay=self.client.post('/api/spatial/members',json={'principal':'成员 API','role':'researcher','requestId':'api-member-create-01'})
+        self.assertEqual(replay.status_code,200,replay.text);self.assertIsNone(replay.json()['member']['token']);self.assertFalse(replay.json()['tokenShownOnce'])
+        member_headers={'Authorization':f'Bearer {token}'}
+        workspace=self.client.get('/api/spatial',headers=member_headers)
+        self.assertEqual(workspace.status_code,200,workspace.text)
+        lab={'id':'member-lab','name':'成员实验室','description':'身份验证','width':10,'depth':8}
+        mutated=self.client.post('/api/spatial/actions',headers=member_headers,json={'expectedRevision':0,'requestId':'member-mutate-01','type':'save_lab','payload':{'lab':lab,'actor':'伪造主体','role':'administrator'}})
+        self.assertEqual(mutated.status_code,200,mutated.text);self.assertEqual(mutated.json()['workspace']['events'][-1]['actor'],'成员 API')
+        self.assertEqual(self.client.get('/api/spatial/members',headers=member_headers).status_code,403)
+        disabled=self.client.post('/api/spatial/members/%E6%88%90%E5%91%98%20API/disable',json={'requestId':'api-member-disable-01'})
+        self.assertEqual(disabled.status_code,200,disabled.text);self.assertFalse(disabled.json()['member']['enabled'])
+        self.assertEqual(self.client.get('/api/spatial',headers=member_headers).status_code,403)
+        self.assertEqual(self.client.get('/api/spatial',headers={'Authorization':'Bearer invalid-membership-token'}).status_code,401)
+
+    def test_membership_requests_keep_roles_isolated_under_concurrency(self):
+        researcher=self.client.post('/api/spatial/members',json={'principal':'并发研究成员','role':'researcher','requestId':'api-member-race-01'}).json()['member']['token']
+        owner=self.client.post('/api/spatial/members',json={'principal':'并发安全成员','role':'safety_owner','requestId':'api-member-race-02'}).json()['member']['token']
+        initialize(s.store())
+        def approval_role(token):
+            response=self.client.get('/api/spatial/plans/EXP-003/approval',headers={'Authorization':f'Bearer {token}'})
+            return response.status_code, response.json().get('role')
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            results=list(pool.map(approval_role, [researcher, owner] * 8))
+        self.assertTrue(results)
+        self.assertTrue(all(status == 200 for status, _ in results))
+        self.assertEqual({role for _, role in results[0::2]}, {'researcher'})
+        self.assertEqual({role for _, role in results[1::2]}, {'safety_owner'})
+
+    def test_membership_role_cannot_be_spoofed_by_approval_body(self):
+        created=self.client.post('/api/spatial/members',json={'principal':'研究成员','role':'researcher','requestId':'api-member-create-02'})
+        token=created.json()['member']['token'];initialize(s.store())
+        response=self.client.post('/api/spatial/actions',headers={'Authorization':f'Bearer {token}'},json={'expectedRevision':1,'requestId':'member-approval-deny','type':'approval_decision','payload':{'planId':'EXP-003','expectedPlanRevision':1,'disposition':'approved','comment':'body role spoof','_serverRole':'administrator'}})
         self.assertEqual(response.status_code,403)
 
     def test_approval_chain_api_exposes_server_state_and_blocks_role_spoofing(self):

@@ -11,6 +11,7 @@ import hmac
 import json
 import os
 import sqlite3
+import secrets
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -25,6 +26,16 @@ from .parser import parse_sop
 RULE_PACK = "resource-prerequisites/1.0"
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_REGISTRY_PATH = ROOT / "data" / "knowledge_sources.json"
+
+WORKSPACE_ROLES = frozenset({"instructor", "researcher", "safety_owner", "ehs_manager", "administrator"})
+
+# The identity is resolved once by local_owner for each request and stored on
+# Request.state.  Handlers then receive the same server-side role/principal
+# without trusting a role/actor field from the JSON body.
+
+def token_digest(token: str) -> str:
+    """Hash a bearer token before it reaches durable storage or diagnostics."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def job_execution_mode() -> str:
@@ -2004,6 +2015,24 @@ class WorkspaceStore:
                     ON spatial_outbox(status, created_at DESC);
                 CREATE INDEX IF NOT EXISTS idx_spatial_outbox_plan
                     ON spatial_outbox(plan_id, created_at DESC);
+                CREATE TABLE IF NOT EXISTS spatial_memberships(
+                    principal TEXT PRIMARY KEY,
+                    role TEXT NOT NULL,
+                    token_hash TEXT NOT NULL UNIQUE,
+                    enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    disabled_at TEXT,
+                    last_seen_at TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_memberships_token
+                    ON spatial_memberships(token_hash);
+                CREATE TABLE IF NOT EXISTS spatial_membership_operations(
+                    request_id TEXT PRIMARY KEY,
+                    request_hash TEXT NOT NULL,
+                    principal TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
             """)
             # Upgrade local databases created before queued browser jobs kept
             # their replay inputs.  The nullable column is intentionally
@@ -2035,6 +2064,119 @@ class WorkspaceStore:
     def read(self) -> dict:
         with self.connection() as conn:
             return json.loads(conn.execute("SELECT payload FROM spatial_workspace WHERE id=1").fetchone()[0])
+
+    @staticmethod
+    def _membership_record(row: tuple | sqlite3.Row, *, token: str | None = None) -> dict:
+        keys = ("principal", "role", "tokenHash", "enabled", "createdAt", "updatedAt", "disabledAt", "lastSeenAt")
+        record = dict(zip(keys, row))
+        # Token digests are never returned to a browser; callers only receive
+        # the one-time clear token attached explicitly by create_membership.
+        record.pop("tokenHash", None)
+        record["enabled"] = bool(record.get("enabled"))
+        if token is not None:
+            record["token"] = token
+        return record
+
+    def membership_for_token(self, token: str) -> dict | None:
+        """Resolve a bearer token by digest without returning token material."""
+        if not token:
+            return None
+        digest = token_digest(token)
+        with self.connection() as conn:
+            row = conn.execute(
+                "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships WHERE token_hash=?",
+                (digest,),
+            ).fetchone()
+            if row and row[3]:
+                seen_at = now()
+                conn.execute("UPDATE spatial_memberships SET last_seen_at=? WHERE token_hash=? AND enabled=1", (seen_at, digest))
+                row = conn.execute(
+                    "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships WHERE token_hash=?",
+                    (digest,),
+                ).fetchone()
+        return self._membership_record(row) if row else None
+
+    def memberships(self) -> list[dict]:
+        with self.connection() as conn:
+            rows = conn.execute(
+                "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships ORDER BY principal ASC"
+            ).fetchall()
+        return [self._membership_record(row) for row in rows]
+
+    def create_membership(self, *, principal: str, role: str, request_id: str) -> dict:
+        """Create one high-entropy token and return it exactly once.
+
+        The idempotency record stores only a request hash and principal.  A
+        replay therefore cannot recover the original clear token.
+        """
+        principal = str(principal or "").strip()
+        role = str(role or "").strip()
+        request_id = str(request_id or "").strip()
+        if not principal or len(principal) > 180:
+            raise ValueError("成员标识不能为空且不能超过 180 个字符。")
+        if any(ord(ch) < 32 for ch in principal):
+            raise ValueError("成员标识不能包含控制字符。")
+        if role not in WORKSPACE_ROLES:
+            raise ValueError("成员角色配置无效。")
+        if len(request_id) < 8 or len(request_id) > 128:
+            raise ValueError("成员请求标识长度必须在 8 到 128 个字符之间。")
+        request_hash = hashlib.sha256(canonical({"principal": principal, "role": role}).encode()).hexdigest()
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            previous = conn.execute(
+                "SELECT request_hash,principal FROM spatial_membership_operations WHERE request_id=?",
+                (request_id,),
+            ).fetchone()
+            if previous:
+                if previous[0] != request_hash:
+                    raise HTTPException(409, "同一成员请求标识不能用于不同成员或角色。")
+                row = conn.execute(
+                    "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships WHERE principal=?",
+                    (previous[1],),
+                ).fetchone()
+                if row is None:
+                    raise HTTPException(409, "成员请求记录与成员台账不一致。")
+                return {**self._membership_record(row), "token": None, "tokenIssued": False}
+            existing = conn.execute("SELECT 1 FROM spatial_memberships WHERE principal=?", (principal,)).fetchone()
+            if existing:
+                raise HTTPException(409, "成员标识已经存在；请使用新的成员标识。")
+            clear_token = secrets.token_urlsafe(32)
+            timestamp = now()
+            conn.execute(
+                "INSERT INTO spatial_memberships(principal,role,token_hash,enabled,created_at,updated_at) VALUES(?,?,?,?,?,?)",
+                (principal, role, token_digest(clear_token), 1, timestamp, timestamp),
+            )
+            conn.execute(
+                "INSERT INTO spatial_membership_operations(request_id,request_hash,principal,created_at) VALUES(?,?,?,?)",
+                (request_id, request_hash, principal, timestamp),
+            )
+            row = conn.execute(
+                "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships WHERE principal=?",
+                (principal,),
+            ).fetchone()
+        return {**self._membership_record(row, token=clear_token), "tokenIssued": True}
+
+    def disable_membership(self, principal: str) -> dict:
+        principal = str(principal or "").strip()
+        if not principal:
+            raise ValueError("成员标识不能为空。")
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships WHERE principal=?",
+                (principal,),
+            ).fetchone()
+            if row is None:
+                raise HTTPException(404, "成员不存在。")
+            if row[3]:
+                disabled_at = now()
+                conn.execute("UPDATE spatial_memberships SET enabled=0,updated_at=?,disabled_at=COALESCE(disabled_at,?) WHERE principal=?", (disabled_at, disabled_at, principal))
+            row = conn.execute(
+                "SELECT principal,role,token_hash,enabled,created_at,updated_at,disabled_at,last_seen_at FROM spatial_memberships WHERE principal=?",
+                (principal,),
+            ).fetchone()
+        return self._membership_record(row)
+
     def mutate(self, expected: int, request_id: str, action: str, payload: dict, actor: str) -> dict:
         fingerprint = hashlib.sha256(canonical(dict(type=action, payload=payload)).encode()).hexdigest()
         with self.connection() as conn:
@@ -2366,34 +2508,92 @@ def store() -> WorkspaceStore:
     return _store
 
 
-def local_owner(request: Request) -> str:
-    token = os.getenv("AEGIS_WORKSPACE_TOKEN", "")
-    authorization = request.headers.get("authorization", "")
-    if token:
-        if not hmac.compare_digest(authorization, f"Bearer {token}"):
-            raise HTTPException(401, "工作区访问令牌无效。")
-    else:
-        peer = request.client.host if request.client else ""
-        host = request.url.hostname
-        origin = request.headers.get("origin")
-        if peer not in {"127.0.0.1", "::1", "testclient"} or host not in {"localhost", "127.0.0.1", "::1", "testserver"}:
-            raise HTTPException(403, "未配置访问令牌时仅允许本机访问。")
-        if origin and urlparse(origin).hostname not in {"localhost", "127.0.0.1", "::1"}:
-            raise HTTPException(403, "拒绝非本机网页来源。")
-    return os.getenv("AEGIS_WORKSPACE_OWNER", "本机负责人")
-
-
-def local_role() -> str:
-    """Return the server-configured role for this local workspace.
-
-    Browser payloads never choose this value.  The local single-owner default
-    is a safety owner for development; deployments should set an explicit
-    role and a workspace token before exposing the API beyond localhost.
-    """
+def _configured_identity() -> dict[str, str]:
     role = os.getenv("AEGIS_WORKSPACE_ROLE", "safety_owner").strip()
-    if role not in {"instructor", "researcher", "safety_owner", "ehs_manager", "administrator"}:
+    if role not in WORKSPACE_ROLES:
         raise HTTPException(500, "工作区角色配置无效。")
-    return role
+    return {"principal": os.getenv("AEGIS_WORKSPACE_OWNER", "本机负责人"), "role": role, "auth": "local"}
+
+
+def _bearer_token(request: Request) -> str | None:
+    authorization = request.headers.get("authorization", "").strip()
+    if not authorization:
+        return None
+    scheme, separator, value = authorization.partition(" ")
+    if not separator or scheme.lower() != "bearer" or not value.strip():
+        raise HTTPException(401, "工作区访问令牌格式无效。")
+    return value.strip()
+
+
+def _remember_identity(request: Request, identity: dict[str, str]) -> str:
+    # Keep the public dependency return value as the principal for compatibility
+    # with existing handlers, while retaining the server-resolved role beside
+    # it.  The JSON body cannot overwrite either value.
+    request.state.workspace_identity = identity
+    return identity["principal"]
+
+
+def local_owner(request: Request) -> str:
+    """Authenticate the browser request and return its server-side principal.
+
+    ``AEGIS_WORKSPACE_TOKEN`` remains a compatible static owner credential.
+    Additional members are resolved from the hashed token table; raw bearer
+    tokens never enter the database, logs, mutation payloads or response
+    bodies except for the one-time create response.  With no configured
+    credential, the existing localhost-only owner mode remains available.
+    """
+    configured_token = os.getenv("AEGIS_WORKSPACE_TOKEN", "")
+    token = _bearer_token(request)
+    if token:
+        if configured_token and hmac.compare_digest(token, configured_token):
+            return _remember_identity(request, _configured_identity() | {"auth": "env-token"})
+        member = store().membership_for_token(token)
+        if member:
+            if not member.get("enabled"):
+                raise HTTPException(403, "该工作区成员已被禁用。")
+            identity = {"principal": str(member["principal"]), "role": str(member["role"]), "auth": "membership"}
+            if identity["role"] not in WORKSPACE_ROLES:
+                raise HTTPException(500, "成员台账中的角色配置无效。")
+            return _remember_identity(request, identity)
+        raise HTTPException(401, "工作区访问令牌无效。")
+    if configured_token:
+        raise HTTPException(401, "工作区访问令牌无效。")
+
+    # Preserve local development behavior only when no credential is configured.
+    peer = request.client.host if request.client else ""
+    host = request.url.hostname
+    origin = request.headers.get("origin")
+    if peer not in {"127.0.0.1", "::1", "testclient"} or host not in {"localhost", "127.0.0.1", "::1", "testserver"}:
+        raise HTTPException(403, "未配置访问令牌时仅允许本机访问。")
+    if origin and urlparse(origin).hostname not in {"localhost", "127.0.0.1", "::1"}:
+        raise HTTPException(403, "拒绝非本机网页来源。")
+    return _remember_identity(request, _configured_identity())
+
+
+def local_role(request: Request | None = None) -> str:
+    """Return the role resolved by local_owner, never a body-provided role."""
+    if request is not None:
+        identity = getattr(request.state, "workspace_identity", None)
+        if not identity:
+            raise HTTPException(401, "请求身份尚未完成认证。")
+        return str(identity["role"])
+    # Direct Python callers have no Request context; preserve the configured
+    # local-owner fallback for domain tests and worker code.
+    return _configured_identity()["role"]
+
+
+def local_principal(request: Request | None = None) -> str:
+    if request is not None:
+        identity = getattr(request.state, "workspace_identity", None)
+        if not identity:
+            raise HTTPException(401, "请求身份尚未完成认证。")
+        return str(identity["principal"])
+    return _configured_identity()["principal"]
+
+
+def require_workspace_roles(*roles: str, request: Request | None = None) -> None:
+    if local_role(request) not in set(roles):
+        raise HTTPException(403, "当前工作区身份没有执行该成员管理操作的权限。")
 
 class Mutation(StrictModel):
     expectedRevision: int = Field(ge=0)
@@ -2406,6 +2606,16 @@ class RestoreRequest(StrictModel):
     requestId: str = Field(min_length=8, max_length=128)
     confirm: Literal["RESTORE"]
     workspace: dict
+
+
+class MemberCreateRequest(StrictModel):
+    principal: str = Field(min_length=1, max_length=180)
+    role: Literal["instructor", "researcher", "safety_owner", "ehs_manager", "administrator"]
+    requestId: str = Field(default_factory=lambda: uid("member"), min_length=8, max_length=128)
+
+
+class MemberDisableRequest(StrictModel):
+    requestId: str = Field(default_factory=lambda: uid("member-disable"), min_length=8, max_length=128)
 
 
 class ExpiryRecheckRequest(StrictModel):
@@ -2437,8 +2647,51 @@ def get_source_registry(actor: str = Depends(local_owner)):
     sources = read_source_registry()
     return {"sources": sources, "scope": "公开类别与管理机制参考，不是机构资产台账"}
 
+
+@router.get("/members")
+def list_members(request: Request, actor: str = Depends(local_owner)):
+    """List workspace members without exposing token digests or clear tokens."""
+    require_workspace_roles("safety_owner", "administrator", request=request)
+    return {
+        "members": store().memberships(),
+        "scope": "工作区成员台账；token 只在新增成功响应中显示一次。",
+    }
+
+
+@router.post("/members")
+def create_member(body: MemberCreateRequest, request: Request, actor: str = Depends(local_owner)):
+    """Create a member credential under an owner/admin identity.
+
+    The clear bearer token is intentionally present only in this response;
+    retries return the public member record with ``token: null``.
+    """
+    require_workspace_roles("safety_owner", "administrator", request=request)
+    try:
+        member = store().create_membership(principal=body.principal, role=body.role, request_id=body.requestId)
+    except (ValueError, TypeError) as error:
+        raise HTTPException(422, str(error)) from error
+    return {
+        "member": member,
+        "tokenShownOnce": bool(member.get("tokenIssued")),
+        "scope": "token 仅本次响应可见；请由负责人安全保存。",
+    }
+
+
+@router.post("/members/{principal}/disable")
+def disable_member(principal: str, request: Request, body: MemberDisableRequest | None = None, actor: str = Depends(local_owner)):
+    """Disable a member token; repeat calls are idempotent."""
+    require_workspace_roles("safety_owner", "administrator", request=request)
+    if principal == local_principal(request):
+        raise HTTPException(409, "不能禁用当前登录成员；请由另一位管理员执行。")
+    try:
+        member = store().disable_membership(principal)
+    except (ValueError, TypeError) as error:
+        raise HTTPException(422, str(error)) from error
+    return {"member": member, "requestId": body.requestId if body else None, "scope": "禁用仅撤销该 token 的后续访问，不删除历史审计记录。"}
+
+
 @router.get("/plans/{plan_id}/approval")
-def get_plan_approval(plan_id: str, actor: str = Depends(local_owner)):
+def get_plan_approval(plan_id: str, request: Request, actor: str = Depends(local_owner)):
     """Return the server-derived approval chain for one current plan."""
     w = store().read()
     plan = next((item for item in w.get("plans", []) if item.get("id") == plan_id), None)
@@ -2446,7 +2699,7 @@ def get_plan_approval(plan_id: str, actor: str = Depends(local_owner)):
         raise HTTPException(404, "计划不存在。")
     checks = [item for item in check_workspace(w) if item.get("planId") == plan_id]
     state = approval_state(w, plan, checks)
-    return {"planId": plan_id, "planRevision": plan.get("revision"), "role": local_role(), "status": plan_status(w, plan, checks), **state}
+    return {"planId": plan_id, "planRevision": plan.get("revision"), "role": local_role(request), "status": plan_status(w, plan, checks), **state}
 
 @router.get("/graph")
 def get_relationship_graph(
@@ -2713,12 +2966,12 @@ def get_relationship_graph(
     return {"revision": w.get("revision", 0), "planId": planId, "labId": labId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "relations": sorted(allowed_relations), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops, "labId": labId}}
 
 @router.post("/actions")
-def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
-    role = local_role()
+def mutate_workspace(body: Mutation, request: Request, actor: str = Depends(local_owner)):
+    role = local_role(request)
     if body.type in {"approve", "approval_decision"} and role not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有记录正式复核的权限。")
     handoff_update = body.type == "update_task" and any(key in body.payload for key in ("newOwner", "expectedOwner", "handoffNote"))
-    if (body.type == "assign_task" or handoff_update) and local_role() not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
+    if (body.type == "assign_task" or handoff_update) and local_role(request) not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有转交协作任务的权限。")
     if body.type == "review_branch_patch" and role not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有复核候选字段的权限。")
@@ -2737,14 +2990,14 @@ def export_workspace(actor: str = Depends(local_owner)):
     return {"exportedAt": now(), "scope": "资源与证据审查记录，不是安全证书", "sha256": hashlib.sha256(canonical(w).encode()).hexdigest(), **envelope(w)}
 
 @router.post("/restore")
-def restore_workspace(body: RestoreRequest, actor: str = Depends(local_owner)):
+def restore_workspace(body: RestoreRequest, request: Request, actor: str = Depends(local_owner)):
     """Restore a validated browser export with a durable rollback point.
 
     This endpoint is intentionally role-gated and never trusts the imported
     revision.  The current server payload is snapshotted before replacement;
     a stale browser receives 409 instead of overwriting newer work.
     """
-    if local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
+    if local_role(request) not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有恢复服务端存档的权限。")
     try:
         restored = store().restore(expected_revision=body.expectedRevision, request_id=body.requestId, candidate=body.workspace, actor=actor)
@@ -2952,7 +3205,7 @@ def recheck_expiry(body: ExpiryRecheckRequest, background_tasks: BackgroundTasks
         raise HTTPException(500, f"到期重检失败：{type(error).__name__}: {str(error)[:180]}") from error
 
 @router.post('/jobs/{job_id}/cancel')
-def cancel_job(job_id: str, actor: str = Depends(local_owner)):
+def cancel_job(job_id: str, request: Request, actor: str = Depends(local_owner)):
     """Request cancellation for a durable local job.
 
     Analysis currently runs in the request process, so cancellation can stop
@@ -2960,7 +3213,7 @@ def cancel_job(job_id: str, actor: str = Depends(local_owner)):
     that is already executing.  The state transition is persisted and a
     synchronous handler must still check it before publishing a result.
     """
-    if local_role() not in {"safety_owner", "ehs_manager", "administrator"}:
+    if local_role(request) not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有取消分析任务的权限。")
     return store().cancel_job(job_id, reason=f"{actor} 取消任务")
 

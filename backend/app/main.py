@@ -233,8 +233,9 @@ def add_evidence(review_id: str, evidence: Evidence, actor: str = "requester") -
 
 
 @app.post("/reviews/{review_id}/decision", response_model=Review, tags=["workflow"])
-def decide_review(review_id: str, request: DecisionRequest) -> Review:
+def decide_review(review_id: str, request: DecisionRequest, http_request: Request) -> Review:
     try:
+        request.actor = http_request.state.workspace_identity["principal"]
         return service.decide_review(review_id, request)
     except KeyError as error:
         raise _not_found(error)
@@ -243,12 +244,13 @@ def decide_review(review_id: str, request: DecisionRequest) -> Review:
 
 
 @app.post("/reviews/{review_id}/gates/{gate_id}", response_model=Review, tags=["approval"])
-def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest) -> Review:
+def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest, http_request: Request) -> Review:
     try:
         # The body may contain a display actor name, but the privilege comes
         # from server-side workspace configuration rather than a client role
         # selector.
-        request.actor_role = local_role()
+        request.actor_role = local_role(http_request)
+        request.actor = http_request.state.workspace_identity["principal"]
         return service.decide_gate(review_id, gate_id, request)
     except KeyError as error:
         raise _not_found(error)
@@ -257,9 +259,10 @@ def decide_gate(review_id: str, gate_id: str, request: GateDecisionRequest) -> R
 
 
 @app.post("/reviews/{review_id}/override", response_model=Review, tags=["approval"])
-def override_review(review_id: str, request: OverrideRequest) -> Review:
+def override_review(review_id: str, request: OverrideRequest, http_request: Request) -> Review:
     try:
-        request.actor_role = local_role()
+        request.actor_role = local_role(http_request)
+        request.actor = http_request.state.workspace_identity["principal"]
         return service.override_review(review_id, request)
     except KeyError as error:
         raise _not_found(error)
