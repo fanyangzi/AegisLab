@@ -12,8 +12,20 @@ export async function request<T>(path:string, body?:unknown):Promise<T> {
  // sequential Responses API calls. Keep the browser request alive beyond the
  // server's per-call timeout so a valid remote result is not shown as an
  // aborted request while the server is still completing the run.
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path.endsWith("/analysis")||path.includes("/ai-preview")?120000:10000)
- try {const response=await fetch(`${API_BASE}${path}`,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal});const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:`请求失败（${response.status}），请检查输入或连接。`);return data} finally {clearTimeout(timer)}
+ const retryInitialSnapshot=body===undefined&&path==='/api/spatial'
+ for(let attempt=0;;attempt++){
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),path.endsWith("/analysis")||path.includes("/ai-preview")?120000:10000)
+  try {
+   const response=await fetch(`${API_BASE}${path}`,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:body===undefined?undefined:JSON.stringify(body),signal:controller.signal})
+   const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:`请求失败（${response.status}），请检查输入或连接。`);return data
+  } catch(error) {
+   // A freshly restarted local API can briefly reset the first browser
+   // connection. Retry only that initial read once; POSTs and HTTP errors must
+   // remain visible to the caller instead of being silently replayed.
+   if(retryInitialSnapshot&&attempt===0&&error instanceof TypeError){await new Promise(resolve=>setTimeout(resolve,250));continue}
+   throw error
+  } finally {clearTimeout(timer)}
+ }
 }
 const localSnapshot=(workspace:Workspace):Snapshot=>{const checks=checkWorkspace(workspace);return {workspace,checks,statuses:Object.fromEntries(workspace.plans.map(p=>[p.id,planStatus(workspace,p,checks)])),mode:'local'}}
 function readLocal(): {value:Workspace; error:string} {try{const raw=localStorage.getItem(KEY);if(!raw)return {value:emptyWorkspace(),error:''};const value=JSON.parse(raw);assertWorkspace(value);return {value,error:''}}catch{return {value:emptyWorkspace(),error:'浏览器存档无法读取；原存档未覆盖。请在设置中导出原始存档后处理。'}}}
