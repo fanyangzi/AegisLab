@@ -650,6 +650,33 @@ class StoreTests(unittest.TestCase):
     def test_request_id_cannot_be_reused_for_different_payload(self):
         initialize(self.store);self.store.mutate(1,'repeat-0002','confirm_steps',{'planId':'EXP-004'},'负责人')
         with self.assertRaises(HTTPException):self.store.mutate(2,'repeat-0002','confirm_steps',{'planId':'EXP-003'},'负责人')
+    def test_mutation_outbox_is_atomic_idempotent_and_acknowledgeable(self):
+        initialize(self.store)
+        workspace = self.store.read()
+        task = copy.deepcopy(workspace['tasks'][0])
+        task['title'] = '待核验的通知任务'
+        saved = self.store.mutate(1, 'notify-task-0001', 'save_task', {'task': task}, '测试负责人')
+        pending = self.store.notifications(status='pending', plan_id=task['planId'])
+        self.assertEqual(len(pending), 1)
+        event = pending[0]
+        self.assertEqual(event['eventType'], 'task.created')
+        self.assertIn(task['owner'], event['audience'])
+        self.assertEqual(event['workspaceRevision'], saved['revision'])
+        # Retrying the same mutation cannot create a second inbox item.
+        retry = self.store.mutate(1, 'notify-task-0001', 'save_task', {'task': task}, '测试负责人')
+        self.assertEqual(retry['revision'], saved['revision'])
+        self.assertEqual(len(self.store.notifications(status='all', plan_id=task['planId'])), 1)
+        acknowledged = self.store.acknowledge_notification(event['eventId'], '本机负责人')
+        self.assertEqual(acknowledged['status'], 'acknowledged')
+        self.assertEqual(acknowledged['acknowledgedBy'], '本机负责人')
+        self.assertEqual(self.store.acknowledge_notification(event['eventId'], '另一位负责人')['status'], 'acknowledged')
+        self.assertEqual(self.store.notifications(status='pending', plan_id=task['planId']), [])
+
+    def test_failed_mutation_does_not_emit_outbox_event(self):
+        initialize(self.store)
+        with self.assertRaises(ValueError):
+            self.store.mutate(1, 'notify-failed-01', 'update_task', {'id': 'missing-task', 'status': 'done'}, '测试负责人')
+        self.assertEqual(self.store.notifications(status='all'), [])
     def test_failed_transaction_does_not_modify_workspace(self):
         initialize(self.store);before=self.store.read()
         with self.assertRaises(ValueError):self.store.mutate(1,'failed-001','approve',{'planId':'EXP-001','expectedPlanRevision':1,'comment':'bad'},'负责人')
@@ -1300,6 +1327,31 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
             denied=self.client.post('/api/spatial/restore',json={'expectedRevision':2,'requestId':'api-restore-03','confirm':'RESTORE','workspace':candidate})
         self.assertEqual(denied.status_code,403)
+
+    def test_notification_api_lists_and_acknowledges_business_change(self):
+        initialize(s.store())
+        workspace = s.store().read()
+        task = copy.deepcopy(workspace['tasks'][0])
+        task['title'] = 'API 通知回链任务'
+        response = self.client.post('/api/spatial/actions', json={
+            'expectedRevision': 1,
+            'requestId': 'api-notify-task-01',
+            'type': 'save_task',
+            'payload': {'task': task},
+        })
+        self.assertEqual(response.status_code, 200, response.text)
+        listed = self.client.get('/api/spatial/notifications?status=pending&planId=EXP-001')
+        self.assertEqual(listed.status_code, 200, listed.text)
+        payload = listed.json()
+        self.assertEqual(payload['scope'], '本地 outbox 收件箱；未发送外部通知，需要负责人打开对象后复核。')
+        self.assertEqual(len(payload['notifications']), 1)
+        event_id = payload['notifications'][0]['eventId']
+        acknowledged = self.client.post('/api/spatial/notifications/' + event_id + '/ack')
+        self.assertEqual(acknowledged.status_code, 200, acknowledged.text)
+        self.assertEqual(acknowledged.json()['notification']['status'], 'acknowledged')
+        self.assertEqual(self.client.get('/api/spatial/notifications?status=pending&planId=EXP-001').json()['notifications'], [])
+        self.assertEqual(self.client.get('/api/spatial/notifications?status=invalid').status_code, 422)
+        self.assertEqual(self.client.post('/api/spatial/notifications/notify-missing/ack').status_code, 404)
     def test_review_endpoint_rejects_unanchored_model_reordering(self):
         with patch.object(self.service.llm, 'extract_sop', return_value={'steps':[{'order':2,'instruction':'第二步：完成转移操作'},{'order':1,'instruction':'第一步：准备样品'}]}):
             response=self.client.post('/reviews/from-sop',json={'title':'来源绑定测试','room':'测试室','sop_text':'第一步：准备样品\n第二步：完成转移操作'})

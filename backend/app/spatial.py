@@ -79,6 +79,85 @@ def overlap(a: dict, b: dict) -> bool:
 def canonical(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
+
+# The browser workspace has one configured local owner, but business changes
+# still need a durable hand-off point.  These entries are a local outbox, not
+# an assertion that email, chat, or institutional notifications were sent.
+# Keeping the mapping server-side means a browser cannot manufacture a
+# notification by posting an arbitrary event type.
+MUTATION_NOTIFICATION_TYPES: dict[str, tuple[str, str]] = {
+    "approval_decision": ("approval.updated", "安全负责人"),
+    "approve": ("approval.updated", "安全负责人"),
+    "save_task": ("task.created", "任务负责人"),
+    "assign_task": ("task.assigned", "任务负责人"),
+    "update_task": ("task.updated", "任务负责人"),
+    "save_document": ("evidence.submitted", "安全负责人"),
+    "verify_document": ("evidence.verified", "安全负责人"),
+    "transition_plan": ("plan.lifecycle", "计划负责人"),
+    "save_branch": ("plan.branch_saved", "计划负责人"),
+    "apply_branch": ("plan.branch_applied", "安全负责人"),
+}
+
+
+def mutation_notification(result: dict, action: str, payload: dict, actor: str, request_id: str) -> dict | None:
+    """Build one auditable outbox record for a meaningful workspace change.
+
+    The record deliberately contains the resulting revision and event summary,
+    rather than a mutable copy of the whole workspace.  Consumers must fetch
+    the current object before acting, and the outbox remains useful after a
+    browser reconnect without pretending to deliver an external message.
+    """
+    descriptor = MUTATION_NOTIFICATION_TYPES.get(action)
+    if not descriptor:
+        return None
+    event_type, audience_label = descriptor
+    event = (result.get("events") or [{}])[-1]
+    object_id = str(event.get("objectId") or payload.get("id") or payload.get("planId") or "workspace")
+    plan_id = payload.get("planId")
+    if not plan_id and action in {"save_task", "save_branch"}:
+        nested = payload.get("task") or payload.get("branch") or {}
+        plan_id = nested.get("planId")
+    if not plan_id and action == "apply_branch":
+        branch = next((item for item in result.get("branches", []) if item.get("id") == payload.get("id")), None)
+        plan_id = branch.get("planId") if branch else None
+    task = None
+    task_id = object_id if action in {"save_task", "assign_task", "update_task"} else payload.get("id")
+    if task_id and action in {"save_task", "assign_task", "update_task"}:
+        task = next((item for item in result.get("tasks", []) if item.get("id") == task_id), None)
+        plan_id = plan_id or (task or {}).get("planId")
+    audience = audience_label
+    if task and task.get("owner"):
+        audience = f"任务负责人:{task['owner']}"
+    title = {
+        "approval.updated": "审批链需要关注",
+        "task.created": "新增协作任务",
+        "task.assigned": "协作任务已转交",
+        "task.updated": "协作任务状态已更新",
+        "evidence.submitted": "资料等待独立核验",
+        "evidence.verified": "资料核验状态已更新",
+        "plan.lifecycle": "计划生命周期已更新",
+        "plan.branch_saved": "候选方案等待复核",
+        "plan.branch_applied": "候选方案已应用并触发重检",
+    }.get(event_type, "工作区状态已更新")
+    return {
+        "eventId": uid("notify"),
+        "idempotencyKey": f"mutation:{request_id}",
+        "eventType": event_type,
+        "aggregateType": "task" if task else "plan" if plan_id else "workspace",
+        "aggregateId": object_id,
+        "planId": plan_id,
+        "audience": audience,
+        "title": title,
+        "summary": str(event.get("summary") or "工作区状态已更新")[:500],
+        "actor": actor,
+        "workspaceRevision": int(result.get("revision", 0)),
+        "sourceEventId": event.get("id"),
+        "status": "pending",
+        "createdAt": str(event.get("at") or now()),
+        "acknowledgedAt": None,
+        "acknowledgedBy": None,
+    }
+
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -1735,6 +1814,28 @@ class WorkspaceStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_spatial_workspace_snapshots_saved
                     ON spatial_workspace_snapshots(saved_at DESC);
+                CREATE TABLE IF NOT EXISTS spatial_outbox(
+                    event_id TEXT PRIMARY KEY,
+                    idempotency_key TEXT NOT NULL UNIQUE,
+                    event_type TEXT NOT NULL,
+                    aggregate_type TEXT NOT NULL,
+                    aggregate_id TEXT NOT NULL,
+                    plan_id TEXT,
+                    audience TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    summary TEXT NOT NULL,
+                    actor TEXT NOT NULL,
+                    workspace_revision INTEGER NOT NULL,
+                    source_event_id TEXT,
+                    status TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    acknowledged_at TEXT,
+                    acknowledged_by TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_spatial_outbox_status
+                    ON spatial_outbox(status, created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_spatial_outbox_plan
+                    ON spatial_outbox(plan_id, created_at DESC);
             """)
             # Upgrade local databases created before queued browser jobs kept
             # their replay inputs.  The nullable column is intentionally
@@ -1781,6 +1882,22 @@ class WorkspaceStore:
             result = apply_operation(json.loads(row[1]), action, payload, actor)
             conn.execute("UPDATE spatial_workspace SET revision=?,payload=? WHERE id=1", (result["revision"], json.dumps(result, ensure_ascii=False)))
             conn.execute("INSERT INTO spatial_operations VALUES(?,?,?)", (request_id, fingerprint, result["revision"]))
+            notification = mutation_notification(result, action, payload, actor, request_id)
+            if notification:
+                conn.execute(
+                    """INSERT INTO spatial_outbox(
+                       event_id,idempotency_key,event_type,aggregate_type,aggregate_id,
+                       plan_id,audience,title,summary,actor,workspace_revision,
+                       source_event_id,status,created_at,acknowledged_at,acknowledged_by
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (
+                        notification["eventId"], notification["idempotencyKey"], notification["eventType"],
+                        notification["aggregateType"], notification["aggregateId"], notification.get("planId"),
+                        notification["audience"], notification["title"], notification["summary"], notification["actor"],
+                        notification["workspaceRevision"], notification.get("sourceEventId"), notification["status"],
+                        notification["createdAt"], notification.get("acknowledgedAt"), notification.get("acknowledgedBy"),
+                    ),
+                )
             return result
     def save_analysis_run(self, payload: dict) -> None:
         trace = payload.get("trace") or {}
@@ -2009,6 +2126,67 @@ class WorkspaceStore:
         if not row:
             return None
         return dict(snapshotId=row[0], revision=row[1], savedAt=row[2], actor=row[3], reason=row[4], workspace=json.loads(row[5]))
+
+    @staticmethod
+    def _notification_row(row: sqlite3.Row | tuple) -> dict:
+        keys = (
+            "eventId", "idempotencyKey", "eventType", "aggregateType", "aggregateId", "planId",
+            "audience", "title", "summary", "actor", "workspaceRevision", "sourceEventId",
+            "status", "createdAt", "acknowledgedAt", "acknowledgedBy",
+        )
+        return dict(zip(keys, row))
+
+    def notifications(self, *, status: str = "pending", audience: str | None = None, plan_id: str | None = None, limit: int = 50) -> list[dict]:
+        """List durable local notifications without claiming external delivery.
+
+        ``status=all`` is read-only history.  Audience matching is exact or
+        prefix-based for task-owner entries (``任务负责人:...``), so a browser
+        can request the current role inbox without exposing another audience's
+        events by accident.
+        """
+        if status not in {"pending", "acknowledged", "all"}:
+            raise ValueError("通知状态只能是 pending、acknowledged 或 all。")
+        clauses: list[str] = []
+        params: list[Any] = []
+        if status != "all":
+            clauses.append("status=?")
+            params.append(status)
+        if audience:
+            clauses.append("(audience=? OR audience LIKE ?)")
+            params.extend([audience, f"{audience}:%"])
+        if plan_id:
+            clauses.append("plan_id=?")
+            params.append(plan_id)
+        where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        params.append(max(1, min(limit, 100)))
+        with self.connection() as conn:
+            rows = conn.execute(
+                f"SELECT event_id,idempotency_key,event_type,aggregate_type,aggregate_id,plan_id,audience,title,summary,actor,workspace_revision,source_event_id,status,created_at,acknowledged_at,acknowledged_by FROM spatial_outbox{where} ORDER BY created_at DESC,event_id DESC LIMIT ?",
+                tuple(params),
+            ).fetchall()
+        return [self._notification_row(row) for row in rows]
+
+    def acknowledge_notification(self, event_id: str, actor: str) -> dict:
+        """Acknowledge one local inbox item; repeated acknowledgement is safe."""
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT event_id,idempotency_key,event_type,aggregate_type,aggregate_id,plan_id,audience,title,summary,actor,workspace_revision,source_event_id,status,created_at,acknowledged_at,acknowledged_by FROM spatial_outbox WHERE event_id=?",
+                (event_id,),
+            ).fetchone()
+            if not row:
+                raise HTTPException(404, "通知不存在。")
+            if row[12] == "pending":
+                acknowledged_at = now()
+                conn.execute(
+                    "UPDATE spatial_outbox SET status='acknowledged',acknowledged_at=?,acknowledged_by=? WHERE event_id=? AND status='pending'",
+                    (acknowledged_at, actor, event_id),
+                )
+            row = conn.execute(
+                "SELECT event_id,idempotency_key,event_type,aggregate_type,aggregate_id,plan_id,audience,title,summary,actor,workspace_revision,source_event_id,status,created_at,acknowledged_at,acknowledged_by FROM spatial_outbox WHERE event_id=?",
+                (event_id,),
+            ).fetchone()
+        return self._notification_row(row)
 
 
 _store: WorkspaceStore | None = None
@@ -2417,6 +2595,42 @@ def get_workspace_snapshot(snapshot_id: str, actor: str = Depends(local_owner)):
     if not snapshot:
         raise HTTPException(404, "恢复前快照不存在。")
     return snapshot
+
+
+@router.get("/notifications")
+def list_notifications(
+    status: Literal["pending", "acknowledged", "all"] = "pending",
+    audience: str | None = None,
+    planId: str | None = None,
+    limit: int = 50,
+    actor: str = Depends(local_owner),
+):
+    """Read the durable local inbox generated by workspace mutations.
+
+    This is deliberately scoped to the browser workspace.  It exposes pending
+    hand-off records for the UI and does not claim email, chat, or push
+    delivery.  Acknowledgement is an auditable local state transition.
+    """
+    try:
+        notifications = store().notifications(status=status, audience=audience, plan_id=planId, limit=limit)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+    return {
+        "status": status,
+        "audience": audience,
+        "planId": planId,
+        "notifications": notifications,
+        "scope": "本地 outbox 收件箱；未发送外部通知，需要负责人打开对象后复核。",
+    }
+
+
+@router.post("/notifications/{event_id}/ack")
+def acknowledge_notification(event_id: str, actor: str = Depends(local_owner)):
+    """Acknowledge a notification without changing the underlying business object."""
+    return {
+        "notification": store().acknowledge_notification(event_id, actor),
+        "scope": "仅确认本机收件箱已读，不代表审批、证据核验或实验放行。",
+    }
 
 
 @router.post('/import-text')
