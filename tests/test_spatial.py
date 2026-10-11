@@ -791,6 +791,33 @@ class StoreTests(unittest.TestCase):
         initialize(self.store);candidate=self.store.read();candidate['name']='过期恢复'
         with self.assertRaises(HTTPException) as result:self.store.restore(expected_revision=0,request_id='restore-0002',candidate=candidate,actor='测试负责人')
         self.assertEqual(result.exception.status_code,409);self.assertEqual(self.store.snapshots(),[])
+    def test_restore_migrates_legacy_workspace_and_records_migration(self):
+        initialize(self.store)
+        legacy = fixture()
+        # Simulate an early browser archive: no schema marker, no optional
+        # collections, snake_case provenance fields, and no lifecycle flag.
+        legacy.pop('schemaVersion')
+        legacy.pop('tasks'); legacy.pop('decisions'); legacy.pop('events'); legacy.pop('branches')
+        legacy['plans'][0].pop('lifecycle', None)
+        document = legacy['documents'][0]
+        document['source_type'] = 'upload'; document.pop('sourceType', None)
+        document['source_locator'] = 'legacy/inspection.txt'; document.pop('sourceLocator', None)
+        normalized, report = s.migrate_workspace_import(legacy)
+        self.assertEqual(normalized['schemaVersion'], 1)
+        self.assertTrue(report['migrated'])
+        self.assertEqual(report['fromVersion'], 0)
+        self.assertIn('tasks', normalized); self.assertIn('branches', normalized)
+        self.assertEqual(normalized['documents'][0]['sourceType'], 'upload')
+        restored = self.store.restore(expected_revision=1, request_id='restore-legacy-0001', candidate=legacy, actor='测试负责人')
+        self.assertEqual(restored['revision'], 2)
+        self.assertEqual(restored['documents'][0]['sourceLocator'], 'legacy/inspection.txt')
+        self.assertTrue(any('存档迁移 v0→v1' in event['summary'] for event in restored['events']))
+
+    def test_restore_rejects_future_workspace_schema_without_snapshot(self):
+        initialize(self.store); candidate = fixture(); candidate['schemaVersion'] = 2
+        with self.assertRaisesRegex(ValueError, '高于服务端支持'):
+            self.store.restore(expected_revision=1, request_id='restore-future-0001', candidate=candidate, actor='测试负责人')
+        self.assertEqual(self.store.snapshots(), [])
     def test_job_cancel_is_persisted_and_terminal_states_are_immutable(self):
         queued=self.store.begin_job(job_id='job-cancel-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-cancel-01')
         self.assertEqual(queued['status'],'queued')
@@ -1387,6 +1414,35 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.get('/api/spatial/graph?dateFrom=bad').status_code,422)
         self.assertEqual(self.client.get('/api/spatial/graph?hops=3').status_code,422)
 
+    def test_relationship_graph_returns_deterministic_shortest_path(self):
+        initialize(s.store())
+        response=self.client.get('/api/spatial/graph?planId=EXP-001&pathFrom=plan:EXP-001&pathTo=equipment:C-01&relations=reserves')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json()
+        self.assertEqual(graph['filters']['pathFrom'],'plan:EXP-001')
+        self.assertEqual(graph['filters']['pathTo'],'equipment:C-01')
+        self.assertTrue(graph['path']['requested'])
+        self.assertTrue(graph['path']['found'])
+        self.assertEqual(graph['path']['nodeIds'],['plan:EXP-001','equipment:C-01'])
+        self.assertEqual(graph['path']['hops'],1)
+        self.assertEqual(len(graph['path']['edgeIds']),1)
+        self.assertEqual([edge['relation'] for edge in graph['edges']],['reserves'])
+        self.assertEqual({node['id'] for node in graph['nodes']},set(graph['path']['nodeIds']))
+
+    def test_relationship_graph_path_reports_disconnected_scope_and_rejects_bad_endpoints(self):
+        initialize(s.store())
+        disconnected=self.client.get('/api/spatial/graph?planId=EXP-001&pathFrom=plan:EXP-001&pathTo=equipment:C-01&relations=mentions')
+        self.assertEqual(disconnected.status_code,200,disconnected.text)
+        graph=disconnected.json()
+        self.assertFalse(graph['path']['found'])
+        self.assertEqual(graph['path']['nodeIds'],[])
+        self.assertEqual({node['id'] for node in graph['nodes']},{'plan:EXP-001','equipment:C-01'})
+        self.assertEqual(graph['edges'],[])
+        self.assertEqual(self.client.get('/api/spatial/graph?planId=EXP-001&pathFrom=plan:EXP-001').status_code,422)
+        self.assertEqual(self.client.get('/api/spatial/graph?planId=EXP-001&pathFrom=plan:EXP-001&pathTo=missing:object').status_code,404)
+        self.assertEqual(self.client.get('/api/spatial/graph?planId=EXP-001&nodeId=plan:EXP-001&pathFrom=plan:EXP-001&pathTo=equipment:C-01').status_code,422)
+        self.assertEqual(self.client.get('/api/spatial/graph?planId=EXP-001&pathFrom=plan:EXP-001&pathTo=equipment:C-01&hops=1').status_code,422)
+
     def test_relationship_graph_scopes_plan_queries_to_laboratory(self):
         initialize(s.store())
         same_lab=self.client.get('/api/spatial/graph?labId=lab-201&planId=EXP-001')
@@ -1479,6 +1535,25 @@ class ApiTests(unittest.TestCase):
         with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
             denied=self.client.post('/api/spatial/restore',json={'expectedRevision':2,'requestId':'api-restore-03','confirm':'RESTORE','workspace':candidate})
         self.assertEqual(denied.status_code,403)
+
+    def test_restore_api_reports_legacy_migration_and_rejects_future_schema(self):
+        initialize(s.store())
+        legacy = fixture(); legacy.pop('schemaVersion'); legacy.pop('tasks'); legacy.pop('events'); legacy.pop('branches')
+        legacy['documents'][0]['source_locator'] = 'legacy/api.txt'
+        response = self.client.post('/api/spatial/restore', json={
+            'expectedRevision': 1, 'requestId': 'api-restore-legacy-01', 'confirm': 'RESTORE', 'workspace': legacy,
+        })
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertTrue(response.json()['migration']['migrated'])
+        self.assertEqual(response.json()['migration']['fromVersion'], 0)
+        self.assertEqual(response.json()['workspace']['documents'][0]['sourceLocator'], 'legacy/api.txt')
+        self.assertTrue(any('存档迁移 v0→v1' in event['summary'] for event in response.json()['workspace']['events']))
+        future = fixture(); future['schemaVersion'] = 99
+        rejected = self.client.post('/api/spatial/restore', json={
+            'expectedRevision': 2, 'requestId': 'api-restore-future-01', 'confirm': 'RESTORE', 'workspace': future,
+        })
+        self.assertEqual(rejected.status_code, 422, rejected.text)
+        self.assertIn('高于服务端支持', rejected.json()['detail'])
 
     def test_notification_api_lists_and_acknowledges_business_change(self):
         initialize(s.store())

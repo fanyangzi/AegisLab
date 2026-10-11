@@ -562,6 +562,119 @@ class Workspace(StrictModel):
 def empty_workspace() -> dict:
     return dict(schemaVersion=1, revision=0, name="我的实验工作区", provenance="user", laboratories=[], equipment=[], plans=[], documents=[], tasks=[], decisions=[], events=[], branches=[])
 
+
+CURRENT_WORKSPACE_SCHEMA = 1
+
+
+def migrate_workspace_import(payload: dict) -> tuple[dict, dict[str, Any]]:
+    """Normalize an exported workspace before validation and restore.
+
+    Browser exports are long-lived files: a workspace written before optional
+    provenance, lifecycle, task, or branch fields existed should remain
+    importable after a server upgrade.  Migration is deliberately narrow and
+    loss-averse.  It only unwraps a known export envelope, renames explicitly
+    documented snake_case aliases, fills fields whose absence has an
+    unambiguous empty/default meaning, and bumps the schema marker.  Unknown
+    fields are left in place so ``Workspace.model_validate`` rejects them
+    instead of silently discarding evidence.
+
+    A future schema is rejected rather than guessed.  The report is returned
+    to the API so a reviewer can see whether a restore was a no-op or used a
+    legacy migration; it contains no document contents or credentials.
+    """
+    if not isinstance(payload, dict):
+        raise ValueError("工作区存档必须是 JSON 对象。")
+    raw = copy.deepcopy(payload)
+    changes: list[str] = []
+    envelope_unwrapped = False
+
+    # Accept the exact object emitted by ``GET /export`` as well as the
+    # nested workspace object used by the browser restore picker.  An actual
+    # workspace has ``laboratories``; that guard prevents accidentally
+    # unwrapping a malformed workspace which happens to contain a ``workspace``
+    # metadata field.
+    nested = raw.get("workspace")
+    if "laboratories" not in raw and isinstance(nested, dict):
+        raw = copy.deepcopy(nested)
+        envelope_unwrapped = True
+        changes.append("解包服务端导出信封")
+
+    if "schemaVersion" in raw:
+        schema = raw["schemaVersion"]
+    elif "schema_version" in raw:
+        schema = raw.pop("schema_version")
+        changes.append("将 schema_version 迁移为 schemaVersion")
+    else:
+        # Very early browser drafts did not carry a schema marker.  Treating
+        # those as v0 is safe because only additive defaults are applied.
+        schema = 0
+        changes.append("缺少 schemaVersion，按 v0 迁移")
+    if isinstance(schema, bool) or not isinstance(schema, int) or schema < 0:
+        raise ValueError("工作区存档版本必须是非负整数。")
+    if schema > CURRENT_WORKSPACE_SCHEMA:
+        raise ValueError(
+            f"工作区存档版本 {schema} 高于服务端支持的 {CURRENT_WORKSPACE_SCHEMA}，请先升级服务端。"
+        )
+
+    # These fields have a semantically safe default.  Missing lists mean no
+    # records were present in the old export; missing revision/provenance are
+    # metadata defaults and do not claim any laboratory fact.
+    defaults: dict[str, Any] = {
+        "revision": 0,
+        "name": "导入的实验工作区",
+        "provenance": "user",
+        "laboratories": [],
+        "equipment": [],
+        "plans": [],
+        "documents": [],
+        "tasks": [],
+        "decisions": [],
+        "events": [],
+        "branches": [],
+    }
+    for key, value in defaults.items():
+        if key not in raw:
+            raw[key] = copy.deepcopy(value)
+            changes.append(f"补齐缺省字段 {key}")
+
+    # Document provenance was introduced with camelCase names.  Migrate only
+    # explicit aliases; do not infer source authority or invent timestamps.
+    document_aliases = {
+        "equipment_id": "equipmentId", "spec_version": "specVersion",
+        "valid_from": "validFrom", "valid_until": "validUntil",
+        "reviewed_by": "reviewedBy", "reviewed_at": "reviewedAt",
+        "source_type": "sourceType", "source_locator": "sourceLocator",
+        "captured_at": "capturedAt", "content_length": "contentLength",
+        "provenance_note": "provenanceNote",
+    }
+    for document in raw.get("documents", []):
+        if not isinstance(document, dict):
+            continue
+        for old, new in document_aliases.items():
+            if new not in document and old in document:
+                document[new] = document.pop(old)
+                changes.append(f"资料字段 {old} → {new}")
+
+    # Legacy plans only had ``archived``.  The field remains optional in the
+    # current contract, so there is no need to invent a lifecycle value.  A
+    # missing archived flag is safe to interpret as an active plan.
+    for plan in raw.get("plans", []):
+        if isinstance(plan, dict) and "archived" not in plan:
+            plan["archived"] = False
+            changes.append("计划缺少 archived，按未归档迁移")
+
+    raw["schemaVersion"] = CURRENT_WORKSPACE_SCHEMA
+    if schema != CURRENT_WORKSPACE_SCHEMA:
+        changes.append(f"工作区 schema v{schema} → v{CURRENT_WORKSPACE_SCHEMA}")
+    report = {
+        "fromVersion": schema,
+        "toVersion": CURRENT_WORKSPACE_SCHEMA,
+        "migrated": bool(changes),
+        "changes": changes,
+        "envelopeUnwrapped": envelope_unwrapped,
+    }
+    return raw, report
+
 def read_source_registry() -> list[dict]:
     """Read the public source directory without treating it as workspace fact."""
     try:
@@ -2386,13 +2499,19 @@ class WorkspaceStore:
             if current and current["status"] in {"queued", "running"}:
                 self.finish_job(job_id, status="failed", error=f"{type(error).__name__}: {str(error)[:500]}")
             raise
-    def restore(self, *, expected_revision: int, request_id: str, candidate: dict, actor: str) -> dict:
+    def restore(self, *, expected_revision: int, request_id: str, candidate: dict, actor: str, migration_report: dict | None = None) -> dict:
         """Replace the workspace only after validation and a durable pre-restore snapshot.
 
         The imported revision is deliberately ignored.  Restore is an ordinary
         optimistic-concurrency mutation: a stale browser cannot overwrite a
         newer server state, and retrying the same request is idempotent.
         """
+        candidate, migration = migrate_workspace_import(candidate)
+        # The HTTP handler normalizes once so it can return the report to the
+        # browser.  Carry that report into the durable event instead of
+        # losing the provenance note on the second idempotent normalization.
+        if migration_report is not None:
+            migration = migration_report
         fingerprint = hashlib.sha256(canonical(dict(type="restore_workspace", workspace=candidate)).encode()).hexdigest()
         validate_workspace(candidate)
         with self.connection() as conn:
@@ -2417,7 +2536,10 @@ class WorkspaceStore:
             restored.setdefault("events", [])
             restored["events"] = [*restored["events"], dict(
                 id=uid("event"), at=saved_at, actor=actor, action="restore_workspace",
-                objectId="workspace", summary=f"从服务端恢复文件替换工作区；恢复前快照 {snapshot_id}",
+                objectId="workspace", summary=(
+                    f"从服务端恢复文件替换工作区；恢复前快照 {snapshot_id}"
+                    + (f"；存档迁移 v{migration['fromVersion']}→v{migration['toVersion']}" if migration["migrated"] else "")
+                ),
             )]
             validate_workspace(restored)
             conn.execute("UPDATE spatial_workspace SET revision=?,payload=? WHERE id=1", (restored["revision"], json.dumps(restored, ensure_ascii=False)))
@@ -2709,6 +2831,8 @@ def get_relationship_graph(
     labId: str | None = None,
     types: str | None = None,
     nodeId: str | None = None,
+    pathFrom: str | None = None,
+    pathTo: str | None = None,
     dateFrom: str | None = None,
     dateTo: str | None = None,
     relations: str | None = None,
@@ -2727,6 +2851,12 @@ def get_relationship_graph(
     """
     if hops < 0 or hops > 2:
         raise HTTPException(422, "hops 必须在 0 到 2 之间。")
+    if (pathFrom is None) != (pathTo is None):
+        raise HTTPException(422, "pathFrom 与 pathTo 必须同时提供。")
+    if pathFrom and nodeId:
+        raise HTTPException(422, "路径查询不能同时使用 nodeId 局部邻域。")
+    if pathFrom and hops:
+        raise HTTPException(422, "路径查询不能同时使用 hops 局部邻域。")
     w = store().read()
     # Keep the query scoped to the active laboratory as well as the optional
     # plan.  The browser already applies this scope to its local projection,
@@ -2946,7 +3076,82 @@ def get_relationship_graph(
             add_node(pending_id, "approval", "等待人工放行", approvalId=None, planId=pid, state="unknown", provenance="审批链", detail="当前没有人工审批记录；AI 与规则结果不能替代负责人决策。")
             add_edge(f"{pid}:approval:pending", f"plan:{pid}", pending_id, "approval", state="unknown", provenance="审批链")
 
-    if nodeId:
+    # A path query is an explicit, stable view for review hand-off: the
+    # server chooses the shortest undirected path over the same source-derived
+    # edges that the graph already exposes.  Sorting neighbours by edge/id
+    # makes equal-length paths deterministic across SQLite/Python runs.  The
+    # result is a projection only; it never mutates the workspace or implies
+    # that an unknown edge is safe.
+    path_result: dict[str, Any] = {
+        "requested": bool(pathFrom or pathTo),
+        "from": pathFrom,
+        "to": pathTo,
+        "found": False,
+        "nodeIds": [],
+        "edgeIds": [],
+        "hops": None,
+    }
+    if pathFrom and pathTo:
+        if pathFrom not in nodes or pathTo not in nodes:
+            missing = pathFrom if pathFrom not in nodes else pathTo
+            raise HTTPException(404, f"关系图路径端点不存在：{missing}。")
+        if allowed_types:
+            invalid_types = [node_id for node_id in (pathFrom, pathTo) if nodes[node_id]["type"] not in allowed_types]
+            if invalid_types:
+                raise HTTPException(422, "路径端点类型被 types 过滤器排除。")
+        adjacency: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+        for edge in edges:
+            if allowed_relations and edge["relation"] not in allowed_relations:
+                continue
+            if allowed_types and (nodes[edge["from"]]["type"] not in allowed_types or nodes[edge["to"]]["type"] not in allowed_types):
+                continue
+            adjacency.setdefault(edge["from"], []).append((edge["to"], edge))
+            adjacency.setdefault(edge["to"], []).append((edge["from"], edge))
+        for links in adjacency.values():
+            links.sort(key=lambda item: (item[1]["id"], item[0]))
+        queue = [pathFrom]
+        previous: dict[str, tuple[str, dict[str, Any]] | None] = {pathFrom: None}
+        cursor = 0
+        while cursor < len(queue) and pathTo not in previous:
+            current = queue[cursor]
+            cursor += 1
+            for target, edge in adjacency.get(current, []):
+                if target in previous:
+                    continue
+                previous[target] = (current, edge)
+                queue.append(target)
+                if target == pathTo:
+                    break
+        if pathTo in previous:
+            path_nodes = [pathTo]
+            path_edges: list[dict[str, Any]] = []
+            current = pathTo
+            while current != pathFrom:
+                parent = previous[current]
+                assert parent is not None
+                parent_id, edge = parent
+                path_edges.append(edge)
+                path_nodes.append(parent_id)
+                current = parent_id
+            path_nodes.reverse()
+            path_edges.reverse()
+            path_result.update({
+                "found": True,
+                "nodeIds": path_nodes,
+                "edgeIds": [edge["id"] for edge in path_edges],
+                "hops": len(path_edges),
+            })
+            visible = set(path_nodes)
+            edges = [edge for edge in path_edges if edge["from"] in visible and edge["to"] in visible]
+            nodes = {key: value for key, value in nodes.items() if key in visible}
+        else:
+            # Keep both endpoints visible when no relation path exists. This
+            # lets a reviewer see that the requested objects are disconnected
+            # under the active date/type/relation scope rather than receiving
+            # an ambiguous empty graph.
+            nodes = {key: value for key, value in nodes.items() if key in {pathFrom, pathTo}}
+            edges = []
+    elif nodeId:
         adjacency: dict[str, set[str]] = {}
         for edge in edges:
             adjacency.setdefault(edge["from"], set()).add(edge["to"])
@@ -2965,7 +3170,7 @@ def get_relationship_graph(
     edges = [edge for edge in edges if edge["from"] in visible_ids and edge["to"] in visible_ids]
     if allowed_relations:
         edges = [edge for edge in edges if edge["relation"] in allowed_relations]
-    return {"revision": w.get("revision", 0), "planId": planId, "labId": labId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "relations": sorted(allowed_relations), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops, "labId": labId}}
+    return {"revision": w.get("revision", 0), "planId": planId, "labId": labId, "nodes": list(nodes.values()), "edges": edges, "path": path_result, "filters": {"types": sorted(allowed_types), "relations": sorted(allowed_relations), "nodeId": nodeId, "pathFrom": pathFrom, "pathTo": pathTo, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops, "labId": labId}}
 
 @router.post("/actions")
 def mutate_workspace(body: Mutation, request: Request, actor: str = Depends(local_owner)):
@@ -3002,8 +3207,9 @@ def restore_workspace(body: RestoreRequest, request: Request, actor: str = Depen
     if local_role(request) not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有恢复服务端存档的权限。")
     try:
-        restored = store().restore(expected_revision=body.expectedRevision, request_id=body.requestId, candidate=body.workspace, actor=actor)
-        return envelope(restored)
+        candidate, migration = migrate_workspace_import(body.workspace)
+        restored = store().restore(expected_revision=body.expectedRevision, request_id=body.requestId, candidate=candidate, actor=actor, migration_report=migration)
+        return {**envelope(restored), "migration": migration}
     except (ValidationError, ValueError, KeyError, TypeError) as error:
         message = str(error) if not isinstance(error, ValidationError) else "恢复文件结构不符合工作区契约。"
         raise HTTPException(422, message) from error
