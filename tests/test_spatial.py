@@ -440,6 +440,41 @@ class DomainTests(unittest.TestCase):
         branch={'id':'branch-equipment-condition-03','name':'未审计设备状态','planId':p['id'],'baseRevision':p['revision'],'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),'equipmentStates':[{'equipmentId':target,'status':'available'}],'createdAt':s.now(),'patches':[]}
         with self.assertRaisesRegex(ValueError,'审计字段'):
             s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+
+    def test_branch_patch_review_rejects_one_field_and_applies_remaining(self):
+        w=fixture();p=copy.deepcopy(w['plans'][0]);base=copy.deepcopy(p['reservations'][0]);candidate=copy.deepcopy(p['reservations'])
+        candidate[0]['equipmentId']='F-02';candidate[0]['start']='2026-10-09T08:20:00+08:00'
+        branch={'id':'branch-review-01','name':'逐字段复核候选','planId':p['id'],'baseRevision':p['revision'],
+                'baseBasis':s.basis(w,p),'reservations':candidate,'createdAt':s.now(),
+                'patches':[
+                    {'path':'reservation.equipmentId','targetId':base['id'],'before':base['equipmentId'],'after':'F-02','reason':'替代资源'},
+                    {'path':'reservation.start','targetId':base['id'],'before':base['start'],'after':candidate[0]['start'],'reason':'避开冲突'},
+                ]}
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        reviewed=s.apply_operation(saved,'review_branch_patch',{
+            'branchId':branch['id'],'path':'reservation.equipmentId','targetId':base['id'],
+            'disposition':'rejected','reviewNote':'现场设备能力未完成独立核验。'},'安全负责人')
+        stored=next(item for item in reviewed['branches'] if item['id']==branch['id'])
+        rejected=next(item for item in stored['patches'] if item['path']=='reservation.equipmentId')
+        self.assertEqual(rejected['disposition'],'rejected');self.assertEqual(rejected['reviewedBy'],'安全负责人')
+        self.assertEqual(stored['reservations'][0]['equipmentId'],base['equipmentId'])
+        self.assertEqual(stored['reservations'][0]['start'],candidate[0]['start'])
+        applied=s.apply_operation(reviewed,'apply_branch',{'id':branch['id']},'安全负责人')
+        applied_plan=next(item for item in applied['plans'] if item['id']==p['id'])
+        self.assertEqual(applied_plan['reservations'][0]['equipmentId'],base['equipmentId'])
+        self.assertEqual(applied_plan['reservations'][0]['start'],candidate[0]['start'])
+
+    def test_branch_patch_review_requires_reason_and_valid_disposition(self):
+        w=fixture();p=w['plans'][0];base=copy.deepcopy(p['reservations'][0]);candidate=copy.deepcopy(p['reservations'])
+        candidate[0]['start']='2026-10-09T08:20:00+08:00'
+        branch={'id':'branch-review-02','name':'候选复核校验','planId':p['id'],'baseRevision':p['revision'],
+                'baseBasis':s.basis(w,p),'reservations':candidate,'createdAt':s.now(),
+                'patches':[{'path':'reservation.start','targetId':base['id'],'before':base['start'],'after':candidate[0]['start'],'reason':'调整时间'}]}
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        with self.assertRaisesRegex(ValueError,'复核说明'):
+            s.apply_operation(saved,'review_branch_patch',{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'rejected'},'负责人')
+        with self.assertRaisesRegex(ValueError,'accepted 或 rejected'):
+            s.apply_operation(saved,'review_branch_patch',{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'pending','reviewNote':'等待确认'},'负责人')
     def test_typescript_python_parity(self):
         path=Path(__file__).with_name('web-parity.json')
         if not path.exists():self.skipTest('Generate with node scripts/test-web.mjs --parity')
@@ -810,6 +845,25 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(applied.status_code,200,applied.text)
         applied_plan=next(item for item in applied.json()['workspace']['plans'] if item['id']==plan['id'])
         self.assertEqual(applied_plan['reservations'][0]['equipmentId'],'F-02');self.assertEqual(applied_plan['reservations'][0]['start'],candidate[0]['start'])
+
+    def test_branch_api_patch_review_has_role_gate_and_reason(self):
+        initialize(s.store())
+        workspace=s.store().read();plan=next(item for item in workspace['plans'] if item['id']=='EXP-001')
+        base=copy.deepcopy(plan['reservations'][0]);candidate=copy.deepcopy(plan['reservations'])
+        candidate[0]['start']='2026-10-09T08:20:00+08:00'
+        branch={'id':'api-branch-review-01','name':'API 逐字段复核','planId':plan['id'],'baseRevision':plan['revision'],'baseBasis':s.basis(workspace,plan),'reservations':candidate,'createdAt':s.now(),'patches':[{'path':'reservation.start','targetId':base['id'],'before':base['start'],'after':candidate[0]['start'],'reason':'避开冲突'}]}
+        saved=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'api-branch-review-save','type':'save_branch','payload':{'branch':branch}})
+        self.assertEqual(saved.status_code,200,saved.text)
+        with patch.dict(os.environ,{'AEGIS_WORKSPACE_ROLE':'researcher'}):
+            denied=self.client.post('/api/spatial/actions',json={'expectedRevision':2,'requestId':'api-branch-review-deny','type':'review_branch_patch','payload':{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'rejected','reviewNote':'研究者不能作出候选取舍'}})
+        self.assertEqual(denied.status_code,403)
+        missing=self.client.post('/api/spatial/actions',json={'expectedRevision':2,'requestId':'api-branch-review-missing','type':'review_branch_patch','payload':{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'rejected'}})
+        self.assertEqual(missing.status_code,422)
+        reviewed=self.client.post('/api/spatial/actions',json={'expectedRevision':2,'requestId':'api-branch-review-ok','type':'review_branch_patch','payload':{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'rejected','reviewNote':'现场窗口未确认，保留原时间'}})
+        self.assertEqual(reviewed.status_code,200,reviewed.text)
+        stored=next(item for item in reviewed.json()['workspace']['branches'] if item['id']==branch['id'])
+        self.assertEqual(stored['patches'][0]['disposition'],'rejected')
+        self.assertEqual(stored['reservations'][0]['start'],base['start'])
 
     def test_branch_api_audits_equipment_condition_and_applies_atomically(self):
         initialize(s.store())

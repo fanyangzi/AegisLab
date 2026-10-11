@@ -182,6 +182,14 @@ class BranchPatch(StrictModel):
     before: str
     after: str
     reason: str = Field(min_length=1, max_length=500)
+    # Candidate edits are initially accepted for backwards compatibility with
+    # saved branches.  A reviewer can explicitly reject one field without
+    # applying the remaining branch edits; the decision remains part of the
+    # immutable branch audit trail.
+    disposition: Literal["accepted", "rejected"] = "accepted"
+    reviewedBy: str | None = Field(default=None, max_length=180)
+    reviewedAt: str | None = None
+    reviewNote: str | None = Field(default=None, max_length=2000)
 
 class BranchEquipmentState(StrictModel):
     """One equipment condition in an isolated candidate branch."""
@@ -555,6 +563,40 @@ def basis(w: dict, p: dict) -> str:
         documents=relevant_documents, otherReservations=other))
 
 
+def _effective_branch_snapshots(w: dict, branch: dict) -> tuple[list[dict], list[dict]]:
+    """Project only accepted field patches onto the current branch base.
+
+    This is used after a reviewer rejects an individual suggestion.  The
+    legacy branch shape still carries a complete snapshot; once a patch has an
+    explicit disposition, the accepted patches become the authoritative
+    candidate and rejected fields fall back to the base value.
+    """
+    base_plan = next((item for item in w["plans"] if item["id"] == branch["planId"]), None)
+    if base_plan is None:
+        raise ValueError("方案关联的计划不存在。")
+    reservations = copy.deepcopy(base_plan.get("reservations", []))
+    equipment_by_id = {item["id"]: copy.deepcopy(item) for item in w.get("equipment", [])}
+    reservation_by_id = {item["id"]: item for item in reservations}
+    for patch in branch.get("patches", []):
+        if patch.get("disposition", "accepted") != "accepted":
+            continue
+        path = patch["path"]
+        if path == "equipment.status":
+            equipment = equipment_by_id.get(patch["targetId"])
+            if equipment is not None:
+                equipment["status"] = patch["after"]
+            continue
+        row = reservation_by_id.get(patch["targetId"])
+        if row is not None:
+            row[path.removeprefix("reservation.")] = patch["after"]
+    states = [
+        {"equipmentId": patch["targetId"], "status": patch["after"]}
+        for patch in branch.get("patches", [])
+        if patch["path"] == "equipment.status" and patch.get("disposition", "accepted") == "accepted"
+    ]
+    return reservations, states
+
+
 def branch_candidate(w: dict, branch: dict) -> dict:
     """Build and validate a branch projection without mutating ``w``.
 
@@ -570,7 +612,19 @@ def branch_candidate(w: dict, branch: dict) -> dict:
     base_plan = next((item for item in w["plans"] if item["id"] == branch["planId"]), None)
     if plan is None or base_plan is None:
         raise ValueError("方案关联的计划不存在。")
-    plan["reservations"] = copy.deepcopy(branch["reservations"])
+    patch_keys = [(item.get("path"), item.get("targetId")) for item in branch.get("patches", [])]
+    if len(patch_keys) != len(set(patch_keys)):
+        raise ValueError("候选字段不能重复指定同一路径和目标。")
+    has_review_decisions = any("disposition" in patch for patch in branch.get("patches", []))
+    if has_review_decisions:
+        effective_reservations, effective_states = _effective_branch_snapshots(w, branch)
+        if branch.get("reservations") != effective_reservations:
+            raise ValueError("候选字段与人工取舍后的方案快照不一致，请重新生成方案。")
+        if branch.get("equipmentStates", []) != effective_states:
+            raise ValueError("候选设备状态与人工取舍后的审计字段不一致。")
+        plan["reservations"] = effective_reservations
+    else:
+        plan["reservations"] = copy.deepcopy(branch["reservations"])
     equipment_by_id = {item["id"]: item for item in candidate["equipment"]}
     base_equipment_by_id = {item["id"]: item for item in w["equipment"]}
     equipment_states = branch.get("equipmentStates", [])
@@ -594,9 +648,10 @@ def branch_candidate(w: dict, branch: dict) -> dict:
                 raise ValueError(f"候选字段目标不存在：{target_id}。")
             if base_equipment["status"] != patch["before"]:
                 raise ValueError("候选字段基线已变化，请重新创建方案。")
-            if candidate_equipment["status"] != patch["after"]:
+            expected_after = patch["after"] if patch.get("disposition", "accepted") == "accepted" else patch["before"]
+            if candidate_equipment["status"] != expected_after:
                 raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
-            if state_by_equipment.get(target_id) != patch["after"]:
+            if patch.get("disposition", "accepted") == "accepted" and state_by_equipment.get(target_id) != patch["after"]:
                 raise ValueError("设备状态候选必须与审计字段保持一致。")
             continue
         base_row = base_reservation_by_id.get(target_id)
@@ -605,11 +660,12 @@ def branch_candidate(w: dict, branch: dict) -> dict:
             raise ValueError(f"候选字段目标不存在：{target_id}。")
         if base_row[path.removeprefix("reservation.")] != patch["before"]:
             raise ValueError("候选字段基线已变化，请重新创建方案。")
-        if candidate_row[path.removeprefix("reservation.")] != patch["after"]:
+        expected_after = patch["after"] if patch.get("disposition", "accepted") == "accepted" else patch["before"]
+        if candidate_row[path.removeprefix("reservation.")] != expected_after:
             raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
     audited_equipment_after = {
         patch["targetId"]: patch["after"] for patch in branch.get("patches", [])
-        if patch.get("path") == "equipment.status"
+        if patch.get("path") == "equipment.status" and patch.get("disposition", "accepted") == "accepted"
     }
     for state in equipment_states:
         base_equipment = base_equipment_by_id[state["equipmentId"]]
@@ -1442,6 +1498,39 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         branch_candidate(next_w, b)
         upsert("branches", b)
         object_id, summary = b["id"], "保存独立候选方案，正式计划未改变"
+    elif action == "review_branch_patch":
+        branch_id = str(x.get("branchId", ""))
+        b = get("branches", branch_id)
+        p = get("plans", b["planId"])
+        if p["revision"] != b["baseRevision"] or basis(w, p) != b["baseBasis"]:
+            raise ValueError("方案基线已变化，请重新创建后再审查候选字段。")
+        path = x.get("path")
+        target_id = str(x.get("targetId", ""))
+        disposition = x.get("disposition")
+        if path not in {"reservation.equipmentId", "reservation.start", "reservation.end", "equipment.status"}:
+            raise ValueError("候选字段路径无效。")
+        if disposition not in {"accepted", "rejected"}:
+            raise ValueError("候选字段取舍必须是 accepted 或 rejected。")
+        note = str(x.get("reviewNote", "")).strip()
+        if not note:
+            raise ValueError("候选字段取舍必须填写复核说明。")
+        patch = next((item for item in b.get("patches", []) if item.get("path") == path and item.get("targetId") == target_id), None)
+        if patch is None:
+            raise ValueError("候选字段不存在。")
+        # Validate the unmodified branch before recording the decision, then
+        # rebuild its candidate snapshot so rejected fields visibly fall back
+        # to the formal plan while the suggestion itself remains in history.
+        branch_candidate(next_w, b)
+        patch["disposition"] = disposition
+        patch["reviewedBy"] = actor
+        patch["reviewedAt"] = now()
+        patch["reviewNote"] = note[:2000]
+        reservations, states = _effective_branch_snapshots(next_w, b)
+        b["reservations"] = reservations
+        b["equipmentStates"] = states
+        branch_candidate(next_w, b)
+        object_id = branch_id
+        summary = f"复核候选字段：{path} · {target_id} · {'采纳' if disposition == 'accepted' else '拒绝'}；{note[:200]}"
     elif action == "apply_branch":
         b = get("branches", x["id"])
         p = get("plans", b["planId"])
@@ -1456,7 +1545,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         candidate_equipment = {item["id"]: item for item in candidate["equipment"]}
         audited_equipment_ids = {
             patch["targetId"] for patch in b.get("patches", [])
-            if patch.get("path") == "equipment.status"
+            if patch.get("path") == "equipment.status" and patch.get("disposition", "accepted") == "accepted"
         }
         for equipment in next_w["equipment"]:
             if equipment["id"] not in audited_equipment_ids:
@@ -2285,6 +2374,8 @@ def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):
     handoff_update = body.type == "update_task" and any(key in body.payload for key in ("newOwner", "expectedOwner", "handoffNote"))
     if (body.type == "assign_task" or handoff_update) and local_role() not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有转交协作任务的权限。")
+    if body.type == "review_branch_patch" and role not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有复核候选字段的权限。")
     try:
         payload = dict(body.payload)
         if body.type in {"approve", "approval_decision"}:

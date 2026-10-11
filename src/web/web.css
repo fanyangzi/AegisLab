@@ -204,3 +204,4 @@
 .al-exception-panel .al-section-label{margin-top:0}
 .al-exception-panel .al-checkbox{margin:7px 0}
 @media (max-width:760px){.al-choice-row{grid-template-columns:1fr}}
+.al-branch-review-list{display:flex;flex-direction:column;gap:8px;border-top:1px solid #edf2f8;padding-top:12px}.al-branch-review-list>small{font-size:10px;color:#9aafc8}.al-branch-review-row{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid #f2f5fa}.al-branch-review-row>span{flex:1;min-width:0}.al-branch-review-row b,.al-branch-review-row small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.al-branch-review-row b{font-size:10px;color:#7894b7;font-weight:550}.al-branch-review-row small{font-size:9px;color:#a2b5cd;margin-top:3px}.al-branch-review-row>.al-button{padding:4px;color:#8ba8cf}.al-branch-review-row>.al-button svg{width:13px;height:13px}

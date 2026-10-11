@@ -106,7 +106,10 @@ export interface Decision {
 }
 export interface AuditEvent { id: string; at: string; actor: string; action: string; objectId: string; summary: string }
 export type BranchPatchPath = 'reservation.equipmentId' | 'reservation.start' | 'reservation.end' | 'equipment.status'
-export interface BranchPatch { path: BranchPatchPath; targetId: string; before: string; after: string; reason: string }
+export interface BranchPatch {
+  path: BranchPatchPath; targetId: string; before: string; after: string; reason: string
+  disposition?: 'accepted' | 'rejected'; reviewedBy?: string; reviewedAt?: string; reviewNote?: string
+}
 export interface BranchEquipmentState { equipmentId: string; status: Equipment['status'] }
 export interface Branch {
   id: string; name: string; planId: string; baseRevision: number; baseBasis: string; reservations: Reservation[]; createdAt: string; patches?: BranchPatch[]; equipmentStates?: BranchEquipmentState[]
