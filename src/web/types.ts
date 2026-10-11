@@ -105,10 +105,11 @@ export interface Decision {
   exception?: {checkIds: string[]; reason: string; mitigation: string; expiresAt: string}
 }
 export interface AuditEvent { id: string; at: string; actor: string; action: string; objectId: string; summary: string }
-export type BranchPatchPath = 'reservation.equipmentId' | 'reservation.start' | 'reservation.end'
+export type BranchPatchPath = 'reservation.equipmentId' | 'reservation.start' | 'reservation.end' | 'equipment.status'
 export interface BranchPatch { path: BranchPatchPath; targetId: string; before: string; after: string; reason: string }
+export interface BranchEquipmentState { equipmentId: string; status: Equipment['status'] }
 export interface Branch {
-  id: string; name: string; planId: string; baseRevision: number; baseBasis: string; reservations: Reservation[]; createdAt: string; patches?: BranchPatch[]
+  id: string; name: string; planId: string; baseRevision: number; baseBasis: string; reservations: Reservation[]; createdAt: string; patches?: BranchPatch[]; equipmentStates?: BranchEquipmentState[]
 }
 export interface Workspace {
   schemaVersion: 1; revision: number; name: string; provenance: 'user' | 'example';

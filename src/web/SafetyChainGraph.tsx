@@ -8,7 +8,7 @@ import './safetyChainGraph.css'
 
 /** Query result returned by the persisted relationship-graph endpoint. */
 export type ServerGraphNode = {
-  id: string; type: 'plan' | 'step' | 'equipment' | 'document' | 'task' | 'check'; label: string
+  id: string; type: 'plan' | 'step' | 'chemical' | 'control' | 'equipment' | 'document' | 'task' | 'check' | 'approval'; label: string
   state?: string; code?: string; sourceLine?: number; source?: string; provenance?: string
   planId?: string; equipmentId?: string; documentId?: string; taskId?: string; labId?: string
   detail?: string; [key: string]: unknown

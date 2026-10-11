@@ -387,6 +387,42 @@ class DomainTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError,'快照不一致'):
             s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+
+    def test_branch_equipment_condition_patch_stays_isolated_until_apply(self):
+        w=fixture();p=copy.deepcopy(w['plans'][0])
+        target=next(r['equipmentId'] for r in p['reservations'] if next(e for e in w['equipment'] if e['id']==r['equipmentId'])['status']=='unknown')
+        before=next(e['status'] for e in w['equipment'] if e['id']==target)
+        branch={
+            'id':'branch-equipment-condition-01','name':'确认设备状态后再排程','planId':p['id'],
+            'baseRevision':p['revision'],'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),
+            'equipmentStates':[{'equipmentId':target,'status':'available'}],'createdAt':s.now(),
+            'patches':[{'path':'equipment.status','targetId':target,'before':before,'after':'available','reason':'现场确认设备可用'}],
+        }
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        self.assertEqual(next(e['status'] for e in saved['equipment'] if e['id']==target),before)
+        stored=next(item for item in saved['branches'] if item['id']==branch['id'])
+        self.assertEqual(stored['equipmentStates'][0]['status'],'available')
+        applied=s.apply_operation(saved,'apply_branch',{'id':branch['id']},'负责人')
+        self.assertEqual(next(e['status'] for e in applied['equipment'] if e['id']==target),'available')
+        applied_plan=next(item for item in applied['plans'] if item['id']==p['id'])
+        self.assertEqual(applied_plan['revision'],p['revision']+1)
+
+    def test_branch_equipment_condition_patch_rejects_stale_condition(self):
+        w=fixture();p=w['plans'][0]
+        target=next(r['equipmentId'] for r in p['reservations'] if next(e for e in w['equipment'] if e['id']==r['equipmentId'])['status']=='unknown')
+        before=next(e['status'] for e in w['equipment'] if e['id']==target)
+        branch={'id':'branch-equipment-condition-02','name':'陈旧设备条件','planId':p['id'],'baseRevision':p['revision'],'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),'equipmentStates':[{'equipmentId':target,'status':'available'}],'createdAt':s.now(),'patches':[{'path':'equipment.status','targetId':target,'before':before,'after':'available','reason':'设备复核'}]}
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        changed=copy.deepcopy(saved);next(e for e in changed['equipment'] if e['id']==target)['status']='unavailable'
+        with self.assertRaises(ValueError):
+            s.apply_operation(changed,'apply_branch',{'id':branch['id']},'负责人')
+
+    def test_branch_equipment_state_requires_an_audited_patch(self):
+        w=fixture();p=copy.deepcopy(w['plans'][0])
+        target=next(r['equipmentId'] for r in p['reservations'] if next(e for e in w['equipment'] if e['id']==r['equipmentId'])['status']=='unknown')
+        branch={'id':'branch-equipment-condition-03','name':'未审计设备状态','planId':p['id'],'baseRevision':p['revision'],'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),'equipmentStates':[{'equipmentId':target,'status':'available'}],'createdAt':s.now(),'patches':[]}
+        with self.assertRaisesRegex(ValueError,'审计字段'):
+            s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
     def test_typescript_python_parity(self):
         path=Path(__file__).with_name('web-parity.json')
         if not path.exists():self.skipTest('Generate with node scripts/test-web.mjs --parity')
@@ -741,6 +777,36 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(applied.status_code,200,applied.text)
         applied_plan=next(item for item in applied.json()['workspace']['plans'] if item['id']==plan['id'])
         self.assertEqual(applied_plan['reservations'][0]['equipmentId'],'F-02');self.assertEqual(applied_plan['reservations'][0]['start'],candidate[0]['start'])
+
+    def test_branch_api_audits_equipment_condition_and_applies_atomically(self):
+        initialize(s.store())
+        workspace=s.store().read();plan=next(item for item in workspace['plans'] if item['id']=='EXP-001')
+        target=next(r['equipmentId'] for r in plan['reservations'] if next(e for e in workspace['equipment'] if e['id']==r['equipmentId'])['status']=='unknown')
+        before=next(e['status'] for e in workspace['equipment'] if e['id']==target)
+        branch={'id':'api-branch-equipment-01','name':'API 设备条件候选','planId':plan['id'],'baseRevision':plan['revision'],'baseBasis':s.basis(workspace,plan),'reservations':copy.deepcopy(plan['reservations']),'equipmentStates':[{'equipmentId':target,'status':'available'}],'createdAt':s.now(),'patches':[{'path':'equipment.status','targetId':target,'before':before,'after':'available','reason':'现场确认设备可用'}]}
+        saved=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'api-branch-equipment-save-01','type':'save_branch','payload':{'branch':branch}})
+        self.assertEqual(saved.status_code,200,saved.text)
+        saved_state=saved.json()['workspace'];self.assertEqual(next(e['status'] for e in saved_state['equipment'] if e['id']==target),before)
+        stored=next(item for item in saved_state['branches'] if item['id']==branch['id']);self.assertEqual(stored['equipmentStates'][0]['status'],'available')
+        applied=self.client.post('/api/spatial/actions',json={'expectedRevision':2,'requestId':'api-branch-equipment-apply-01','type':'apply_branch','payload':{'id':branch['id']}})
+        self.assertEqual(applied.status_code,200,applied.text)
+        applied_state=applied.json()['workspace'];self.assertEqual(next(e['status'] for e in applied_state['equipment'] if e['id']==target),'available')
+
+    def test_branch_api_rejects_stale_equipment_condition_before_apply(self):
+        initialize(s.store())
+        workspace=s.store().read();plan=next(item for item in workspace['plans'] if item['id']=='EXP-001')
+        target=next(r['equipmentId'] for r in plan['reservations'] if next(e for e in workspace['equipment'] if e['id']==r['equipmentId'])['status']=='unknown')
+        before=next(e['status'] for e in workspace['equipment'] if e['id']==target)
+        branch={'id':'api-branch-equipment-02','name':'API 陈旧设备候选','planId':plan['id'],'baseRevision':plan['revision'],'baseBasis':s.basis(workspace,plan),'reservations':copy.deepcopy(plan['reservations']),'equipmentStates':[{'equipmentId':target,'status':'available'}],'createdAt':s.now(),'patches':[{'path':'equipment.status','targetId':target,'before':before,'after':'available','reason':'设备复核'}]}
+        saved=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'api-branch-equipment-save-02','type':'save_branch','payload':{'branch':branch}})
+        self.assertEqual(saved.status_code,200,saved.text)
+        equipment=copy.deepcopy(next(e for e in saved.json()['workspace']['equipment'] if e['id']==target));equipment['status']='unavailable'
+        changed=self.client.post('/api/spatial/actions',json={'expectedRevision':2,'requestId':'api-branch-equipment-change-02','type':'save_equipment','payload':{'equipment':equipment}})
+        self.assertEqual(changed.status_code,200,changed.text)
+        stale=self.client.post('/api/spatial/actions',json={'expectedRevision':3,'requestId':'api-branch-equipment-apply-02','type':'apply_branch','payload':{'id':branch['id']}})
+        self.assertEqual(stale.status_code,422,stale.text)
+        latest=stale.json()['detail']
+        self.assertIn('过期',latest)
     def test_clean_workspace_can_complete_web_lifecycle_without_examples(self):
         """Run the complete browser lifecycle against a fresh, example-free DB.
 
@@ -1059,6 +1125,35 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(plan['reservationCount'],3)
         self.assertTrue(plan['timeFiltered'])
         self.assertEqual(self.client.get('/api/spatial/graph?types=rule').status_code,422)
+    def test_relationship_graph_adds_source_anchored_entities_and_pending_approval(self):
+        initialize(s.store())
+        response=self.client.get('/api/spatial/graph?planId=EXP-001&types=plan,step,chemical,control,approval')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json()
+        nodes={node['id']:node for node in graph['nodes']}
+        self.assertTrue(any(node['type']=='chemical' for node in nodes.values()))
+        self.assertTrue(any(node['type']=='control' for node in nodes.values()))
+        approval=next(node for node in nodes.values() if node['type']=='approval')
+        self.assertEqual(approval['state'],'unknown')
+        self.assertEqual(approval['provenance'],'审批链')
+        chemicals=[node for node in nodes.values() if node['type']=='chemical']
+        self.assertTrue(any(node['label']=='甲苯' and node['sourceLine']==1 for node in chemicals))
+        self.assertTrue(all(node['state']=='unknown' and node.get('provenance') for node in chemicals))
+        toluene=next(node for node in chemicals if node['label']=='甲苯')
+        self.assertEqual(toluene['hazardClasses'],['flammable','toxic'])
+        self.assertTrue(any(edge['relation']=='mentions' for edge in graph['edges']))
+        self.assertTrue(any(edge['relation']=='requires-control' for edge in graph['edges']))
+        self.assertTrue(all(edge['from'] in nodes and edge['to'] in nodes for edge in graph['edges']))
+    def test_relationship_graph_relations_filter_limits_edges_without_promoting_nodes(self):
+        initialize(s.store())
+        response=self.client.get('/api/spatial/graph?planId=EXP-001&relations=mentions,requires-control')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json()
+        self.assertEqual(graph['filters']['relations'],['mentions','requires-control'])
+        self.assertTrue(graph['edges'])
+        self.assertTrue(all(edge['relation'] in {'mentions','requires-control'} for edge in graph['edges']))
+        self.assertTrue(any(node['type']=='approval' for node in graph['nodes']))
+
     def test_restore_api_is_role_gated_and_creates_snapshot(self):
         initialize(s.store());candidate=s.store().read();candidate['name']='服务端恢复验收';candidate['revision']=700
         response=self.client.post('/api/spatial/restore',json={'expectedRevision':1,'requestId':'api-restore-01','confirm':'RESTORE','workspace':candidate})

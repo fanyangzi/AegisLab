@@ -20,6 +20,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from .parser import parse_sop
 
 RULE_PACK = "resource-prerequisites/1.0"
 ROOT = Path(__file__).resolve().parents[2]
@@ -164,16 +165,23 @@ class BranchPatch(StrictModel):
     """A reviewable field-level change inside an isolated plan branch.
 
     Branch reservations remain the candidate state used by the checker.  The
-    patch records make the user's intent explicit, so a resource switch and a
-    time change can be accepted together without treating the branch as an
-    opaque replacement snapshot.  ``before`` is checked against the branch
-    base and ``after`` against the candidate state at save/apply time.
+    patch records make the user's intent explicit, so a resource switch, a
+    time change, or a resource-condition change can be accepted together
+    without treating the branch as an opaque replacement snapshot.  ``before``
+    is checked against the branch base and ``after`` against the candidate
+    state at save/apply time.
     """
-    path: Literal["reservation.equipmentId", "reservation.start", "reservation.end"]
+    path: Literal["reservation.equipmentId", "reservation.start", "reservation.end", "equipment.status"]
     targetId: str = Field(min_length=1, max_length=128)
     before: str
     after: str
     reason: str = Field(min_length=1, max_length=500)
+
+class BranchEquipmentState(StrictModel):
+    """One equipment condition in an isolated candidate branch."""
+
+    equipmentId: str = Field(min_length=1, max_length=128)
+    status: Literal["available", "unavailable", "unknown"]
 
 class Plan(StrictModel):
     id: str
@@ -310,6 +318,10 @@ class Branch(StrictModel):
     reservations: list[Reservation] = Field(max_length=500)
     createdAt: str
     patches: list[BranchPatch] = Field(default_factory=list, max_length=200)
+    # Optional for old saved branches.  Only the selected condition is
+    # projected into the candidate workspace; the formal equipment ledger is
+    # unchanged until an explicit apply_branch operation succeeds.
+    equipmentStates: list[BranchEquipmentState] = Field(default_factory=list, max_length=200)
 
 class Workspace(StrictModel):
     schemaVersion: Literal[1]
@@ -553,11 +565,34 @@ def branch_candidate(w: dict, branch: dict) -> dict:
     if plan is None or base_plan is None:
         raise ValueError("方案关联的计划不存在。")
     plan["reservations"] = copy.deepcopy(branch["reservations"])
+    equipment_by_id = {item["id"]: item for item in candidate["equipment"]}
+    base_equipment_by_id = {item["id"]: item for item in w["equipment"]}
+    equipment_states = branch.get("equipmentStates", [])
+    if len({item["equipmentId"] for item in equipment_states}) != len(equipment_states):
+        raise ValueError("候选设备状态不能重复指定同一资源。")
+    for state in equipment_states:
+        equipment = equipment_by_id.get(state["equipmentId"])
+        if equipment is None:
+            raise ValueError(f"候选字段目标不存在：{state['equipmentId']}。")
+        equipment["status"] = state["status"]
+    state_by_equipment = {item["equipmentId"]: item["status"] for item in equipment_states}
     reservation_by_id = {item["id"]: item for item in plan["reservations"]}
     base_reservation_by_id = {item["id"]: item for item in base_plan["reservations"]}
     for patch in branch.get("patches", []):
         path = patch["path"]
         target_id = patch["targetId"]
+        if path == "equipment.status":
+            base_equipment = base_equipment_by_id.get(target_id)
+            candidate_equipment = equipment_by_id.get(target_id)
+            if base_equipment is None or candidate_equipment is None:
+                raise ValueError(f"候选字段目标不存在：{target_id}。")
+            if base_equipment["status"] != patch["before"]:
+                raise ValueError("候选字段基线已变化，请重新创建方案。")
+            if candidate_equipment["status"] != patch["after"]:
+                raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
+            if state_by_equipment.get(target_id) != patch["after"]:
+                raise ValueError("设备状态候选必须与审计字段保持一致。")
+            continue
         base_row = base_reservation_by_id.get(target_id)
         candidate_row = reservation_by_id.get(target_id)
         if base_row is None or candidate_row is None:
@@ -566,6 +601,14 @@ def branch_candidate(w: dict, branch: dict) -> dict:
             raise ValueError("候选字段基线已变化，请重新创建方案。")
         if candidate_row[path.removeprefix("reservation.")] != patch["after"]:
             raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
+    audited_equipment_after = {
+        patch["targetId"]: patch["after"] for patch in branch.get("patches", [])
+        if patch.get("path") == "equipment.status"
+    }
+    for state in equipment_states:
+        base_equipment = base_equipment_by_id[state["equipmentId"]]
+        if base_equipment["status"] != state["status"] and audited_equipment_after.get(state["equipmentId"]) != state["status"]:
+            raise ValueError("设备状态候选必须与审计字段保持一致。")
     validate_workspace(candidate)
     return candidate
 
@@ -1365,6 +1408,20 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         candidate = branch_candidate(next_w, b)
         candidate_plan = next(q for q in candidate["plans"] if q["id"] == p["id"])
         p["reservations"] = copy.deepcopy(candidate_plan["reservations"])
+        # Apply only the explicitly audited equipment conditions from the
+        # isolated candidate.  Other workspace resources retain their formal
+        # state; the branch cannot replace the whole equipment ledger.
+        candidate_equipment = {item["id"]: item for item in candidate["equipment"]}
+        audited_equipment_ids = {
+            patch["targetId"] for patch in b.get("patches", [])
+            if patch.get("path") == "equipment.status"
+        }
+        for equipment in next_w["equipment"]:
+            if equipment["id"] not in audited_equipment_ids:
+                continue
+            projected = candidate_equipment.get(equipment["id"])
+            if projected is not None and projected["status"] != equipment["status"]:
+                equipment["status"] = projected["status"]
         p["revision"] += 1
         patch_count = len(b.get("patches", []))
         detail = f"，记录 {patch_count} 个字段变更" if patch_count else ""
@@ -1854,10 +1911,10 @@ class ExpiryRecheckRequest(StrictModel):
 router = APIRouter(prefix="/api/spatial", tags=["web-workspace"])
 
 # Keep this contract explicit instead of silently returning an empty graph for
-# a misspelled type.  The endpoint is intentionally limited to entities that
-# are persisted in the workspace snapshot; chemical/control candidates that
-# only exist in the AI parser are not promoted to server graph facts here.
-GRAPH_NODE_TYPES = frozenset({"plan", "step", "equipment", "document", "task", "check"})
+# a misspelled type. Chemical and control nodes are source-anchored
+# projections of saved plan text; they remain unknown until evidence is
+# reviewed and are never treated as confirmed safety facts.
+GRAPH_NODE_TYPES = frozenset({"plan", "step", "chemical", "control", "equipment", "document", "task", "check", "approval"})
 
 @router.get("")
 def get_workspace(actor: str = Depends(local_owner)):
@@ -1888,6 +1945,7 @@ def get_relationship_graph(
     nodeId: str | None = None,
     dateFrom: str | None = None,
     dateTo: str | None = None,
+    relations: str | None = None,
     hops: int = 0,
     actor: str = Depends(local_owner),
 ):
@@ -1918,6 +1976,7 @@ def get_relationship_graph(
             raise HTTPException(404, "计划不属于当前实验室。")
         raise HTTPException(404, "计划不存在。")
     allowed_types = {item.strip() for item in (types or "").split(",") if item.strip()}
+    allowed_relations = {item.strip() for item in (relations or "").split(",") if item.strip()}
     unknown_types = sorted(allowed_types - GRAPH_NODE_TYPES)
     if unknown_types:
         raise HTTPException(422, f"types 包含不支持的节点类型：{', '.join(unknown_types)}。")
@@ -1958,6 +2017,17 @@ def get_relationship_graph(
             return False
         return (not end_bound or item_start < end_bound) and (not start_bound or item_end > start_bound)
 
+    def slug(value: str) -> str:
+        # Keep graph IDs stable without leaking arbitrary source text into a
+        # URL or DOM identifier.  The human label remains the original term.
+        return hashlib.sha1(value.encode("utf-8")).hexdigest()[:12]
+
+    def source_line_for(plan: dict, term: str) -> int | None:
+        for line_no, line in enumerate(plan.get("source", "").splitlines(), 1):
+            if term in line:
+                return line_no
+        return None
+
     equipment_by_id = {e["id"]: e for e in w.get("equipment", [])}
     documents = w.get("documents", [])
     tasks = w.get("tasks", [])
@@ -1985,6 +2055,55 @@ def get_relationship_graph(
                 used_equipment.add(equipment_id)
                 edge_id = f"{pid}:step:{step.get('line', index)}:equipment:{equipment_id}"
                 add_edge(edge_id, sid, f"equipment:{equipment_id}", "requires", state="pass", sourceLine=step.get("line"), provenance="SOP 原文")
+
+        # Chemical and control nodes are derived by the same deterministic
+        # parser used by the review service.  They are source-anchored
+        # assertions, not AI candidates or confirmed SDS/control facts, so the
+        # graph keeps them amber/unknown until a reviewer records evidence.
+        try:
+            parsed_sop = parse_sop(plan.get("source", ""))
+        except (TypeError, ValueError):
+            parsed_sop = {"substances": [], "steps": []}
+        chemical_nodes: dict[str, str] = {}
+        for substance in parsed_sop.get("substances", []):
+            # ``parse_sop`` returns Pydantic ``Substance`` values, while a
+            # future parser adapter may return mappings. Keep this projection
+            # JSON-safe for both forms and preserve enum values (``flammable``)
+            # instead of Python's ``HazardClass.FLAMMABLE`` representation.
+            if isinstance(substance, dict):
+                name = substance.get("name")
+                cas_number = substance.get("cas_number")
+                hazard_classes = substance.get("hazard_classes") or []
+            else:
+                name = getattr(substance, "name", None)
+                cas_number = getattr(substance, "cas_number", None)
+                hazard_classes = getattr(substance, "hazard_classes", None) or []
+            if not name:
+                continue
+            chemical_id = f"chemical:{pid}:{slug(name)}"
+            source_line = source_line_for(plan, str(name))
+            hazard_values = [getattr(item, "value", str(item)) for item in hazard_classes]
+            add_node(chemical_id, "chemical", str(name), planId=pid, name=str(name), cas=cas_number, hazardClasses=hazard_values, state="unknown", sourceLine=source_line, source=plan.get("sourceName"), provenance="SOP 原文关键词实体（待人工确认）", detail="来自已保存计划原文的确定性关键词识别；尚未关联经核验 SDS 或相容性结论。")
+            chemical_nodes[str(name)] = chemical_id
+        control_nodes: dict[str, str] = {}
+        for index, parsed_step in enumerate(parsed_sop.get("steps", []), 1):
+            source_line = getattr(parsed_step, "source_line", None) or getattr(parsed_step, "order", index)
+            sid = f"step:{pid}:{source_line}"
+            controls = list(getattr(parsed_step, "controls", None) or [])
+            ventilation = getattr(parsed_step, "ventilation", None)
+            waste_stream = getattr(parsed_step, "waste_stream", None)
+            controls += ([f"通风：{ventilation}"] if ventilation else [])
+            controls += ([f"废液：{waste_stream}"] if waste_stream else [])
+            for control in dict.fromkeys(str(item).strip() for item in controls if str(item).strip()):
+                control_id = f"control:{pid}:{slug(control)}"
+                add_node(control_id, "control", control, planId=pid, sourceLine=source_line, state="unknown", provenance="SOP 原文确定性解析（待人工确认）", detail="原文包含该控制线索；需要负责人确认控制措施、适用范围与证据。")
+                control_nodes[control] = control_id
+                if sid in nodes:
+                    add_edge(f"{pid}:step:{source_line}:control:{slug(control)}", sid, control_id, "requires-control", state="unknown", sourceLine=source_line, provenance="SOP 原文")
+            instruction = str(getattr(parsed_step, "instruction", ""))
+            for name, chemical_id in chemical_nodes.items():
+                if name in instruction and sid in nodes:
+                    add_edge(f"{pid}:step:{source_line}:chemical:{slug(name)}", sid, chemical_id, "mentions", state="unknown", sourceLine=source_line, provenance="SOP 原文")
         for reservation in plan.get("reservations", []):
             if not in_window(reservation):
                 continue
@@ -2023,6 +2142,23 @@ def get_relationship_graph(
             if check.get("equipmentId"):
                 add_edge(f"{check['id']}:equipment", cid, f"equipment:{check['equipmentId']}", "evaluates", state=check.get("state"), provenance="规则核验对象")
 
+        # Approval records are immutable human decisions.  A pending node is
+        # explicit when no decision exists; neither node type implies an
+        # approval result on its own.
+        plan_decisions = [decision for decision in w.get("decisions", []) if decision.get("planId") == pid]
+        if plan_decisions:
+            for decision in plan_decisions:
+                decision_id = f"approval:{decision.get('id')}"
+                disposition = decision.get("disposition", "approved")
+                same_basis = decision.get("basis") == basis(w, plan)
+                state = "pass" if disposition == "approved" and same_basis and current_status == "approved" else "unknown"
+                add_node(decision_id, "approval", "人工放行" if disposition == "approved" else "例外授权" if disposition == "exception" else "审批退回", approvalId=decision.get("id"), planId=pid, actor=decision.get("actor"), stage=decision.get("stage"), disposition=disposition, state=state, provenance="人工审批记录", detail=f"{decision.get('actor', '未记录')} · {decision.get('at', '')}{'' if same_basis else ' · 计划条件已变化，历史记录需重新核对'}")
+                add_edge(f"{pid}:approval:{decision.get('id')}", f"plan:{pid}", decision_id, "approval", state=state, provenance="人工审批记录")
+        else:
+            pending_id = f"approval:{pid}:pending"
+            add_node(pending_id, "approval", "等待人工放行", approvalId=None, planId=pid, state="unknown", provenance="审批链", detail="当前没有人工审批记录；AI 与规则结果不能替代负责人决策。")
+            add_edge(f"{pid}:approval:pending", f"plan:{pid}", pending_id, "approval", state="unknown", provenance="审批链")
+
     if nodeId:
         adjacency: dict[str, set[str]] = {}
         for edge in edges:
@@ -2040,7 +2176,9 @@ def get_relationship_graph(
         nodes = {key: value for key, value in nodes.items() if value["type"] in allowed_types}
     visible_ids = set(nodes)
     edges = [edge for edge in edges if edge["from"] in visible_ids and edge["to"] in visible_ids]
-    return {"revision": w.get("revision", 0), "planId": planId, "labId": labId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops, "labId": labId}}
+    if allowed_relations:
+        edges = [edge for edge in edges if edge["relation"] in allowed_relations]
+    return {"revision": w.get("revision", 0), "planId": planId, "labId": labId, "nodes": list(nodes.values()), "edges": edges, "filters": {"types": sorted(allowed_types), "relations": sorted(allowed_relations), "nodeId": nodeId, "dateFrom": dateFrom, "dateTo": dateTo, "hops": hops, "labId": labId}}
 
 @router.post("/actions")
 def mutate_workspace(body: Mutation, actor: str = Depends(local_owner)):

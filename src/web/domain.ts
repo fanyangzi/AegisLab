@@ -166,17 +166,38 @@ export function candidateWorkspace(w: Workspace, branch: Branch): Workspace {
   const p = next.plans.find(p => p.id === branch.planId)
   if (!p) throw new Error('计划不存在。')
   p.reservations = structuredClone(branch.reservations)
+  const equipmentStates = branch.equipmentStates ?? []
+  if (new Set(equipmentStates.map(item => item.equipmentId)).size !== equipmentStates.length) throw new Error('候选设备状态不能重复指定同一资源。')
+  for (const state of equipmentStates) {
+    const equipment = next.equipment.find(item => item.id === state.equipmentId)
+    if (!equipment) throw new Error(`候选字段目标不存在：${state.equipmentId}。`)
+    equipment.status = state.status
+  }
   const basePlan = w.plans.find(item => item.id === branch.planId)
   if (!basePlan) throw new Error('方案关联的计划不存在。')
   const baseById = new Map(basePlan.reservations.map(row => [row.id, row]))
   const candidateById = new Map(p.reservations.map(row => [row.id, row]))
+  const baseEquipmentById = new Map(w.equipment.map(item => [item.id, item]))
+  const candidateEquipmentById = new Map(next.equipment.map(item => [item.id, item]))
   for (const patch of branch.patches ?? []) {
-    if (!['reservation.equipmentId', 'reservation.start', 'reservation.end'].includes(patch.path)) throw new Error('候选字段路径不受支持。')
+    if (patch.path === 'equipment.status') {
+      const base = baseEquipmentById.get(patch.targetId), candidate = candidateEquipmentById.get(patch.targetId)
+      if (!base || !candidate) throw new Error(`候选字段目标不存在：${patch.targetId}。`)
+      if (base.status !== patch.before) throw new Error('候选字段基线已变化，请重新创建方案。')
+      if (candidate.status !== patch.after) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
+      if ((equipmentStates.find(item => item.equipmentId === patch.targetId)?.status) !== patch.after) throw new Error('设备状态候选必须与审计字段保持一致。')
+      continue
+    }
     const base = baseById.get(patch.targetId), candidate = candidateById.get(patch.targetId)
     if (!base || !candidate) throw new Error(`候选字段目标不存在：${patch.targetId}。`)
     const key = patch.path.slice('reservation.'.length) as keyof typeof base
     if (base[key] !== patch.before) throw new Error('候选字段基线已变化，请重新创建方案。')
     if (candidate[key] !== patch.after) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
+  }
+  const auditedEquipmentAfter = new Map((branch.patches ?? []).filter(patch => patch.path === 'equipment.status').map(patch => [patch.targetId, patch.after]))
+  for (const state of equipmentStates) {
+    const base = baseEquipmentById.get(state.equipmentId)
+    if (base && base.status !== state.status && auditedEquipmentAfter.get(state.equipmentId) !== state.status) throw new Error('设备状态候选必须与审计字段保持一致。')
   }
   assertWorkspace(next)
   return next
