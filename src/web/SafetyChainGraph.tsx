@@ -14,7 +14,11 @@ export type ServerGraphNode = {
   detail?: string; [key: string]: unknown
 }
 export type ServerGraphEdge = { id: string; from: string; to: string; relation: string; state?: string; provenance?: string; [key: string]: unknown }
-export type ServerGraph = { revision: number; planId?: string | null; labId?: string | null; nodes: ServerGraphNode[]; edges: ServerGraphEdge[]; filters?: Record<string, unknown> }
+export type ServerGraphPath = {
+  requested: boolean; from: string | null; to: string | null; found: boolean
+  nodeIds: string[]; edgeIds: string[]; hops: number | null
+}
+export type ServerGraph = { revision: number; planId?: string | null; labId?: string | null; nodes: ServerGraphNode[]; edges: ServerGraphEdge[]; path?: ServerGraphPath; filters?: Record<string, unknown> }
 
 export type ChainNodeType = 'plan' | 'step' | 'chemical' | 'equipment' | 'control' | 'rule' | 'document' | 'task' | 'approval'
 export const CHAIN_NODE_TYPES: ChainNodeType[] = ['plan', 'step', 'chemical', 'equipment', 'control', 'rule', 'document', 'task', 'approval']

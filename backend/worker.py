@@ -28,10 +28,15 @@ def run_once() -> bool:
     job = worker_store.claim_next_job()
     if not job:
         return False
+    # ``startedAt`` is the compare-and-set lease token returned by
+    # ``claim_next_job``.  If this process is paused long enough for another
+    # Worker to reclaim the row, every terminal write below must be rejected.
+    lease_token = job.get("startedAt")
     try:
         if job["kind"] == "analysis":
             spatial._run_analysis_sync(
-                job["planId"], retry=True, actor="后台 Worker", job_id_override=job["jobId"]
+                job["planId"], retry=True, actor="后台 Worker", job_id_override=job["jobId"],
+                job_started_at=lease_token,
             )
         elif job["kind"] == "expiry_recheck":
             as_of = (job.get("context") or {}).get("asOf")
@@ -46,13 +51,17 @@ def run_once() -> bool:
                 "generatedAt": spatial.now(),
                 "actor": "后台 Worker",
             })
-            worker_store.finish_job(job["jobId"], status="succeeded", result=report)
+            worker_store.finish_job(job["jobId"], status="succeeded", result=report, expected_started_at=lease_token)
         else:
-            worker_store.finish_job(job["jobId"], status="failed", error=f"不支持的任务类型: {job['kind']}")
+            worker_store.finish_job(job["jobId"], status="failed", error=f"不支持的任务类型: {job['kind']}", expected_started_at=lease_token)
     except Exception as error:  # the domain runner records its own failures
         current = worker_store.job(job["jobId"])
-        if current and current["status"] in {"queued", "running"}:
-            worker_store.finish_job(job["jobId"], status="failed", error=f"{type(error).__name__}: {str(error)[:500]}")
+        if current and current["status"] == "running" and current.get("startedAt") == lease_token:
+            worker_store.finish_job(
+                job["jobId"], status="failed",
+                error=f"{type(error).__name__}: {str(error)[:500]}",
+                expected_started_at=lease_token,
+            )
     return True
 
 

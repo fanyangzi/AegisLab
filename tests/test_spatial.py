@@ -92,6 +92,8 @@ class DomainTests(unittest.TestCase):
             'validUntil':'2026-10-09T23:59:00+08:00','content':'现场复核记录：联锁待确认。',
             'source':'现场检查表 / 记录 2026-10-09','reviewedBy':'旧值','reviewedAt':'2026-10-09T01:00:00+08:00',
             'sourceType':'upload','sourceLocator':'inspection/2026-10-09/A-01.txt',
+            'sourceFileName':'A-01.txt','sourceFileSize':48,'sourceMediaType':'text/plain',
+            'sourceLocations':[{'kind':'line','lineStart':1,'lineEnd':1,'label':'L1'}],
             'provenanceNote':'由负责人上传，等待独立核验。',
         }
         saved=s.apply_operation(w,'save_document',{'document':document},'负责人')
@@ -100,6 +102,7 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(stored['contentLength'],len(document['content']))
         self.assertEqual(stored['sourceType'],'upload')
         self.assertEqual(stored['sourceLocator'],document['sourceLocator'])
+        self.assertEqual(stored['sourceFileName'],'A-01.txt');self.assertEqual(stored['sourceLocations'][0]['lineStart'],1)
         self.assertTrue(stored['capturedAt'])
         check=next(c for c in s.check_workspace(saved) if c['planId']=='EXP-003' and c['code']=='EVIDENCE' and c['equipmentId']=='A-01')
         item=next(item for item in check['evidenceApplicability'] if item['documentId']==document['id'])
@@ -107,6 +110,10 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(item['reason'],'not-verified')
         self.assertEqual(item['coverage'],'complete')
         self.assertFalse(item['effectiveForAllReservations'])
+    def test_document_provenance_rejects_unanchored_location(self):
+        w=fixture();document=copy.deepcopy(w['documents'][0]);document['id']='doc-invalid-location'
+        document['sourceLocations']=[{'kind':'line','label':'missing coordinate'}]
+        with self.assertRaises(ValueError):s.validate_workspace({**w,'documents':[document]})
     def test_replacement_requires_source_reconciliation(self):
         w=fixture();w['plans'][0]['reservations'][0]['equipmentId']='F-02'
         self.assertTrue(any(c['planId']=='EXP-001' and c['code']=='BINDING' for c in s.check_workspace(w)))
@@ -875,6 +882,39 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(claimed['jobId'],created['jobId']);self.assertEqual(claimed['status'],'running')
         self.assertIsNone(durable.claim_next_job())
         self.assertEqual(durable.job(created['jobId'])['status'],'running')
+
+    def test_worker_reclaims_expired_lease_and_rejects_stale_finish(self):
+        created=self.store.begin_job(job_id='job-worker-recover-01',kind='expiry_recheck',plan_id=None,idempotency_key='idem-worker-recover-01',context={'asOf':'2026-10-11T00:00:00+08:00'})
+        durable=s.WorkspaceStore(self.path, recover_incomplete=False)
+        first=durable.claim_next_job()
+        self.assertEqual(first['status'],'running')
+        stale_token=first['startedAt']
+        # Simulate a crashed Worker whose lease has been idle for longer than
+        # the configured timeout.  A new Worker must reclaim it atomically.
+        with durable.connection() as conn:
+            conn.execute("UPDATE spatial_jobs SET started_at=? WHERE job_id=?", ('2000-01-01T00:00:00Z', created['jobId']))
+        with patch.dict(os.environ, {'AEGIS_SPATIAL_WORKER_LEASE_SECONDS':'1'}):
+            recovered=durable.claim_next_job()
+        self.assertEqual(recovered['jobId'],created['jobId'])
+        self.assertEqual(recovered['status'],'running')
+        self.assertNotEqual(recovered['startedAt'],stale_token)
+        self.assertIn('租约', recovered['error'])
+        with self.assertRaises(HTTPException) as result:
+            durable.finish_job(created['jobId'], status='succeeded', result={'stale':True}, expected_started_at=stale_token)
+        self.assertEqual(result.exception.status_code,409)
+        self.assertEqual(durable.job(created['jobId'])['status'],'running')
+        finished=durable.finish_job(created['jobId'], status='succeeded', result={'ok':True}, expected_started_at=recovered['startedAt'])
+        self.assertEqual(finished['status'],'succeeded')
+
+    def test_two_worker_store_instances_claim_one_job_only(self):
+        created=self.store.begin_job(job_id='job-worker-race-01',kind='expiry_recheck',plan_id=None,idempotency_key='idem-worker-race-01',context={'asOf':'2026-10-11T00:00:00+08:00'})
+        stores=[s.WorkspaceStore(self.path, recover_incomplete=False) for _ in range(2)]
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            claims=list(pool.map(lambda worker_store: worker_store.claim_next_job(), stores))
+        claimed=[item for item in claims if item is not None]
+        self.assertEqual(len(claimed),1)
+        self.assertEqual(claimed[0]['jobId'],created['jobId'])
+        self.assertEqual(self.store.job(created['jobId'])['status'],'running')
     def test_worker_expiry_report_marks_durable_worker(self):
         initialize(self.store)
         job=self.store.begin_job(job_id='job-worker-expiry-01',kind='expiry_recheck',plan_id=None,idempotency_key='idem-worker-expiry-01',context={'asOf':'2026-10-10T00:00:00+08:00'})
@@ -1188,6 +1228,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(r.status_code,200);payload=r.json();self.assertEqual(payload['locator'],'extracted-text-lines')
         self.assertEqual(payload['sourceType'],'upload');self.assertEqual(payload['sourceLocator'],'extracted-text-lines')
         self.assertEqual(payload['contentLength'],len(payload['text']));self.assertTrue(payload['capturedAt'])
+        self.assertEqual(payload['sourceFileName'],'test.md');self.assertEqual(payload['sourceFileSize'],len('计划文本\n检查 F-01'.encode()))
+        self.assertEqual([(row['lineStart'],row['lineEnd']) for row in payload['sourceLocations']],[(1,1),(2,2)])
     def test_unsupported_type_denied(self):self.assertEqual(self.client.post('/api/spatial/import-text?filename=evil.exe',content=b'abc').status_code,422)
     def test_scanned_pdf_empty_text_not_fabricated(self):
         from pypdf import PdfWriter
@@ -1198,7 +1240,18 @@ class ApiTests(unittest.TestCase):
         from docx import Document
         doc=Document();doc.add_paragraph('第一段');table=doc.add_table(rows=1,cols=2);table.cell(0,0).text='设备';table.cell(0,1).text='F-01';doc.add_paragraph('第二段');f=io.BytesIO();doc.save(f)
         r=self.client.post('/api/spatial/import-text?filename=test.docx',content=f.getvalue())
-        self.assertEqual(r.status_code,200);self.assertEqual(r.json()['text'],'第一段\n设备 | F-01\n第二段')
+        self.assertEqual(r.status_code,200);payload=r.json();self.assertEqual(payload['text'],'第一段\n设备 | F-01\n第二段')
+        self.assertEqual(payload['locator'],'docx-paragraphs');self.assertEqual([row['paragraph'] for row in payload['sourceLocations']],[1,2,3])
+    def test_pdf_import_retains_page_location_for_text_layer(self):
+        objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
+        stream='BT /F1 12 Tf 72 720 Td (A-01 inspection) Tj ET';objects.append(f'<< /Length {len(stream.encode())} >>\nstream\n{stream}\nendstream')
+        pdf=b'%PDF-1.4\n';offsets=[0]
+        for index,obj in enumerate(objects,1):offsets.append(len(pdf));pdf+=f'{index} 0 obj\n{obj}\nendobj\n'.encode()
+        xref=len(pdf);pdf+=f'xref\n0 {len(objects)+1}\n0000000000 65535 f \n'.encode()
+        for offset in offsets[1:]:pdf+=f'{offset:010d} 00000 n \n'.encode()
+        pdf+=f'trailer << /Size {len(objects)+1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n'.encode()
+        r=self.client.post('/api/spatial/import-text?filename=inspection.pdf',content=pdf)
+        self.assertEqual(r.status_code,200,r.text);payload=r.json();self.assertEqual(payload['locator'],'pdf-pages-text-layer');self.assertEqual(payload['sourceLocations'][0]['page'],1)
     def test_analysis_cannot_mutate_workspace(self):
         initialize(s.store());before=s.store().read()
         with patch.dict(os.environ,{'LABSAFETY_LLM_API_KEY':''}):r=self.client.post('/api/spatial/plans/EXP-001/analysis',json={})

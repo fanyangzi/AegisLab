@@ -43,6 +43,25 @@ def job_execution_mode() -> str:
     value = os.getenv("AEGIS_SPATIAL_JOB_EXECUTION", "process-local").strip().lower()
     return value if value in {"process-local", "worker"} else "process-local"
 
+
+def worker_lease_seconds() -> float:
+    """Return the durable Worker lease timeout.
+
+    A running row is only eligible for recovery after this interval.  Keeping
+    the value configurable makes a local restart drill deterministic while a
+    normal deployment gets a long enough lease for model calls.  Invalid or
+    non-positive values deliberately fall back to the safe default instead of
+    allowing two workers to reclaim a live job immediately.
+    """
+    raw = os.getenv("AEGIS_SPATIAL_WORKER_LEASE_SECONDS", "900").strip()
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return 900.0
+    if value <= 0 or value > 7 * 24 * 60 * 60:
+        return 900.0
+    return value
+
 # The browser scene uses a deliberately small set of semantic resource kinds.
 # Keeping their approximate footprint here gives the server enough information
 # to place a newly-created resource without making the scene layout part of the
@@ -422,6 +441,22 @@ class Plan(StrictModel):
     # server rechecks the current plan and its evidence basis.
     lifecycle: Literal["draft", "submitted", "revising", "archived", "cancelled"] | None = None
 
+class DocumentLocation(StrictModel):
+    """A stable pointer into the extracted source, without claiming page OCR.
+
+    ``page`` is populated for PDF sources, ``paragraph`` for DOCX body/table
+    units, and ``lineStart``/``lineEnd`` for plain text.  The coordinates are
+    copied from the extractor and let a client return to the exact extracted
+    segment.  Missing coordinates mean that
+    the extractor could not provide that coordinate; they are never inferred.
+    """
+    kind: Literal["page", "paragraph", "line", "range"]
+    page: int | None = Field(default=None, ge=1, strict=True)
+    paragraph: int | None = Field(default=None, ge=1, strict=True)
+    lineStart: int | None = Field(default=None, ge=1, strict=True)
+    lineEnd: int | None = Field(default=None, ge=1, strict=True)
+    label: str | None = Field(default=None, max_length=240)
+
 class Document(StrictModel):
     id: str
     name: str = Field(min_length=1, max_length=240)
@@ -444,6 +479,10 @@ class Document(StrictModel):
     capturedAt: str | None = None
     contentLength: int | None = Field(default=None, ge=0, strict=True)
     provenanceNote: str | None = Field(default=None, max_length=1000)
+    sourceFileName: str | None = Field(default=None, max_length=240)
+    sourceFileSize: int | None = Field(default=None, ge=0, strict=True)
+    sourceMediaType: str | None = Field(default=None, max_length=180)
+    sourceLocations: list[DocumentLocation] = Field(default_factory=list, max_length=2000)
 
 class Task(StrictModel):
     id: str
@@ -645,7 +684,9 @@ def migrate_workspace_import(payload: dict) -> tuple[dict, dict[str, Any]]:
         "reviewed_by": "reviewedBy", "reviewed_at": "reviewedAt",
         "source_type": "sourceType", "source_locator": "sourceLocator",
         "captured_at": "capturedAt", "content_length": "contentLength",
-        "provenance_note": "provenanceNote",
+        "provenance_note": "provenanceNote", "source_file_name": "sourceFileName",
+        "source_file_size": "sourceFileSize", "source_media_type": "sourceMediaType",
+        "source_locations": "sourceLocations",
     }
     for document in raw.get("documents", []):
         if not isinstance(document, dict):
@@ -739,6 +780,16 @@ def validate_workspace(w: dict) -> dict:
             dt(d["capturedAt"])
         if d.get("contentLength") is not None and d["contentLength"] != len(d["content"]):
             raise ValueError("资料内容长度与 provenance 记录不一致。")
+        if d.get("sourceFileName") is not None and not str(d["sourceFileName"]).strip():
+            raise ValueError("资料原始文件名不能是空白。")
+        if d.get("sourceFileSize") is not None and d.get("sourceType") != "upload":
+            raise ValueError("原始文件大小只能用于上传资料。")
+        for location in d.get("sourceLocations", []):
+            coordinates = [location.get("page"), location.get("paragraph"), location.get("lineStart"), location.get("lineEnd")]
+            if not any(value is not None for value in coordinates):
+                raise ValueError("资料定位至少要包含页、段落或行坐标。")
+            if location.get("lineStart") is not None and location.get("lineEnd") is not None and location["lineStart"] > location["lineEnd"]:
+                raise ValueError("资料行定位范围无效。")
     for t in w["tasks"]:
         dt(t["dueAt"])
         if (t["planId"] is not None and t["planId"] not in plans) or (t["equipmentId"] is not None and t["equipmentId"] not in equipment):
@@ -863,7 +914,7 @@ def basis(w: dict, p: dict) -> str:
         # document has no provenance metadata.  New records include only the
         # fields that were actually captured, so absent metadata is not a
         # fabricated claim and the browser/Python parity contract survives.
-        document_facts.update({k: d[k] for k in ("sourceType", "sourceLocator", "capturedAt", "contentLength", "provenanceNote") if d.get(k) is not None})
+        document_facts.update({k: d[k] for k in ("sourceType", "sourceLocator", "capturedAt", "contentLength", "provenanceNote", "sourceFileName", "sourceFileSize", "sourceMediaType", "sourceLocations") if d.get(k) is not None})
         relevant_documents.append(document_facts)
     relevant_documents.sort(key=lambda d: (d.get("equipmentId") or "", d.get("kind", ""), d.get("id", "")))
     other = []
@@ -1134,7 +1185,9 @@ def check_workspace(w: dict) -> list[dict]:
                         "validFrom": d["validFrom"], "validUntil": d["validUntil"],
                         "source": d["source"], "sourceType": d.get("sourceType"),
                         "sourceLocator": d.get("sourceLocator"), "capturedAt": d.get("capturedAt"),
-                        "contentLength": d.get("contentLength"),
+                        "contentLength": d.get("contentLength"), "sourceFileName": d.get("sourceFileName"),
+                        "sourceFileSize": d.get("sourceFileSize"), "sourceMediaType": d.get("sourceMediaType"),
+                        "sourceLocations": d.get("sourceLocations", []),
                         "provenanceNote": d.get("provenanceNote"),
                         "reviewedBy": d.get("reviewedBy"), "reviewedAt": d.get("reviewedAt"),
                     }
@@ -1753,15 +1806,16 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         previous = next((item for item in w["documents"] if item["id"] == d["id"]), None)
         # Preserve capture provenance across edits while recording a bounded,
         # inspectable text length for the exact content that was submitted.
-        # This intentionally avoids treating a digest as evidence of source
-        # authority; reviewers still verify source, object, version and time.
+        # Metadata records where the text came from; it never asserts source
+        # authority. Reviewers still verify source, object, version and time.
         if previous:
-            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote"):
+            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote", "sourceFileName", "sourceFileSize", "sourceMediaType", "sourceLocations"):
                 if d.get(field) is None and previous.get(field) is not None:
                     d[field] = previous[field]
         d.setdefault("sourceType", "manual")
         d.setdefault("capturedAt", now())
         d["contentLength"] = len(d.get("content", ""))
+        d.setdefault("sourceLocations", [])
         d.update(status="pending", reviewedBy=None, reviewedAt=None)
         upsert("documents", d)
         object_id, summary = d["id"], "提交资料，等待独立核验"
@@ -2399,13 +2453,35 @@ class WorkspaceStore:
 
         SQLite's immediate transaction is enough for the single-node local
         deployment: two worker processes cannot claim the same row, and a
-        cancelled/terminal row is left immutable.
+        cancelled/terminal row is left immutable.  A worker crash can leave a
+        ``running`` row behind, so an expired lease is moved back to ``queued``
+        in this same transaction.  The previous ``started_at`` value is the
+        ownership token; callers must pass it to :meth:`finish_job` so an old
+        worker cannot publish a result after a new worker reclaimed the job.
         """
         if not kinds:
             return None
         placeholders = ",".join("?" for _ in kinds)
         with self.connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
+            # Only a durable Worker opts into this method.  Requeueing is
+            # deliberately lease-based rather than startup-based: a worker
+            # that is still processing a slow model call keeps its ownership
+            # until the configured timeout elapses.
+            lease_cutoff = datetime.now(timezone.utc) - timedelta(seconds=worker_lease_seconds())
+            cutoff_text = lease_cutoff.isoformat().replace("+00:00", "Z")
+            recovery_message = (
+                "Worker 租约已过期，任务已重新入队；旧 Worker 不再拥有写入权限。"
+            )
+            conn.execute(
+                f"""UPDATE spatial_jobs
+                    SET status='queued', started_at=NULL, finished_at=NULL,
+                        error=?
+                    WHERE status='running' AND kind IN ({placeholders})
+                      AND started_at IS NOT NULL
+                      AND julianday(started_at) < julianday(?)""",
+                (recovery_message, *kinds, cutoff_text),
+            )
             row = conn.execute(
                 f"SELECT * FROM spatial_jobs WHERE status='queued' AND kind IN ({placeholders}) ORDER BY created_at ASC, job_id ASC LIMIT 1",
                 tuple(kinds),
@@ -2414,14 +2490,31 @@ class WorkspaceStore:
                 return None
             job_id = row[0]
             updated = conn.execute(
-                "UPDATE spatial_jobs SET status='running', started_at=COALESCE(started_at,?), error=NULL WHERE job_id=? AND status='queued'",
+                "UPDATE spatial_jobs SET status='running', started_at=COALESCE(started_at,?) WHERE job_id=? AND status='queued'",
                 (now(), job_id),
             )
             if updated.rowcount != 1:
                 return None
             row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
         return self._job_row(row)
-    def finish_job(self, job_id: str, *, status: str, result: dict | None = None, error: str | None = None) -> dict:
+
+    def finish_job(
+        self,
+        job_id: str,
+        *,
+        status: str,
+        result: dict | None = None,
+        error: str | None = None,
+        expected_started_at: str | None = None,
+    ) -> dict:
+        """Persist a terminal result, optionally guarded by a Worker lease.
+
+        ``expected_started_at`` is intentionally optional for compatibility
+        with process-local handlers.  A durable Worker passes the timestamp it
+        received from :meth:`claim_next_job`; if another Worker has reclaimed
+        the row, the compare-and-set fails and the stale process cannot mark
+        the newer attempt failed or succeeded.
+        """
         if status not in {"succeeded", "failed", "cancelled"}:
             raise ValueError("无效的任务终态。")
         with self.connection() as conn:
@@ -2433,10 +2526,18 @@ class WorkspaceStore:
                 if current == status:
                     return self._job_row(row)
                 raise HTTPException(409, f"任务已经进入终态 {current}，不能改成 {status}。")
+            if expected_started_at is not None and row[6] != expected_started_at:
+                raise HTTPException(409, "Worker 租约已失效，任务已由其他 Worker 接管。")
             if status == "succeeded" and current != "running":
                 raise HTTPException(409, "只有运行中的任务可以完成。")
-            conn.execute("UPDATE spatial_jobs SET status=?,finished_at=?,result_payload=?,error=? WHERE job_id=? AND status IN ('queued','running')",
-                         (status, now(), json.dumps(result, ensure_ascii=False) if result is not None else None, error, job_id))
+            if expected_started_at is None:
+                conn.execute("UPDATE spatial_jobs SET status=?,finished_at=?,result_payload=?,error=? WHERE job_id=? AND status IN ('queued','running')",
+                             (status, now(), json.dumps(result, ensure_ascii=False) if result is not None else None, error, job_id))
+            else:
+                updated = conn.execute("UPDATE spatial_jobs SET status=?,finished_at=?,result_payload=?,error=? WHERE job_id=? AND status='running' AND started_at=?",
+                                       (status, now(), json.dumps(result, ensure_ascii=False) if result is not None else None, error, job_id, expected_started_at))
+                if updated.rowcount != 1:
+                    raise HTTPException(409, "Worker 租约已失效，任务已由其他 Worker 接管。")
             row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
         return self._job_row(row)
     def cancel_job(self, job_id: str, *, reason: str = "由负责人取消") -> dict:
@@ -3019,7 +3120,7 @@ def get_relationship_graph(
                 if document.get("equipmentId") != equipment_id:
                     continue
                 did = f"document:{document['id']}"
-                add_node(did, "document", document.get("name", document["id"]), documentId=document["id"], equipmentId=equipment_id, state=document.get("status"), status=document.get("status"), validFrom=document.get("validFrom"), validUntil=document.get("validUntil"), source=document.get("source"), sourceType=document.get("sourceType"), sourceLocator=document.get("sourceLocator"), capturedAt=document.get("capturedAt"))
+                add_node(did, "document", document.get("name", document["id"]), documentId=document["id"], equipmentId=equipment_id, state=document.get("status"), status=document.get("status"), validFrom=document.get("validFrom"), validUntil=document.get("validUntil"), source=document.get("source"), sourceType=document.get("sourceType"), sourceLocator=document.get("sourceLocator"), capturedAt=document.get("capturedAt"), sourceFileName=document.get("sourceFileName"), sourceFileSize=document.get("sourceFileSize"), sourceLocations=document.get("sourceLocations", []))
                 add_edge(f"{equipment_id}:document:{document['id']}", f"equipment:{equipment_id}", did, "evidence", status=document.get("status"), specVersion=document.get("specVersion"), provenance=document.get("source") or document.get("sourceType"))
         for task in tasks:
             if task.get("planId") != pid:
@@ -3277,9 +3378,31 @@ def acknowledge_notification(event_id: str, request: Request, actor: str = Depen
     }
 
 
+def _line_locations(text: str) -> list[dict[str, Any]]:
+    """Return bounded line ranges for a plain-text source.
+
+    A location is a navigation contract, not a claim about PDF page layout.
+    Long files are grouped into deterministic ranges so a large upload cannot
+    turn provenance metadata into an unbounded workspace payload.
+    """
+    lines = text.splitlines() or [""]
+    if len(lines) <= 2000:
+        return [{"kind": "line", "lineStart": index, "lineEnd": index, "label": f"L{index}"} for index in range(1, len(lines) + 1)]
+    chunk_size = 100
+    return [
+        {"kind": "range", "lineStart": start, "lineEnd": min(start + chunk_size - 1, len(lines)), "label": f"L{start}–L{min(start + chunk_size - 1, len(lines))}"}
+        for start in range(1, len(lines) + 1, chunk_size)
+    ]
+
+
 @router.post('/import-text')
 async def import_text(request: Request, filename: str, actor: str = Depends(local_owner)):
-    """Bounded document extraction: never execute document commands or macros."""
+    """Bounded document extraction with explicit source coordinates.
+
+    The service keeps only extracted text and provenance metadata.  It does
+    not retain the uploaded binary, execute macros, or claim that extraction
+    itself verifies the source or its safety applicability.
+    """
     from io import BytesIO
     import zipfile
     raw = bytearray()
@@ -3288,9 +3411,14 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
         if len(raw) > 8 * 1024 * 1024:
             raise HTTPException(413, '文件不能超过 8 MB。')
     suffix = Path(filename).suffix.lower()
+    source_file_name = Path(filename).name
+    source_media_type = request.headers.get("content-type") or "application/octet-stream"
+    source_locations: list[dict[str, Any]] = []
+    locator = "extracted-text-lines"
     try:
         if suffix in {'.txt', '.md'}:
             text = raw.decode('utf-8-sig')
+            source_locations = _line_locations(text)
         elif suffix == '.docx':
             from docx import Document as WordDocument
             with zipfile.ZipFile(BytesIO(raw)) as archive:
@@ -3308,6 +3436,8 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
                 elif element.tag == qn('w:tbl'):
                     parts.extend(' | '.join(c.text for c in row.cells) for row in Table(element, doc).rows)
             text = '\n'.join(parts)
+            source_locations = [{"kind": "paragraph", "paragraph": index, "label": f"段落 {index}"} for index in range(1, len(parts) + 1)]
+            locator = "docx-paragraphs"
         elif suffix == '.pdf':
             from pypdf import PdfReader
             reader = PdfReader(BytesIO(raw), strict=False)
@@ -3315,7 +3445,10 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
                 raise ValueError('请先移除文档密码。')
             if len(reader.pages) > 100:
                 raise ValueError('本次导入最多支持 100 页。')
-            text = '\n\n'.join(page.extract_text() or '' for page in reader.pages)
+            page_texts = [page.extract_text() or '' for page in reader.pages]
+            text = '\n\n'.join(page_texts)
+            source_locations = [{"kind": "page", "page": index, "label": f"PDF 第 {index} 页"} for index in range(1, len(page_texts) + 1)]
+            locator = "pdf-pages-text-layer"
         else:
             raise ValueError('仅支持 TXT、Markdown、DOCX 和带文本层的 PDF。')
         if not text.strip():
@@ -3323,15 +3456,18 @@ async def import_text(request: Request, filename: str, actor: str = Depends(loca
         if len(text) > 100000:
             raise ValueError('提取文本超过 100,000 字符，请按实验计划拆分。')
         return {
-            'filename': Path(filename).name,
+            'filename': source_file_name,
             'text': text,
-            'sha256': hashlib.sha256(raw).hexdigest(),
             'sourceType': 'upload',
-            'sourceLocator': 'extracted-text-lines',
-            'locator': 'extracted-text-lines',
+            'sourceLocator': locator,
+            'locator': locator,
             'capturedAt': now(),
             'contentLength': len(text),
-            'note': '原文定位对应提取后文本行；不是 PDF 版面坐标。上传成功不会自动核验或证明适用性。',
+            'sourceFileName': source_file_name,
+            'sourceFileSize': len(raw),
+            'sourceMediaType': source_media_type,
+            'sourceLocations': source_locations,
+            'note': '原文定位对应提取后的行、段落或 PDF 文本层；不是未经 OCR 验证的版面坐标。上传成功不会自动核验或证明适用性。',
         }
     except HTTPException:
         raise
@@ -3441,7 +3577,13 @@ def cancel_job(job_id: str, request: Request, actor: str = Depends(local_owner))
     return store().cancel_job(job_id, reason=f"{actor} 取消任务")
 
 
-def _run_analysis_sync(plan_id: str, retry: bool = False, actor: str = "本机负责人", job_id_override: str | None = None):
+def _run_analysis_sync(
+    plan_id: str,
+    retry: bool = False,
+    actor: str = "本机负责人",
+    job_id_override: str | None = None,
+    job_started_at: str | None = None,
+):
     """Reuse legacy parsing/rules and optional LLM explanation without approval."""
     from .parser import parse_sop
     from .llm import LLMAdapter
@@ -3586,17 +3728,31 @@ def _run_analysis_sync(plan_id: str, retry: bool = False, actor: str = "本机�
             raise HTTPException(409, "分析任务已取消，未发布分析结果。")
         store().save_evaluation_run(evaluation_record)
         store().save_analysis_run(response)
-        job = store().finish_job(job_id, status="succeeded", result=response)
+        job = store().finish_job(
+            job_id, status="succeeded", result=response,
+            expected_started_at=job_started_at,
+        )
         return {**response, "job": job}
     except HTTPException:
         current_job = store().job(job_id)
-        if current_job and current_job["status"] in {"queued", "running"}:
-            store().finish_job(job_id, status="failed", error="分析请求被拒绝或中断。")
+        if current_job and current_job["status"] in {"queued", "running"} and (
+            job_started_at is None or current_job.get("startedAt") == job_started_at
+        ):
+            store().finish_job(
+                job_id, status="failed", error="分析请求被拒绝或中断。",
+                expected_started_at=job_started_at,
+            )
         raise
     except Exception as error:
         current_job = store().job(job_id)
-        if current_job and current_job["status"] in {"queued", "running"}:
-            store().finish_job(job_id, status="failed", error=f"{type(error).__name__}: {str(error)[:500]}")
+        if current_job and current_job["status"] in {"queued", "running"} and (
+            job_started_at is None or current_job.get("startedAt") == job_started_at
+        ):
+            store().finish_job(
+                job_id, status="failed",
+                error=f"{type(error).__name__}: {str(error)[:500]}",
+                expected_started_at=job_started_at,
+            )
         raise HTTPException(500, "分析任务失败；请查看任务记录后修改计划或重新发起。") from error
 
 
