@@ -475,6 +475,71 @@ class DomainTests(unittest.TestCase):
             s.apply_operation(saved,'review_branch_patch',{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'rejected'},'负责人')
         with self.assertRaisesRegex(ValueError,'accepted 或 rejected'):
             s.apply_operation(saved,'review_branch_patch',{'branchId':branch['id'],'path':'reservation.start','targetId':base['id'],'disposition':'pending','reviewNote':'等待确认'},'负责人')
+
+    def test_branch_non_reservation_fields_are_isolated_and_apply_after_review(self):
+        """Personnel, zone, controls and evidence scope stay candidate-only."""
+        w=fixture();p=copy.deepcopy(next(item for item in w['plans'] if item['id']=='EXP-003'))
+        equipment=copy.deepcopy(next(item for item in w['equipment'] if item['id']=='A-01'))
+        document=copy.deepcopy(next(item for item in w['documents'] if item['id']=='doc-A-01'))
+        zone_before=equipment.get('zone')
+        controls_before=list(equipment.get('controlTags', []))
+        owner_before=(p['owner'],equipment['owner'])
+        valid_until_after='2026-10-31T23:59:00+08:00'
+        branch={
+            'id':'branch-fields-01','name':'责任区与适用性候选','planId':p['id'],'baseRevision':p['revision'],
+            'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),'createdAt':s.now(),
+            'patches':[
+                {'path':'plan.owner','targetId':p['id'],'before':p['owner'],'after':'新实验负责人','reason':'候选负责人已确认'},
+                {'path':'equipment.owner','targetId':equipment['id'],'before':equipment['owner'],'after':'分析平台管理员','reason':'候选责任人归属'},
+                {'path':'equipment.zone','targetId':equipment['id'],'before':zone_before,'after':'A 区 · 湿化学操作岛','reason':'候选区域标签'},
+                {'path':'equipment.x','targetId':equipment['id'],'before':equipment['x'],'after':equipment['x']+0.4,'reason':'候选布局微调'},
+                {'path':'equipment.controlTags','targetId':equipment['id'],'before':controls_before,'after':controls_before+['双人复核'], 'reason':'候选控制措施'},
+                {'path':'document.validUntil','targetId':document['id'],'before':document['validUntil'],'after':valid_until_after,'reason':'候选资料适用窗口'},
+            ],
+        }
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        # Saving a branch must not mutate any formal business object.
+        self.assertEqual(next(item for item in saved['plans'] if item['id']==p['id'])['owner'],owner_before[0])
+        self.assertEqual(next(item for item in saved['equipment'] if item['id']==equipment['id'])['owner'],owner_before[1])
+        self.assertEqual(next(item for item in saved['equipment'] if item['id']==equipment['id']).get('zone'),zone_before)
+        self.assertEqual(next(item for item in saved['documents'] if item['id']==document['id'])['validUntil'],document['validUntil'])
+        # Reject only the region proposal; accepted personnel, controls and
+        # applicability fields remain in the isolated candidate.
+        reviewed=s.apply_operation(saved,'review_branch_patch',{
+            'branchId':branch['id'],'path':'equipment.zone','targetId':equipment['id'],
+            'disposition':'rejected','reviewNote':'现场区域尚未完成发布确认。'},'安全负责人')
+        stored=next(item for item in reviewed['branches'] if item['id']==branch['id'])
+        zone_patch=next(item for item in stored['patches'] if item['path']=='equipment.zone')
+        self.assertEqual(zone_patch['disposition'],'rejected')
+        applied=s.apply_operation(reviewed,'apply_branch',{'id':branch['id']},'安全负责人')
+        applied_plan=next(item for item in applied['plans'] if item['id']==p['id'])
+        applied_equipment=next(item for item in applied['equipment'] if item['id']==equipment['id'])
+        applied_document=next(item for item in applied['documents'] if item['id']==document['id'])
+        self.assertEqual(applied_plan['owner'],'新实验负责人')
+        self.assertEqual(applied_equipment['owner'],'分析平台管理员')
+        self.assertIsNone(applied_equipment.get('zone'))
+        self.assertAlmostEqual(applied_equipment['x'],equipment['x']+0.4)
+        self.assertIn('双人复核',applied_equipment['controlTags'])
+        self.assertEqual(applied_document['validUntil'],valid_until_after)
+        self.assertEqual(applied_plan['revision'],p['revision']+1)
+
+    def test_branch_non_reservation_patch_types_targets_and_basis_are_strict(self):
+        w=fixture();p=next(item for item in w['plans'] if item['id']=='EXP-003');e=next(item for item in w['equipment'] if item['id']=='A-01')
+        base_branch={'id':'branch-fields-02','name':'严格字段校验','planId':p['id'],'baseRevision':p['revision'],'baseBasis':s.basis(w,p),'reservations':copy.deepcopy(p['reservations']),'createdAt':s.now()}
+        bad=copy.deepcopy(base_branch);bad['patches']=[{'path':'equipment.controlTags','targetId':e['id'],'before':'不是列表','after':['双人复核'],'reason':'错误类型'}]
+        with self.assertRaisesRegex(ValueError,'文本列表'):
+            s.apply_operation(w,'save_branch',{'branch':bad},'负责人')
+        bad=copy.deepcopy(base_branch);bad['patches']=[{'path':'equipment.owner','targetId':'missing','before':e['owner'],'after':'其他人','reason':'不存在对象'}]
+        with self.assertRaisesRegex(ValueError,'目标不存在'):
+            s.apply_operation(w,'save_branch',{'branch':bad},'负责人')
+        bad=copy.deepcopy(base_branch);bad['patches']=[{'path':'document.status','targetId':'doc-A-01','before':'pending','after':'verified','reason':'禁止绕过核验'}]
+        with self.assertRaisesRegex(ValueError,'document.status'):
+            s.apply_operation(w,'save_branch',{'branch':bad},'负责人')
+        branch=copy.deepcopy(base_branch);branch['patches']=[{'path':'equipment.owner','targetId':e['id'],'before':e['owner'],'after':'其他责任人','reason':'责任人候选'}]
+        saved=s.apply_operation(w,'save_branch',{'branch':branch},'负责人')
+        changed=copy.deepcopy(saved);next(item for item in changed['equipment'] if item['id']==e['id'])['owner']='并发改动'
+        with self.assertRaisesRegex(ValueError,'基线已变化'):
+            s.apply_operation(changed,'apply_branch',{'id':branch['id']},'负责人')
     def test_typescript_python_parity(self):
         path=Path(__file__).with_name('web-parity.json')
         if not path.exists():self.skipTest('Generate with node scripts/test-web.mjs --parity')

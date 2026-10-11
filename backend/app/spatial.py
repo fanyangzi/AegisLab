@@ -212,6 +212,10 @@ class Equipment(StrictModel):
     x: float = Field(ge=-20, le=20)
     z: float = Field(ge=-20, le=20)
     rotation: float = Field(ge=-360, le=360)
+    # Optional semantic room/zone label.  Existing workspaces do not need to
+    # carry it; a branch may propose a zone change without inventing a lab
+    # or pretending that a coordinate is a named operational area.
+    zone: str | None = Field(default=None, max_length=180)
     capacity: int = Field(ge=1, le=100, strict=True)
     status: Literal["available", "unavailable", "unknown"]
     owner: str = Field(max_length=180)
@@ -256,10 +260,19 @@ class BranchPatch(StrictModel):
     is checked against the branch base and ``after`` against the candidate
     state at save/apply time.
     """
-    path: Literal["reservation.equipmentId", "reservation.start", "reservation.end", "equipment.status"]
+    path: Literal[
+        "reservation.equipmentId", "reservation.start", "reservation.end", "equipment.status",
+        "plan.owner", "equipment.owner", "equipment.zone", "equipment.x", "equipment.z",
+        "equipment.rotation", "equipment.controlTags", "equipment.requiredTraining",
+        "document.equipmentId", "document.specVersion", "document.validFrom", "document.validUntil",
+    ]
     targetId: str = Field(min_length=1, max_length=128)
-    before: str
-    after: str
+    # Reservation values are strings, but operational fields can be numeric,
+    # nullable strings, or bounded string lists.  Keeping the exact JSON value
+    # in before/after avoids lossy string coercion while preserving a readable
+    # field-level audit record.
+    before: Any
+    after: Any
     reason: str = Field(min_length=1, max_length=500)
     # Candidate edits are initially accepted for backwards compatibility with
     # saved branches.  A reviewer can explicitly reject one field without
@@ -275,6 +288,110 @@ class BranchEquipmentState(StrictModel):
 
     equipmentId: str = Field(min_length=1, max_length=128)
     status: Literal["available", "unavailable", "unknown"]
+
+
+# Branch fields deliberately name a bounded set of business properties.  A
+# generic JSON pointer would let a candidate mutate evidence, approval
+# history, or unrelated workspace records without a reviewable contract.
+BRANCH_PATCH_PATHS = frozenset({
+    "reservation.equipmentId", "reservation.start", "reservation.end", "equipment.status",
+    "plan.owner", "equipment.owner", "equipment.zone", "equipment.x", "equipment.z",
+    "equipment.rotation", "equipment.controlTags", "equipment.requiredTraining",
+    "document.equipmentId", "document.specVersion", "document.validFrom", "document.validUntil",
+})
+
+_BRANCH_PATCH_FIELDS: dict[str, tuple[str, str, str]] = {
+    "reservation.equipmentId": ("reservation", "equipmentId", "text"),
+    "reservation.start": ("reservation", "start", "text"),
+    "reservation.end": ("reservation", "end", "text"),
+    "equipment.status": ("equipment", "status", "status"),
+    "plan.owner": ("plan", "owner", "text"),
+    "equipment.owner": ("equipment", "owner", "text"),
+    "equipment.zone": ("equipment", "zone", "nullable-text"),
+    "equipment.x": ("equipment", "x", "coordinate"),
+    "equipment.z": ("equipment", "z", "coordinate"),
+    "equipment.rotation": ("equipment", "rotation", "rotation"),
+    "equipment.controlTags": ("equipment", "controlTags", "tags"),
+    "equipment.requiredTraining": ("equipment", "requiredTraining", "tags"),
+    "document.equipmentId": ("document", "equipmentId", "nullable-text"),
+    "document.specVersion": ("document", "specVersion", "positive-int"),
+    "document.validFrom": ("document", "validFrom", "text"),
+    "document.validUntil": ("document", "validUntil", "text"),
+}
+
+
+def _branch_patch_value(path: str, value: Any) -> Any:
+    """Validate and return one field-level branch value.
+
+    ``BranchPatch`` keeps values as JSON so list and numeric changes do not
+    silently turn into strings.  This helper is the path-specific type gate
+    used by save, review, candidate projection, and apply.
+    """
+    spec = _BRANCH_PATCH_FIELDS.get(path)
+    if spec is None:
+        raise ValueError("候选字段路径无效。")
+    kind = spec[2]
+    if kind == "text":
+        if not isinstance(value, str) or not value.strip() or len(value) > 1000:
+            raise ValueError(f"{path} 必须是非空文本。")
+        return value
+    if kind == "nullable-text":
+        if value is not None and (not isinstance(value, str) or len(value) > 1000):
+            raise ValueError(f"{path} 必须是文本或 null。")
+        return value
+    if kind == "status":
+        if value not in {"available", "unavailable", "unknown"}:
+            raise ValueError("设备状态候选值无效。")
+        return value
+    if kind in {"coordinate", "rotation"}:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{path} 必须是数字。")
+        numeric = float(value)
+        if kind == "coordinate" and not -20 <= numeric <= 20:
+            raise ValueError(f"{path} 超出实验室坐标范围。")
+        if kind == "rotation" and not -360 <= numeric <= 360:
+            raise ValueError(f"{path} 超出朝向范围。")
+        return value
+    if kind == "positive-int":
+        if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+            raise ValueError(f"{path} 必须是正整数。")
+        return value
+    if kind == "tags":
+        if not isinstance(value, list) or len(value) > 40 or any(not isinstance(item, str) or not item.strip() or len(item) > 180 for item in value):
+            raise ValueError(f"{path} 必须是最多 40 项的文本列表。")
+        if len(value) != len(set(value)):
+            raise ValueError(f"{path} 不能包含重复项。")
+        return value
+    raise ValueError("候选字段类型未配置。")
+
+
+def _branch_patch_target(workspace: dict, plan_id: str, path: str, target_id: str) -> tuple[dict, str] | None:
+    """Resolve a branch patch to one mutable object and field.
+
+    The resolver is intentionally scoped to the branch's plan for plan and
+    reservation fields.  Equipment and documents remain workspace objects but
+    are still required to exist before a patch can be saved.
+    """
+    spec = _BRANCH_PATCH_FIELDS.get(path)
+    if spec is None:
+        return None
+    collection, field, _ = spec
+    if collection == "plan":
+        plan = next((item for item in workspace.get("plans", []) if item["id"] == plan_id), None)
+        return (plan, field) if plan is not None and target_id == plan_id else None
+    if collection == "reservation":
+        plan = next((item for item in workspace.get("plans", []) if item["id"] == plan_id), None)
+        if plan is None:
+            return None
+        reservation = next((item for item in plan.get("reservations", []) if item["id"] == target_id), None)
+        return (reservation, field) if reservation is not None else None
+    if collection == "equipment":
+        equipment = next((item for item in workspace.get("equipment", []) if item["id"] == target_id), None)
+        return (equipment, field) if equipment is not None else None
+    if collection == "document":
+        document = next((item for item in workspace.get("documents", []) if item["id"] == target_id), None)
+        return (document, field) if document is not None else None
+    return None
 
 class Plan(StrictModel):
     id: str
@@ -720,28 +837,56 @@ def branch_candidate(w: dict, branch: dict) -> dict:
     for patch in branch.get("patches", []):
         path = patch["path"]
         target_id = patch["targetId"]
+        if path not in BRANCH_PATCH_PATHS:
+            raise ValueError("候选字段路径无效。")
+        before = _branch_patch_value(path, patch.get("before"))
+        after = _branch_patch_value(path, patch.get("after"))
+        if before == after:
+            raise ValueError("候选字段必须产生实际变更。")
+        if patch.get("disposition", "accepted") not in {"accepted", "rejected"}:
+            raise ValueError("候选字段取舍必须是 accepted 或 rejected。")
         if path == "equipment.status":
             base_equipment = base_equipment_by_id.get(target_id)
             candidate_equipment = equipment_by_id.get(target_id)
             if base_equipment is None or candidate_equipment is None:
                 raise ValueError(f"候选字段目标不存在：{target_id}。")
-            if base_equipment["status"] != patch["before"]:
+            if base_equipment["status"] != before:
                 raise ValueError("候选字段基线已变化，请重新创建方案。")
-            expected_after = patch["after"] if patch.get("disposition", "accepted") == "accepted" else patch["before"]
+            expected_after = after if patch.get("disposition", "accepted") == "accepted" else before
             if candidate_equipment["status"] != expected_after:
                 raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
-            if patch.get("disposition", "accepted") == "accepted" and state_by_equipment.get(target_id) != patch["after"]:
-                raise ValueError("设备状态候选必须与审计字段保持一致。")
+            if state_by_equipment.get(target_id) != expected_after:
+                # Rejected fields intentionally disappear from the effective
+                # equipmentStates snapshot; accepted fields must stay aligned.
+                if patch.get("disposition", "accepted") == "accepted" or target_id in state_by_equipment:
+                    raise ValueError("设备状态候选必须与审计字段保持一致。")
             continue
-        base_row = base_reservation_by_id.get(target_id)
-        candidate_row = reservation_by_id.get(target_id)
-        if base_row is None or candidate_row is None:
+        # Reservation snapshots are supplied explicitly by the branch and
+        # therefore must match the patch.  Other business objects are
+        # projected directly from their field-level patch; no formal object
+        # is mutated until apply_branch succeeds.
+        if path.startswith("reservation."):
+            field = path.removeprefix("reservation.")
+            base_row = base_reservation_by_id.get(target_id)
+            candidate_row = reservation_by_id.get(target_id)
+            if base_row is None or candidate_row is None:
+                raise ValueError(f"候选字段目标不存在：{target_id}。")
+            if base_row[field] != before:
+                raise ValueError("候选字段基线已变化，请重新创建方案。")
+            expected_after = after if patch.get("disposition", "accepted") == "accepted" else before
+            if candidate_row[field] != expected_after:
+                raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
+            continue
+        base_target = _branch_patch_target(w, branch["planId"], path, target_id)
+        candidate_target = _branch_patch_target(candidate, branch["planId"], path, target_id)
+        if base_target is None or candidate_target is None:
             raise ValueError(f"候选字段目标不存在：{target_id}。")
-        if base_row[path.removeprefix("reservation.")] != patch["before"]:
+        base_object, field = base_target
+        candidate_object, candidate_field = candidate_target
+        if field != candidate_field or base_object.get(field) != before:
             raise ValueError("候选字段基线已变化，请重新创建方案。")
-        expected_after = patch["after"] if patch.get("disposition", "accepted") == "accepted" else patch["before"]
-        if candidate_row[path.removeprefix("reservation.")] != expected_after:
-            raise ValueError("候选字段与方案快照不一致，请重新生成方案。")
+        expected_after = after if patch.get("disposition", "accepted") == "accepted" else before
+        candidate_object[field] = copy.deepcopy(expected_after)
     audited_equipment_after = {
         patch["targetId"]: patch["after"] for patch in branch.get("patches", [])
         if patch.get("path") == "equipment.status" and patch.get("disposition", "accepted") == "accepted"
@@ -752,6 +897,28 @@ def branch_candidate(w: dict, branch: dict) -> dict:
             raise ValueError("设备状态候选必须与审计字段保持一致。")
     validate_workspace(candidate)
     return candidate
+
+
+def _apply_accepted_branch_fields(workspace: dict, branch: dict) -> None:
+    """Apply only accepted non-snapshot fields to the formal workspace.
+
+    Reservations and equipment status retain their existing explicit apply
+    logic because both have compatibility snapshots.  Every other field is
+    copied through the same path/type resolver used during candidate checks;
+    rejected suggestions remain audit history and never reach production
+    state.
+    """
+    for patch in branch.get("patches", []):
+        if patch.get("disposition", "accepted") != "accepted":
+            continue
+        path = patch["path"]
+        if path.startswith("reservation.") or path == "equipment.status":
+            continue
+        target = _branch_patch_target(workspace, branch["planId"], path, patch["targetId"])
+        if target is None:
+            raise ValueError(f"候选字段目标不存在：{patch['targetId']}。")
+        obj, field = target
+        obj[field] = copy.deepcopy(_branch_patch_value(path, patch.get("after")))
 
 
 def check_workspace(w: dict) -> list[dict]:
@@ -1586,7 +1753,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         path = x.get("path")
         target_id = str(x.get("targetId", ""))
         disposition = x.get("disposition")
-        if path not in {"reservation.equipmentId", "reservation.start", "reservation.end", "equipment.status"}:
+        if path not in BRANCH_PATCH_PATHS:
             raise ValueError("候选字段路径无效。")
         if disposition not in {"accepted", "rejected"}:
             raise ValueError("候选字段取舍必须是 accepted 或 rejected。")
@@ -1632,6 +1799,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
             projected = candidate_equipment.get(equipment["id"])
             if projected is not None and projected["status"] != equipment["status"]:
                 equipment["status"] = projected["status"]
+        _apply_accepted_branch_fields(next_w, b)
         p["revision"] += 1
         patch_count = len(b.get("patches", []))
         detail = f"，记录 {patch_count} 个字段变更" if patch_count else ""

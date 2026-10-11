@@ -1,4 +1,4 @@
-import type { Workspace, Plan, Check, Operation, Equipment, DocumentRecord, Task, Branch, Laboratory } from './types'
+import type { Workspace, Plan, Check, Operation, Equipment, DocumentRecord, Task, Branch, BranchPatch, Laboratory } from './types'
 import { uid, kindNames, equipmentFamilies, evidenceKinds } from './types'
 
 export const RULE_PACK = 'resource-prerequisites/1.0'
@@ -196,20 +196,59 @@ export function candidateWorkspace(w: Workspace, branch: Branch): Workspace {
   const candidateById = new Map(p.reservations.map(row => [row.id, row]))
   const baseEquipmentById = new Map(w.equipment.map(item => [item.id, item]))
   const candidateEquipmentById = new Map(next.equipment.map(item => [item.id, item]))
+  const sameValue = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
+  const targetFor = (path: BranchPatch['path'], targetId: string): {target: Record<string, unknown>; field: string} | null => {
+    if (path === 'plan.owner') return targetId === p.id ? {target: p as unknown as Record<string, unknown>, field: 'owner'} : null
+    if (path.startsWith('equipment.')) {
+      const target = candidateEquipmentById.get(targetId)
+      return target ? {target: target as unknown as Record<string, unknown>, field: path.slice('equipment.'.length)} : null
+    }
+    if (path.startsWith('document.')) {
+      const target = next.documents.find(item => item.id === targetId)
+      return target ? {target: target as unknown as Record<string, unknown>, field: path.slice('document.'.length)} : null
+    }
+    return null
+  }
   for (const patch of branch.patches ?? []) {
     if (patch.path === 'equipment.status') {
       const base = baseEquipmentById.get(patch.targetId), candidate = candidateEquipmentById.get(patch.targetId)
       if (!base || !candidate) throw new Error(`候选字段目标不存在：${patch.targetId}。`)
-      if (base.status !== patch.before) throw new Error('候选字段基线已变化，请重新创建方案。')
-      if (candidate.status !== patch.after) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
-      if ((equipmentStates.find(item => item.equipmentId === patch.targetId)?.status) !== patch.after) throw new Error('设备状态候选必须与审计字段保持一致。')
+      if (!sameValue(base.status, patch.before)) throw new Error('候选字段基线已变化，请重新创建方案。')
+      const expected = patch.disposition === 'rejected' ? patch.before : patch.after
+      if (!sameValue(candidate.status, expected)) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
+      const state = equipmentStates.find(item => item.equipmentId === patch.targetId)
+      if (!state || !sameValue(state.status, expected)) throw new Error('设备状态候选必须与审计字段保持一致。')
       continue
     }
-    const base = baseById.get(patch.targetId), candidate = candidateById.get(patch.targetId)
-    if (!base || !candidate) throw new Error(`候选字段目标不存在：${patch.targetId}。`)
-    const key = patch.path.slice('reservation.'.length) as keyof typeof base
-    if (base[key] !== patch.before) throw new Error('候选字段基线已变化，请重新创建方案。')
-    if (candidate[key] !== patch.after) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
+    if (patch.path.startsWith('reservation.')) {
+      const base = baseById.get(patch.targetId), candidate = candidateById.get(patch.targetId)
+      if (!base || !candidate) throw new Error(`候选字段目标不存在：${patch.targetId}。`)
+      const key = patch.path.slice('reservation.'.length) as keyof typeof base
+      if (!sameValue(base[key], patch.before)) throw new Error('候选字段基线已变化，请重新创建方案。')
+      const expected = patch.disposition === 'rejected' ? patch.before : patch.after
+      if (!sameValue(candidate[key], expected)) throw new Error('候选字段与方案快照不一致，请重新生成方案。')
+      continue
+    }
+    const baseTarget = (() => {
+      if (patch.path === 'plan.owner') return patch.targetId === basePlan.id ? {target: basePlan as unknown as Record<string, unknown>, field: 'owner'} : null
+      if (patch.path.startsWith('equipment.')) {
+        const target = baseEquipmentById.get(patch.targetId)
+        return target ? {target: target as unknown as Record<string, unknown>, field: patch.path.slice('equipment.'.length)} : null
+      }
+      if (patch.path.startsWith('document.')) {
+        const target = w.documents.find(item => item.id === patch.targetId)
+        return target ? {target: target as unknown as Record<string, unknown>, field: patch.path.slice('document.'.length)} : null
+      }
+      return null
+    })()
+    const candidateTarget = targetFor(patch.path, patch.targetId)
+    if (!baseTarget || !candidateTarget) throw new Error(`候选字段目标不存在：${patch.targetId}`)
+    const {target: baseObject, field} = baseTarget
+    const expected = patch.disposition === 'rejected' ? patch.before : patch.after
+    if (!sameValue(baseObject[field], patch.before)) throw new Error('候选字段基线已变化，请重新创建方案。')
+    if (!sameValue(candidateTarget.target[field], expected)) {
+      candidateTarget.target[field] = structuredClone(expected)
+    }
   }
   const auditedEquipmentAfter = new Map((branch.patches ?? []).filter(patch => patch.path === 'equipment.status').map(patch => [patch.targetId, patch.after]))
   for (const state of equipmentStates) {

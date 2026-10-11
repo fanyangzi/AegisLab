@@ -55,6 +55,8 @@ export interface Equipment {
   id: string; labId: string; code: string; name: string; kind: Kind;
   x: number; z: number; rotation: number; capacity: number; status: 'available' | 'unavailable' | 'unknown';
   owner: string; description: string; requiresEvidence: boolean; specVersion: number; maintenance: Window[];
+  /** Optional semantic room/zone label used by isolated candidate layouts. */
+  zone?: string | null;
   /** Optional for backwards compatibility with existing local workspaces. */
   profile?: EquipmentOperationalProfile;
   family?: EquipmentFamily;
@@ -105,9 +107,14 @@ export interface Decision {
   exception?: {checkIds: string[]; reason: string; mitigation: string; expiresAt: string}
 }
 export interface AuditEvent { id: string; at: string; actor: string; action: string; objectId: string; summary: string }
-export type BranchPatchPath = 'reservation.equipmentId' | 'reservation.start' | 'reservation.end' | 'equipment.status'
+export type BranchPatchPath =
+  | 'reservation.equipmentId' | 'reservation.start' | 'reservation.end' | 'equipment.status'
+  | 'plan.owner' | 'equipment.owner' | 'equipment.zone' | 'equipment.x' | 'equipment.z'
+  | 'equipment.rotation' | 'equipment.controlTags' | 'equipment.requiredTraining'
+  | 'document.equipmentId' | 'document.specVersion' | 'document.validFrom' | 'document.validUntil'
+export type BranchPatchValue = string | number | string[] | null
 export interface BranchPatch {
-  path: BranchPatchPath; targetId: string; before: string; after: string; reason: string
+  path: BranchPatchPath; targetId: string; before: BranchPatchValue; after: BranchPatchValue; reason: string
   disposition?: 'accepted' | 'rejected'; reviewedBy?: string; reviewedAt?: string; reviewNote?: string
 }
 export interface BranchEquipmentState { equipmentId: string; status: Equipment['status'] }

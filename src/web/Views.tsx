@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Workspace, Equipment, Selection, Check, Plan, Snapshot } from './types'
 import { kindNames,statusNames,taskStatusNames } from './types'
 import { Button, Icon, Badge, Empty, dateText, timeText, toneFor } from './ui'
-import { overlaps } from './domain'
+import { candidateWorkspace, checkWorkspace, overlaps, planStatus } from './domain'
 import { profileForKind } from './equipmentTaxonomy'
 import sourceRegistry from '../../data/knowledge_sources.json'
 import { SafetyChainGraph, type ServerGraph } from './SafetyChainGraph'
@@ -39,11 +39,26 @@ export function Timeline({workspace:w,labId,date,selection,onSelect,compact=fals
   <div className="al-time-legend"><span><i/>计划使用</span><span><i className="red"/>容量需核对</span><span><i className="striped"/>维护窗口</span><small>计划安排，非实时遥测 · 浏览器本地时区</small></div>
  </div>
 }
-export function RelationshipGraph({snapshot,labId,selection,onSelect,planId,date}: {snapshot:Snapshot;labId:string;selection:Selection;onSelect:(s:Selection)=>void;planId?:string;date?:string}) {
+export function RelationshipGraph({snapshot,labId,selection,onSelect,planId,branchId,date,onBranchChange}: {snapshot:Snapshot;labId:string;selection:Selection;onSelect:(s:Selection)=>void;planId?:string;branchId?:string|null;date?:string;onBranchChange?:(branchId:string|null)=>void}) {
  const [all,setAll]=useState(false)
  const [serverGraph,setServerGraph]=useState<ServerGraph|null>(null),[graphError,setGraphError]=useState('')
+ const graphContext=useMemo(()=>{
+  const branch=branchId&&planId?snapshot.workspace.branches.find(item=>item.id===branchId&&item.planId===planId):undefined
+  if(!branch)return {branch:undefined, snapshot, error:branchId&&planId?'当前 URL 指向的候选方案不存在，已停止关系图投影。':''}
+  try {
+   const workspace=candidateWorkspace(snapshot.workspace,branch),checks=checkWorkspace(workspace)
+   return {branch,snapshot:{...snapshot,workspace,checks,statuses:Object.fromEntries(workspace.plans.map(plan=>[plan.id,planStatus(workspace,plan,checks)]))},error:''}
+  } catch(error) {
+   return {branch,snapshot,error:error instanceof Error?error.message:'当前候选无法投影为关系图。'}
+  }
+ },[branchId,planId,snapshot])
+ const graphSnapshot=graphContext.snapshot
+ const branchOptions= snapshot.workspace.branches.filter(item=>item.planId===planId)
  useEffect(()=>{
-  if(snapshot.mode!=='server'){setServerGraph(null);setGraphError('');return}
+  // The persisted graph endpoint currently describes the formal workspace
+  // snapshot. A branch is an isolated browser projection, so never mix its
+  // candidate reservations/status with a server graph from the baseline.
+  if(snapshot.mode!=='server'||branchId){setServerGraph(null);setGraphError('');return}
   const query=new URLSearchParams({labId});if(planId)query.set('planId',planId)
   if(date && /^\d{4}-\d{2}-\d{2}$/.test(date)){
    // Use the browser's local day, then send absolute instants to the API;
@@ -54,8 +69,10 @@ export function RelationshipGraph({snapshot,labId,selection,onSelect,planId,date
   let live=true;setServerGraph(null);setGraphError('')
   request<ServerGraph>(`/api/spatial/graph?${query.toString()}`).then(graph=>{if(live)setServerGraph(graph)}).catch(error=>{if(live){setServerGraph(null);setGraphError(error instanceof Error?error.message:'服务端关系快照暂时不可用。')}})
   return()=>{live=false}
- },[snapshot.mode,labId,planId,date,snapshot.workspace.revision])
- return <div className="al-graph-page"><div className="al-view-toolbar"><div><span className="al-eyebrow">DEPENDENCY & EVIDENCE</span><h2>关系与依据</h2><p>把计划、原文步骤、物料线索、空间资源、规则证据和人工动作放到同一条可回溯链路中。线条表达业务依赖，不代表物质流动或安全结论。</p></div><div className="al-actions"><Button icon="filter" onClick={()=>setAll(!all)}>{all?'查看局部':'展开全图'}</Button></div></div>{snapshot.mode==='server'&&<div className="al-note"><Icon name="link" size={16}/><p>{serverGraph?`已同步服务端关系快照 · v${serverGraph.revision} · ${serverGraph.nodes.length} 个对象 / ${serverGraph.edges.length} 条关系${planId?' · 当前计划范围':''}`:graphError||'正在同步服务端关系快照…'}</p></div>}<SafetyChainGraph snapshot={snapshot} labId={labId} planId={planId} selection={selection} onSelect={onSelect} all={all} serverGraph={serverGraph}/></div>
+ },[snapshot.mode,labId,planId,branchId,date,snapshot.workspace.revision])
+ const selectedBranch=graphContext.branch
+ const graphUnavailable=Boolean(graphContext.error)
+ return <div className="al-graph-page"><div className="al-view-toolbar"><div><span className="al-eyebrow">DEPENDENCY & EVIDENCE</span><h2>关系与依据</h2><p>把计划、原文步骤、物料线索、空间资源、规则证据和人工动作放到同一条可回溯链路中。线条表达业务依赖，不代表物质流动或安全结论。</p></div><div className="al-actions"><Button icon="filter" onClick={()=>setAll(!all)}>{all?'查看局部':'展开全图'}</Button>{planId&&branchOptions.length>0&&<label className="al-graph-context-filter"><span>关系范围</span><select aria-label="关系图候选范围" value={selectedBranch?.id||''} onChange={event=>onBranchChange?.(event.target.value||null)}><option value="">正式计划基线</option>{branchOptions.map(branch=><option key={branch.id} value={branch.id}>{branch.name} · v{branch.baseRevision}</option>)}</select></label>}</div></div>{selectedBranch?<div className="al-note al-graph-branch-note"><Icon name="graph" size={16}/><p>当前显示候选“{selectedBranch.name}” · 基于正式计划 v{selectedBranch.baseRevision} · 关系与检查状态来自隔离副本，尚未写回正式计划。</p></div>:graphContext.error?<div className="al-note warning"><Icon name="alert" size={16}/><p>候选关系无法载入：{graphContext.error}。已停止候选投影，避免把正式基线误显示为候选。</p></div>:null}{snapshot.mode==='server'&&!selectedBranch&&!graphUnavailable&&<div className="al-note"><Icon name="link" size={16}/><p>{serverGraph?`已同步服务端关系快照 · v${serverGraph.revision} · ${serverGraph.nodes.length} 个对象 / ${serverGraph.edges.length} 条关系${planId?' · 当前计划范围':''}`:graphError||'正在同步服务端关系快照…'}</p></div>}{graphUnavailable?<div className="al-note al-graph-unavailable"><Icon name="alert" size={18}/><p>没有可用的候选关系快照。请从计划页重新打开该方案，或切换回正式计划基线。</p></div>:<SafetyChainGraph snapshot={graphSnapshot} labId={labId} planId={planId} selection={selection} onSelect={onSelect} all={all} serverGraph={serverGraph} branchId={selectedBranch?.id} branchName={selectedBranch?.name}/>}</div>
 }
 export function EquipmentPicture({equipment:e}:{equipment:Equipment}) {
  const family=e.family||'utility'
