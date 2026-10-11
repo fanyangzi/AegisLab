@@ -26,6 +26,12 @@ RULE_PACK = "resource-prerequisites/1.0"
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_REGISTRY_PATH = ROOT / "data" / "knowledge_sources.json"
 
+
+def job_execution_mode() -> str:
+    """Return the explicit queued-job execution mode for this process."""
+    value = os.getenv("AEGIS_SPATIAL_JOB_EXECUTION", "process-local").strip().lower()
+    return value if value in {"process-local", "worker"} else "process-local"
+
 # The browser scene uses a deliberately small set of semantic resource kinds.
 # Keeping their approximate footprint here gives the server enough information
 # to place a newly-created resource without making the scene layout part of the
@@ -652,7 +658,26 @@ def check_workspace(w: dict) -> list[dict]:
             if e["requiresEvidence"]:
                 docs = [d for d in w["documents"] if d["equipmentId"] == identifier and d["kind"] == "inspection"]
                 valid = [d for d in docs if d["status"] == "verified" and d["specVersion"] == e["specVersion"]]
+                # Two independently verified records for the same object and
+                # specification can overlap the requested interval while
+                # describing different observations.  Treat that as an
+                # unresolved evidence conflict instead of arbitrarily picking
+                # the first document.  A document is still listed with its
+                # normal provenance so a reviewer can reconcile the pair.
+                conflict_by_reservation: dict[str, list[str]] = {}
+                for reservation in reservations:
+                    matches = [
+                        d for d in valid
+                        if dt(d["validFrom"]) <= dt(reservation["start"])
+                        and dt(d["validUntil"]) >= dt(reservation["end"])
+                    ]
+                    signatures = {canonical({"content": d.get("content", "")}) for d in matches}
+                    if len(signatures) > 1:
+                        conflict_by_reservation[reservation["id"]] = [d["id"] for d in matches]
                 covered = all(any(dt(d["validFrom"]) <= dt(r["start"]) and dt(d["validUntil"]) >= dt(r["end"]) for d in valid) for r in reservations)
+                conflicted_reservation_ids = set(conflict_by_reservation)
+                if conflicted_reservation_ids:
+                    covered = False
                 applicability = []
                 for d in docs:
                     covered_reservation_ids = [
@@ -666,10 +691,12 @@ def check_workspace(w: dict) -> list[dict]:
                         state, reason = "mismatched", "spec-version-mismatch"
                     elif not covered_reservation_ids:
                         state, reason = "expired", "outside-reservation-window"
+                    elif any(reservation_id in conflict_by_reservation and d["id"] in conflict_by_reservation[reservation_id] for reservation_id in covered_reservation_ids):
+                        state, reason = "conflict", "overlapping-verified-conflict"
                     else:
                         state = "supports"
                         reason = "covers-all-reservations" if not missing_reservation_ids else "partial-reservation-coverage"
-                    applicability.append({
+                    applicability_row = {
                         "documentId": d["id"], "state": state, "reason": reason,
                         "coverage": "complete" if not missing_reservation_ids and covered_reservation_ids else "partial" if covered_reservation_ids else "none",
                         "coverageBasis": "validity-window",
@@ -684,8 +711,21 @@ def check_workspace(w: dict) -> list[dict]:
                         "contentLength": d.get("contentLength"),
                         "provenanceNote": d.get("provenanceNote"),
                         "reviewedBy": d.get("reviewedBy"), "reviewedAt": d.get("reviewedAt"),
+                    }
+                    conflicting_document_ids = sorted({
+                        document_id
+                        for reservation_id in covered_reservation_ids
+                        for document_id in conflict_by_reservation.get(reservation_id, [])
+                        if document_id != d["id"]
                     })
-                add("EVIDENCE", "pass" if covered else "unknown", f"{e['code']} 的检查证据适用" if covered else f"{e['code']} 缺少适用的检查证据", "对象、规格版本、核验状态与全部使用时段均匹配。" if covered else "需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。", identifier, documents=[d["id"] for d in docs])
+                    if conflicting_document_ids:
+                        applicability_row["conflictingDocumentIds"] = conflicting_document_ids
+                    applicability.append(applicability_row)
+                evidence_detail = "对象、规格版本、核验状态与全部使用时段均匹配。" if covered else "需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。"
+                if conflicted_reservation_ids:
+                    conflict_documents = sorted({document_id for ids_for_reservation in conflict_by_reservation.values() for document_id in ids_for_reservation})
+                    evidence_detail = f"同一预约时段存在 {len(conflict_documents)} 份内容不一致但均已核验的记录（{'、'.join(conflict_documents)}）；需负责人裁定后才能作为适用证据。"
+                add("EVIDENCE", "pass" if covered else "unknown", f"{e['code']} 的检查证据适用" if covered else f"{e['code']} 缺少适用的检查证据", evidence_detail, identifier, documents=[d["id"] for d in docs])
                 results[-1]["evidenceApplicability"] = applicability
                 results[-1]["evidenceScope"] = {
                     "equipmentId": identifier,
@@ -693,6 +733,8 @@ def check_workspace(w: dict) -> list[dict]:
                     "reservationIds": [r["id"] for r in reservations],
                     "requiredCoverage": "all-reservations",
                 }
+                if conflicted_reservation_ids:
+                    results[-1]["evidenceScope"]["conflictReservationIds"] = sorted(conflicted_reservation_ids)
     return results
 
 
@@ -726,7 +768,7 @@ def envelope(w: dict) -> dict:
     return dict(workspace=w, checks=checks, statuses={p["id"]: plan_status(w, p, checks) for p in w["plans"]}, mode="server", rulePack=RULE_PACK, scope="资源时段、台账可用性、检查证据适用性与原文确认；不构成全域化学安全评估或开工许可。")
 
 
-def expiry_recheck_report(w: dict, as_of: str) -> dict:
+def expiry_recheck_report(w: dict, as_of: str, *, worker_name: str = "not-running") -> dict:
     """Return a reproducible expiry/overdue report for the current snapshot.
 
     This is deliberately a pure report builder.  It does not mark evidence
@@ -815,7 +857,7 @@ def expiry_recheck_report(w: dict, as_of: str) -> dict:
         "runType": "expiry_recheck",
         "trigger": "manual",
         "asOf": as_of,
-        "worker": "not-running",
+        "worker": worker_name,
         "scope": "已核验资料有效期、未完成任务截止时间、受影响的当前计划",
         "expiredEvidence": expired_evidence,
         "overdueTasks": overdue_tasks,
@@ -1567,8 +1609,14 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
 
 
 class WorkspaceStore:
-    def __init__(self, path: str):
+    def __init__(self, path: str, *, recover_incomplete: bool | None = None):
         self.path = path
+        # The browser deployment keeps process-local callbacks as the default
+        # so existing callers remain deterministic.  A separate Worker can
+        # opt into durable queued/running rows and take ownership explicitly.
+        if recover_incomplete is None:
+            recover_incomplete = os.getenv("AEGIS_SPATIAL_JOB_EXECUTION", "process-local").strip().lower() != "worker"
+        self.recover_incomplete = bool(recover_incomplete)
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         with self.connection() as conn:
             conn.executescript("""
@@ -1609,13 +1657,14 @@ class WorkspaceStore:
             # process that opens the database after a crash/restart therefore
             # must make an unfinished synchronous job explicit instead of
             # leaving a misleading `running` state forever.
-            conn.execute(
-                """UPDATE spatial_jobs
-                   SET status='failed', finished_at=COALESCE(finished_at, ?),
-                       error=COALESCE(error, ?)
-                   WHERE status IN ('queued','running')""",
-                (now(), "服务重启时进程内任务未能继续；本地部署没有持久 Worker，任务已标记失败，可按幂等边界重新发起。"),
-            )
+            if self.recover_incomplete:
+                conn.execute(
+                    """UPDATE spatial_jobs
+                       SET status='failed', finished_at=COALESCE(finished_at, ?),
+                           error=COALESCE(error, ?)
+                       WHERE status IN ('queued','running')""",
+                    (now(), "服务重启时进程内任务未能继续；本地部署没有持久 Worker，任务已标记失败，可按幂等边界重新发起。"),
+                )
             conn.execute("INSERT OR IGNORE INTO spatial_workspace VALUES(1,0,?)", (json.dumps(empty_workspace(), ensure_ascii=False),))
     @contextmanager
     def connection(self):
@@ -1716,6 +1765,33 @@ class WorkspaceStore:
             conn.execute("UPDATE spatial_jobs SET status='running',started_at=COALESCE(started_at,?),error=NULL WHERE job_id=? AND status='queued'", (now(), job_id))
             row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
         return self._job_row(row)
+    def claim_next_job(self, kinds: tuple[str, ...] = ("analysis", "expiry_recheck")) -> dict | None:
+        """Atomically claim the oldest queued job for an external Worker.
+
+        SQLite's immediate transaction is enough for the single-node local
+        deployment: two worker processes cannot claim the same row, and a
+        cancelled/terminal row is left immutable.
+        """
+        if not kinds:
+            return None
+        placeholders = ",".join("?" for _ in kinds)
+        with self.connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                f"SELECT * FROM spatial_jobs WHERE status='queued' AND kind IN ({placeholders}) ORDER BY created_at ASC, job_id ASC LIMIT 1",
+                tuple(kinds),
+            ).fetchone()
+            if not row:
+                return None
+            job_id = row[0]
+            updated = conn.execute(
+                "UPDATE spatial_jobs SET status='running', started_at=COALESCE(started_at,?), error=NULL WHERE job_id=? AND status='queued'",
+                (now(), job_id),
+            )
+            if updated.rowcount != 1:
+                return None
+            row = conn.execute("SELECT * FROM spatial_jobs WHERE job_id=?", (job_id,)).fetchone()
+        return self._job_row(row)
     def finish_job(self, job_id: str, *, status: str, result: dict | None = None, error: str | None = None) -> dict:
         if status not in {"succeeded", "failed", "cancelled"}:
             raise ValueError("无效的任务终态。")
@@ -1759,7 +1835,7 @@ class WorkspaceStore:
         with self.connection() as conn:
             rows = conn.execute("SELECT * FROM spatial_jobs WHERE plan_id=? ORDER BY created_at DESC LIMIT ?", (plan_id, max(1, min(limit, 100)))).fetchall()
         return [self._job_row(row) for row in rows]
-    def expiry_recheck(self, *, request_id: str, as_of: str, actor: str) -> dict:
+    def expiry_recheck(self, *, request_id: str, as_of: str, actor: str, worker_name: str = "not-running") -> dict:
         """Run and persist a manual expiry scan using the durable job ledger.
 
         This is intentionally synchronous.  The returned ``worker`` marker is
@@ -1786,7 +1862,7 @@ class WorkspaceStore:
             raise HTTPException(409, f"该重检任务已处于 {job['status']} 终态，请更换 requestId 重试。")
         self.set_job_running(job_id)
         try:
-            report = expiry_recheck_report(self.read(), as_of)
+            report = expiry_recheck_report(self.read(), as_of, worker_name=worker_name)
             report.update({"requestId": request_id, "jobId": job_id, "generatedAt": now(), "actor": actor})
             return self.finish_job(job_id, status="succeeded", result=report)
         except Exception as error:
@@ -2141,6 +2217,27 @@ def get_relationship_graph(
             add_edge(f"{pid}:check:{check['id']}", f"plan:{pid}", cid, "evaluates", state=check.get("state"), code=check.get("code"), sourceLine=check.get("line"), provenance="规则核验快照")
             if check.get("equipmentId"):
                 add_edge(f"{check['id']}:equipment", cid, f"equipment:{check['equipmentId']}", "evaluates", state=check.get("state"), provenance="规则核验对象")
+            # Evidence applicability is a first-class relationship.  A
+            # verified document can still be expired, wrong-version, pending
+            # or in conflict for this plan's exact reservation window; the
+            # graph must expose that scoped result instead of only showing a
+            # green document node from its upload-level status.
+            for applicability in check.get("evidenceApplicability", []):
+                document_node = f"document:{applicability.get('documentId')}"
+                if document_node not in nodes:
+                    continue
+                applicability_state = applicability.get("state", "candidate")
+                relation_state = "pass" if applicability_state == "supports" and applicability.get("effectiveForAllReservations") else "unknown"
+                add_edge(
+                    f"{check['id']}:evidence:{applicability.get('documentId')}", cid, document_node,
+                    "supports-evidence", state=relation_state,
+                    applicabilityState=applicability_state,
+                    reason=applicability.get("reason"),
+                    coveredReservationIds=applicability.get("coveredReservationIds", []),
+                    missingReservationIds=applicability.get("missingReservationIds", []),
+                    conflictingDocumentIds=applicability.get("conflictingDocumentIds", []),
+                    provenance="证据适用性计算",
+                )
 
         # Approval records are immutable human decisions.  A pending node is
         # explicit when no decision exists; neither node type implies an
@@ -2366,6 +2463,8 @@ def recheck_expiry(body: ExpiryRecheckRequest, background_tasks: BackgroundTasks
             return existing
         job = store().begin_job(job_id=job_id, kind="expiry_recheck", plan_id=None,
                                 idempotency_key=body.requestId, context={"asOf": as_of})
+        if job_execution_mode() == "worker":
+            return {**job, "scope": "独立 durable worker 执行；任务会在 Worker 领取后运行，可跨 API 进程恢复。"}
         if background_tasks is None:
             raise HTTPException(500, "后台任务调度器不可用。")
         background_tasks.add_task(_run_expiry_background, body.requestId, as_of, actor)
@@ -2625,6 +2724,14 @@ def analyze_plan(
     if job is None:
         raise HTTPException(500, "分析任务创建失败。")
     if created:
+        if job_execution_mode() == "worker":
+            return {
+                "planId": plan_id,
+                "planRevision": plan["revision"],
+                "background": True,
+                "job": job,
+                "scope": "独立 durable worker 执行；任务会在 Worker 领取后运行，可跨 API 进程恢复。",
+            }
         if background_tasks is None:
             # Direct Python calls are useful in smoke tests and must fail with
             # a meaningful HTTP error rather than an AttributeError.  The

@@ -66,6 +66,23 @@ class DomainTests(unittest.TestCase):
         self.assertEqual(item['source'],'设备维护台账 · 2026-Q4（示例）')
         self.assertIsNone(item['capturedAt'])
 
+    def test_overlapping_verified_evidence_conflict_stays_unknown(self):
+        w=fixture()
+        original=next(item for item in w['documents'] if item['id']=='doc-A-01')
+        conflicting=copy.deepcopy(original)
+        conflicting['id']='doc-A-01-conflict'
+        conflicting['source']='设备维护台账 · 另一份记录（待裁定）'
+        conflicting['content']='A-01 设备检查记录：联锁检查结论与原记录不一致。'
+        w['documents'].append(conflicting)
+        check=next(c for c in s.check_workspace(w) if c['planId']=='EXP-003' and c['code']=='EVIDENCE' and c['equipmentId']=='A-01')
+        self.assertEqual(check['state'],'unknown')
+        self.assertEqual(check['evidenceScope']['conflictReservationIds'],['EXP-003-r0'])
+        rows={item['documentId']: item for item in check['evidenceApplicability']}
+        self.assertEqual(rows['doc-A-01']['state'],'conflict')
+        self.assertEqual(rows['doc-A-01-conflict']['state'],'conflict')
+        self.assertEqual(rows['doc-A-01']['conflictingDocumentIds'],['doc-A-01-conflict'])
+        self.assertIn('内容不一致',check['detail'])
+
     def test_document_save_records_provenance_without_granting_applicability(self):
         w=fixture()
         document={
@@ -663,6 +680,22 @@ class StoreTests(unittest.TestCase):
         self.assertEqual(created['status'],'queued');self.assertEqual(created['context']['asOf'],'2026-10-11T00:00:00+08:00')
         recovered=s.WorkspaceStore(self.path).job(created['jobId'])
         self.assertEqual(recovered['status'],'failed');self.assertIn('服务重启',recovered['error']);self.assertIsNotNone(recovered['finishedAt'])
+    def test_worker_store_preserves_queue_and_claims_once(self):
+        created=self.store.begin_job(job_id='job-worker-01',kind='expiry_recheck',plan_id=None,idempotency_key='idem-worker-01',context={'asOf':'2026-10-11T00:00:00+08:00'})
+        durable=s.WorkspaceStore(self.path, recover_incomplete=False)
+        self.assertEqual(durable.job(created['jobId'])['status'],'queued')
+        claimed=durable.claim_next_job()
+        self.assertEqual(claimed['jobId'],created['jobId']);self.assertEqual(claimed['status'],'running')
+        self.assertIsNone(durable.claim_next_job())
+        self.assertEqual(durable.job(created['jobId'])['status'],'running')
+    def test_worker_expiry_report_marks_durable_worker(self):
+        initialize(self.store)
+        job=self.store.begin_job(job_id='job-worker-expiry-01',kind='expiry_recheck',plan_id=None,idempotency_key='idem-worker-expiry-01',context={'asOf':'2026-10-10T00:00:00+08:00'})
+        durable=s.WorkspaceStore(self.path, recover_incomplete=False)
+        claimed=durable.claim_next_job();self.assertEqual(claimed['status'],'running')
+        report=s.expiry_recheck_report(durable.read(),claimed['context']['asOf'],worker_name='durable-worker')
+        result=durable.finish_job(claimed['jobId'],status='succeeded',result=report)
+        self.assertEqual(result['status'],'succeeded');self.assertEqual(result['result']['worker'],'durable-worker')
     def test_failed_job_is_queryable_after_explicit_failure(self):
         created=self.store.begin_job(job_id='job-fail-01',kind='analysis',plan_id='EXP-001',idempotency_key='idem-fail-01')
         self.store.set_job_running(created['jobId'])
@@ -1019,6 +1052,29 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(same.status_code,200,same.text);self.assertEqual(same.json()['jobId'],queued['jobId'])
         conflict=self.client.post('/api/spatial/expiry/recheck?background=true',json={'requestId':'api-bg-expiry-01','asOf':'2026-10-11T00:00:00+08:00'})
         self.assertEqual(conflict.status_code,409,conflict.text)
+    def test_worker_mode_queues_without_process_local_callback(self):
+        initialize(s.store())
+        with patch.dict(os.environ, {'AEGIS_SPATIAL_JOB_EXECUTION':'worker','LABSAFETY_LLM_API_KEY':''}):
+            response=self.client.post('/api/spatial/plans/EXP-001/analysis?background=true')
+        self.assertEqual(response.status_code,200,response.text)
+        payload=response.json();self.assertEqual(payload['job']['status'],'queued');self.assertIn('durable worker',payload['scope'])
+        self.assertEqual(self.client.get('/api/spatial/jobs/'+payload['job']['jobId']).json()['status'],'queued')
+        from backend import worker
+        with patch.dict(os.environ, {'AEGIS_SPATIAL_JOB_EXECUTION':'worker','AEGIS_SPATIAL_DB_PATH':s.store().path,'LABSAFETY_LLM_API_KEY':''}):
+            self.assertTrue(worker.run_once())
+        self.assertEqual(self.client.get('/api/spatial/jobs/'+payload['job']['jobId']).json()['status'],'succeeded')
+    def test_worker_mode_queues_expiry_and_worker_runs_it(self):
+        initialize(s.store())
+        body={'requestId':'api-worker-expiry-01','asOf':'2026-10-10T00:00:00+08:00'}
+        with patch.dict(os.environ, {'AEGIS_SPATIAL_JOB_EXECUTION':'worker'}):
+            response=self.client.post('/api/spatial/expiry/recheck?background=true',json=body)
+        self.assertEqual(response.status_code,200,response.text)
+        payload=response.json();self.assertEqual(payload['status'],'queued');self.assertIn('durable worker',payload['scope'])
+        from backend import worker
+        with patch.dict(os.environ, {'AEGIS_SPATIAL_JOB_EXECUTION':'worker','AEGIS_SPATIAL_DB_PATH':s.store().path}):
+            self.assertTrue(worker.run_once())
+        finished=self.client.get('/api/spatial/jobs/'+payload['jobId']).json()
+        self.assertEqual(finished['status'],'succeeded');self.assertEqual(finished['result']['worker'],'durable-worker')
     def test_analysis_failure_finishes_job_as_failed(self):
         initialize(s.store())
         with patch('backend.app.parser.parse_sop', side_effect=RuntimeError('解析器异常')):
@@ -1153,6 +1209,31 @@ class ApiTests(unittest.TestCase):
         self.assertTrue(graph['edges'])
         self.assertTrue(all(edge['relation'] in {'mentions','requires-control'} for edge in graph['edges']))
         self.assertTrue(any(node['type']=='approval' for node in graph['nodes']))
+
+    def test_relationship_graph_exposes_scoped_evidence_conflict(self):
+        initialize(s.store())
+        original=next(item for item in fixture()['documents'] if item['id']=='doc-A-01')
+        conflicting=copy.deepcopy(original)
+        conflicting['id']='doc-A-01-graph-conflict'
+        conflicting['source']='设备维护台账 · 图谱冲突记录'
+        conflicting['content']='A-01 设备检查记录：图谱测试中的相反观察。'
+        created=self.client.post('/api/spatial/actions',json={
+            'expectedRevision':1,'requestId':'graph-conflict-save-01','type':'save_document','payload':{'document':conflicting},
+        })
+        self.assertEqual(created.status_code,200,created.text)
+        verified=self.client.post('/api/spatial/actions',json={
+            'expectedRevision':2,'requestId':'graph-conflict-verify-01','type':'verify_document','payload':{'id':conflicting['id'],'status':'verified'},
+        })
+        self.assertEqual(verified.status_code,200,verified.text)
+        response=self.client.get('/api/spatial/graph?planId=EXP-003&types=plan,equipment,document,check&relations=supports-evidence')
+        self.assertEqual(response.status_code,200,response.text)
+        graph=response.json();nodes={node['id']:node for node in graph['nodes']}
+        edges=[edge for edge in graph['edges'] if edge['relation']=='supports-evidence']
+        conflict=next(edge for edge in edges if edge['to']=='document:doc-A-01-graph-conflict')
+        self.assertEqual(conflict['state'],'unknown')
+        self.assertEqual(conflict['applicabilityState'],'conflict')
+        self.assertEqual(conflict['reason'],'overlapping-verified-conflict')
+        self.assertIn('document:doc-A-01-graph-conflict',nodes)
 
     def test_restore_api_is_role_gated_and_creates_snapshot(self):
         initialize(s.store());candidate=s.store().read();candidate['name']='服务端恢复验收';candidate['revision']=700

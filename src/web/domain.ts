@@ -69,9 +69,26 @@ export function checkWorkspace(w: Workspace): Check[] {
       if (e.requiresEvidence) {
         const docs = w.documents.filter(d => d.equipmentId === id && d.kind === 'inspection')
         const valid = docs.filter(d => d.status === 'verified' && d.specVersion === e.specVersion)
-        const covered = reservations.every(r => valid.some(d => millis(d.validFrom) <= millis(r.start) && millis(d.validUntil) >= millis(r.end)))
-        const evidenceApplicability = docs.map(d => ({ documentId: d.id, state: d.status !== 'verified' ? 'candidate' as const : d.specVersion !== e.specVersion ? 'mismatched' as const : reservations.some(r => millis(d.validFrom) <= millis(r.start) && millis(d.validUntil) >= millis(r.end)) ? 'supports' as const : 'expired' as const, specVersion: d.specVersion, validFrom: d.validFrom, validUntil: d.validUntil }))
-        const check = { id: `${p.id}:EVIDENCE:${id}`, planId: p.id, code: 'EVIDENCE', state: covered ? 'pass' as const : 'unknown' as const, title: covered ? `${e.code} 的检查证据适用` : `${e.code} 缺少适用的检查证据`, detail: covered ? '对象、规格版本、核验状态与全部使用时段均匹配。' : '需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。', equipmentId: id, relatedPlanIds: [] as string[], documentIds: docs.map(d => d.id), line: p.steps.find(s => s.equipmentIds.includes(id))?.line ?? null, evidenceApplicability }
+        // Do not silently choose one of two conflicting verified records that
+        // cover the same reservation.  The conflict remains reviewable in the
+        // applicability rows and keeps the aggregate check unknown until a
+        // responsible reviewer reconciles the sources.
+        const conflictByReservation = new Map<string, string[]>()
+        for (const reservation of reservations) {
+          const matches = valid.filter(d => millis(d.validFrom) <= millis(reservation.start) && millis(d.validUntil) >= millis(reservation.end))
+          const signatures = new Set(matches.map(d => d.content))
+          if (signatures.size > 1) conflictByReservation.set(reservation.id, matches.map(d => d.id))
+        }
+        const covered = reservations.every(r => valid.some(d => millis(d.validFrom) <= millis(r.start) && millis(d.validUntil) >= millis(r.end))) && conflictByReservation.size === 0
+        const evidenceApplicability = docs.map(d => {
+          const coveredReservationIds = reservations.filter(r => millis(d.validFrom) <= millis(r.start) && millis(d.validUntil) >= millis(r.end)).map(r => r.id)
+          const conflictReservationIds = coveredReservationIds.filter(reservationId => (conflictByReservation.get(reservationId) || []).includes(d.id))
+          const conflictingDocumentIds = [...new Set(conflictReservationIds.flatMap(reservationId => (conflictByReservation.get(reservationId) || []).filter(otherId => otherId !== d.id)))]
+          const state = d.status !== 'verified' ? 'candidate' as const : d.specVersion !== e.specVersion ? 'mismatched' as const : !coveredReservationIds.length ? 'expired' as const : conflictReservationIds.length ? 'conflict' as const : 'supports' as const
+          return { documentId: d.id, state, specVersion: d.specVersion, validFrom: d.validFrom, validUntil: d.validUntil, ...(conflictingDocumentIds.length ? { conflictingDocumentIds } : {}) }
+        })
+        const detail = covered ? '对象、规格版本、核验状态与全部使用时段均匹配。' : conflictByReservation.size ? `同一预约时段存在内容不一致但均已核验的记录（${[...new Set([...conflictByReservation.values()].flat())].join('、')}）；需负责人裁定后才能作为适用证据。` : '需要已核验且覆盖整个使用时段的记录；上传、过期、其他设备的记录都不能代替。'
+        const check = { id: `${p.id}:EVIDENCE:${id}`, planId: p.id, code: 'EVIDENCE', state: covered ? 'pass' as const : 'unknown' as const, title: covered ? `${e.code} 的检查证据适用` : `${e.code} 缺少适用的检查证据`, detail, equipmentId: id, relatedPlanIds: [] as string[], documentIds: docs.map(d => d.id), line: p.steps.find(s => s.equipmentIds.includes(id))?.line ?? null, evidenceApplicability }
         all.push(check)
       }
     }

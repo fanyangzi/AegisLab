@@ -120,7 +120,7 @@ export interface Check {
   id: string; planId: string; equipmentId: string | null; code: string;
   state: 'pass' | 'unknown' | 'blocked'; title: string; detail: string;
   relatedPlanIds: string[]; documentIds: string[]; line: number | null
-  evidenceApplicability?: Array<{documentId: string; state: 'candidate' | 'supports' | 'expired' | 'mismatched'; specVersion: number; validFrom: string; validUntil: string}>
+  evidenceApplicability?: Array<{documentId: string; state: 'candidate' | 'supports' | 'expired' | 'mismatched' | 'conflict'; specVersion: number; validFrom: string; validUntil: string; conflictingDocumentIds?: string[]}>
 }
 export interface Operation { type: string; payload: Record<string, unknown> }
 export interface Snapshot { workspace: Workspace; checks: Check[]; statuses: Record<string, string>; mode: 'local' | 'server' }
