@@ -14,6 +14,18 @@ function cylinder(g:THREE.Group,x:number,y:number,z:number,r:number,h:number,col
 function tube(g:THREE.Group,points:number[][],radius:number,color:number) {const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p as [number,number,number])));const m=new THREE.Mesh(new THREE.TubeGeometry(curve,16,radius,8,false),material(color,{metalness:.7,roughness:.25}));g.add(m);return m}
 function bottle(g:THREE.Group,x:number,y:number,z:number,scale=1,color=0xa9d9d3) {const h=.28*scale;cylinder(g,x,y+h/2,z,.075*scale,h,color);cylinder(g,x,y+h+.015*scale,z,.04*scale,.06*scale,C.ink);box(g,x,y+h/2,z+.075*scale,.09*scale,.11*scale,.004,C.white,0)}
 function flask(g:THREE.Group,x:number,y:number,z:number,scale=1) {const bulb=new THREE.Mesh(new THREE.SphereGeometry(.12*scale,14,10),material(C.glass,{transparent:true,opacity:.7,roughness:.12}));bulb.position.set(x,y+.13*scale,z);g.add(bulb);cylinder(g,x,y+.30*scale,z,.035*scale,.23*scale,C.glass);cylinder(g,x,y+.42*scale,z,.05*scale,.03*scale,C.white)}
+function aiCore(){
+ const g=new THREE.Group();
+ const base=material(0x5e8ee8,{emissive:0x1d4fbe,emissiveIntensity:.48,transparent:true,opacity:.88,roughness:.28,metalness:.18});
+ const glow=material(0x8bd9f3,{emissive:0x218bc4,emissiveIntensity:.7,transparent:true,opacity:.52,roughness:.18,metalness:.08});
+ const plate=new THREE.Mesh(new THREE.CylinderGeometry(.76,.76,.035,48),base);plate.position.y=.06;plate.castShadow=true;g.add(plate);
+ const ring=new THREE.Mesh(new THREE.TorusGeometry(.69,.026,8,64),glow);ring.rotation.x=Math.PI/2;ring.position.y=.095;g.add(ring);
+ const ring2=new THREE.Mesh(new THREE.TorusGeometry(.49,.014,8,64),new THREE.MeshBasicMaterial({color:0xb9edff,transparent:true,opacity:.8}));ring2.rotation.x=Math.PI/2;ring2.position.y=.11;g.add(ring2);
+ const core=new THREE.Mesh(new THREE.OctahedronGeometry(.27,1),new THREE.MeshStandardMaterial({color:0xe9fbff,emissive:0x56c7ee,emissiveIntensity:.75,roughness:.14,metalness:.08,transparent:true,opacity:.94}));core.position.y=.39;core.rotation.y=Math.PI/4;core.castShadow=true;g.add(core);
+ const beacon=new THREE.Mesh(new THREE.CylinderGeometry(.02,.06,.56,12),new THREE.MeshBasicMaterial({color:0x90e8ff,transparent:true,opacity:.68}));beacon.position.y=.52;g.add(beacon);
+ g.traverse(o=>{o.userData.aiCore=true});
+ return g;
+}
 function label(g:THREE.Group,text:string,x:number,y:number,z:number,width=1.0){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=80;const ctx=canvas.getContext('2d');if(!ctx)return;ctx.fillStyle='#346bea';ctx.fillRect(0,0,256,80);ctx.fillStyle='white';ctx.font='600 40px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,128,42);const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;const mesh=new THREE.Mesh(new THREE.PlaneGeometry(width,width*80/256),new THREE.MeshBasicMaterial({map:texture}));mesh.position.set(x,y,z);g.add(mesh)}
 type ZoneSpec={id:string;name:string;x:number;z:number;width:number;depth:number;color:number}
 function zonesFor(lab:Laboratory):ZoneSpec[]{const w=lab.width,d=lab.depth;return [
@@ -91,8 +103,7 @@ function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
    for(const x of [-.72,0,.72]){cylinder(g,x,1.88,.62,.18,.08,C.metal);cylinder(g,x,1.88,.64,.08,.10,C.ink)}
    box(g,0,2.73,0,w,.24,d,C.white);label(g,e.code,0,.64,d/2+.05,.7)
  }
- const specializedFirst=['nmr','epr','ftir','raman','uv_vis','xrd','xps','dls','spr','sem','tem','afm','icp_ms','icp_oes','aas','xrf','mass_spec','elemental_analyzer','reactor','microwave_reactor','photoreactor','electrochemistry','gas_manifold','gas_cabinet','exhaust_treatment','vacuum_pump','liquid_nitrogen','cold_trap','lyophilizer','spray_dryer','co2_incubator','glovebox','cleanroom','clean_bench','biosafety_cabinet'].includes(e.kind)
- if(!specializedFirst) { if(e.kind==='hood') {w=2.5;d=1.35;h=2.85;cabinetBase(g,w,d);box(g,0,1.01,0,w+.10,.12,d+.1,C.ink);box(g,0,1.87,-.60,w,1.65,.10,C.body);for(const s of [-1,1])box(g,s*1.18,1.89,0,.14,1.7,d,C.white);box(g,0,2.7,0,w,.3,d,C.white);box(g,0,2.54,.66,w-.32,.035,.045,C.metal);const glass=box(g,0,2.1,.58,w-.35,.8,.035,C.glass);(glass.material as THREE.MeshStandardMaterial).transparent=true;(glass.material as THREE.MeshStandardMaterial).opacity=.28;box(g,0,1.69,.61,w-.32,.04,.07,C.metal);box(g,0,2.53,-.3,1.7,.035,.16,0xe3f6ff);cylinder(g,0,2.99,-.28,.25,.35,C.metal);label(g,e.code,0,2.72,.687,.67);box(g,1.18,1.46,.72,.12,.32,.03,C.ink);box(g,1.18,1.54,.74,.07,.06,.01,0x89d3be);bottle(g,-.72,1.10,-.27,.95);bottle(g,-.48,1.10,-.28,.8,0xc3ceea);flask(g,.37,1.10,-.13,1.25);box(g,-.1,1.08,.06,.55,.04,.5,C.metal)}
+ if(e.kind==='hood' || e.kind==='gas_cabinet') {w=2.5;d=1.35;h=2.85;cabinetBase(g,w,d);box(g,0,1.01,0,w+.10,.12,d+.1,C.ink);box(g,0,1.87,-.60,w,1.65,.10,C.body);for(const s of [-1,1])box(g,s*1.18,1.89,0,.14,1.7,d,C.white);box(g,0,2.7,0,w,.3,d,C.white);box(g,0,2.54,.66,w-.32,.035,.045,C.metal);const glass=box(g,0,2.1,.58,w-.35,.8,.035,C.glass);(glass.material as THREE.MeshStandardMaterial).transparent=true;(glass.material as THREE.MeshStandardMaterial).opacity=.28;box(g,0,1.69,.61,w-.32,.04,.07,C.metal);box(g,0,2.53,-.3,1.7,.035,.16,0xe3f6ff);cylinder(g,0,2.99,-.28,.25,.35,C.metal);label(g,e.code,0,2.72,.687,.67);box(g,1.18,1.46,.72,.12,.32,.03,C.ink);box(g,1.18,1.54,.74,.07,.06,.01,0x89d3be);bottle(g,-.72,1.10,-.27,.95);bottle(g,-.48,1.10,-.28,.8,0xc3ceea);flask(g,.37,1.10,-.13,1.25);box(g,-.1,1.08,.06,.55,.04,.5,C.metal)}
  else if(['bench','clean_bench','biosafety_cabinet'].includes(e.kind)) {w=3.5;d=1.48;h=2.1;cabinetBase(g,w,d);box(g,0,1.0,0,w+.1,.13,d+.08,C.worktop);for(const x of [-1.42,1.42])box(g,x,1.46,0,.065,.88,.07,C.metal);box(g,0,1.73,0,3.1,.055,.42,C.metal);box(g,0,1.36,0,3.1,.055,.42,C.white);for(let i=0;i<7;i++)bottle(g,-1.25+i*.39,1.765,0,.7,i%3===0?0xc5a876:0xbddbd4);box(g,-1.2,1.17,.43,.38,.2,.34,C.body);flask(g,.45,1.085,.44,.9);flask(g,.85,1.085,.38,.8);box(g,-.25,1.09,.42,.5,.025,.35,C.blue);for(const x of [-1.05,1.05]){cylinder(g,x,.63,1.12,.26,.10,C.ink);cylinder(g,x,.36,1.12,.035,.5,C.metal);for(const off of [-.22,.22])box(g,x+off,.12,1.12,.5,.035,.04,C.metal)}label(g,e.code,0,.60,d/2+.05,.65)}
  else if(['storage','flammable_cabinet','acid_base_cabinet','refrigerator','freezer','drying_oven','furnace'].includes(e.kind)) {w=1.8;d=1.05;h=2.5;box(g,0,1.25,0,w,2.5,d,C.body);box(g,0,.09,0,w-.1,.15,d,C.ink);for(const s of [-1,1]){box(g,s*.44,1.3,.54,.84,2.25,.05,C.white);const glass=box(g,s*.44,1.65,.58,.64,1.19,.03,C.glass);(glass.material as THREE.MeshStandardMaterial).roughness=.2;box(g,s*.1,1.13,.61,.035,.27,.045,C.metal);for(let i=0;i<3;i++)box(g,s*.44,.66+i*.44,.6,.60,.024,.03,C.metal)}label(g,e.code,0,2.33,.59,.62)}
  else if(['nmr','epr','xrd','xps','sem','tem','afm','ftir','raman','spr','dls','bet'].includes(e.kind)){w=2.45;d=1.48;h=2.35;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.1,d+.08,C.worktop);
@@ -122,7 +133,6 @@ function model(e:Equipment){const g=new THREE.Group();let h=1.4,w=2,d=1.3
  else if(e.kind==='safety_shower'){w=1.45;d=1.10;h=2.85;box(g,0,1.30,0,w,2.6,d,0xe4edf3);box(g,0,.10,0,w-.1,.16,d,C.ink);box(g,0,2.38,.34,.08,.07,.06,0xd56e7c);cylinder(g,0,2.75,.24,.27,.09,0xd9e5ee);box(g,-.22,2.18,.25,.35,.035,.06,0xd56e7c);cylinder(g,-.22,2.04,.25,.025,.24,0xd56e7c);wallBadge(g,0,2.98,.49,'SOS',0xf4d7dc);label(g,e.code,0,2.42,.58,.65)}
  else if(['solvent_waste','waste_container','waste_storage'].includes(e.kind)){w=1.65;d=1.18;h=1.55;box(g,0,.78,0,w,1.55,d,0xd4c4a4,.08);box(g,0,1.58,0,w+.08,.12,d+.06,0xb99c67,.04);for(const x of [-.44,.44]){cylinder(g,x,1.7,.05,.22,.08,0xeadfcb);box(g,x,1.43,.60,.27,.35,.025,0xf5e9b4)}box(g,0,.32,.61,.65,.08,.04,0xc49f55);label(g,e.code,0,1.25,.63,.65)}
  else {w=2.05;d=1.22;h=1.92;cabinetBase(g,w,d);box(g,0,1.0,0,w+.08,.10,d+.08,C.worktop);box(g,-.38,1.42,.02,.84,.75,.78,0xf5f9fc);box(g,-.38,1.60,.44,.62,.24,.025,0x6f9bc3);box(g,-.38,1.26,.45,.48,.06,.035,C.metal);box(g,.52,1.36,.02,.57,.62,.62,0xe3edf3);box(g,.52,1.56,.34,.40,.18,.025,C.ink);cylinder(g,.52,1.16,.37,.09,.07,C.blue);label(g,e.code,0,.60,.67,.65)}
- }
  g.position.set(e.x,0,e.z);g.rotation.y=e.rotation*Math.PI/180;g.traverse(o=>o.userData.equipmentId=e.id)
  return {group:g,height:h,width:w,depth:d}
 }
@@ -161,6 +171,9 @@ function room(lab:Laboratory) {const g=new THREE.Group(),w=lab.width,d=lab.depth
   const panel=box(g,w*.22,3.04,z,.34,.025,1.55,0xf5fbff,.02)
   const panelMat=panel.material as THREE.MeshStandardMaterial;panelMat.emissive.setHex(0xc4e8ff);panelMat.emissiveIntensity=.3
  }
+ // A subtle central marker is the visual anchor for the AI safety twin. The
+ // projected overlay added below carries the readable label and live state.
+ const core=aiCore();core.position.set(0,.02,1.0);g.add(core)
  label(g,lab.name.slice(0,12),-w/2+1.7,2.45,-d/2+.11,2.0)
  return g
 }
@@ -170,9 +183,8 @@ export default function LabScene(props:Props) {
  const host=useRef<HTMLDivElement>(null), overlay=useRef<HTMLDivElement>(null), lines=useRef<SVGSVGElement>(null)
  const live=useRef(props);live.current=props
  const actions=useRef<{zoom:(delta:number)=>void;reset:()=>void;focus:()=>void}|null>(null)
- const viewMemory=useRef(new Map<string,{position:[number,number,number];target:[number,number,number];zoom:number}>())
  const [failed,setFailed]=useState(false)
- const layout=JSON.stringify([props.lab,props.equipment.map(({id,kind,x,z,rotation,code})=>({id,kind,x,z,rotation,code}))])
+ const layout=JSON.stringify([props.lab,props.equipment.map(({id,kind,x,z,rotation,code})=>({id,kind,x,z,rotation,code})),props.planId,props.checks.map(({id,state,equipmentId})=>({id,state,equipmentId}))])
  useEffect(()=>{
   if(props.flat)return
   const el=host.current; if(!el)return; let renderer:THREE.WebGLRenderer
@@ -185,8 +197,6 @@ export default function LabScene(props:Props) {
   const camera=new THREE.OrthographicCamera(-10,10,8,-8,.1,200)
   const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.09;controls.minZoom=.5;controls.maxZoom=3;controls.minPolarAngle=.30;controls.maxPolarAngle=Math.PI*.45;controls.enablePan=true;controls.target.set(0,.6,0)
   const reset=()=>{const w=props.lab.width,d=props.lab.depth;
-   const saved=viewMemory.current.get(props.lab.id)
-   if(saved){camera.position.fromArray(saved.position);camera.zoom=saved.zoom;controls.target.fromArray(saved.target);camera.updateProjectionMatrix();controls.update();return}
    // Keep the room readable at the 1440px acceptance width.  The previous
    // distance was tuned for a much taller canvas and made the real assets
    // collapse into a tiny island beside the inspector.
@@ -195,8 +205,11 @@ export default function LabScene(props:Props) {
   };reset()
   const models=props.equipment.map(e=>{const m=model(e);scene.add(m.group);const outline=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(m.width+.12,m.height+.1,m.depth+.12)),new THREE.LineBasicMaterial({color:C.blue,transparent:true,opacity:.8}));outline.position.set(e.x,m.height/2,e.z);outline.rotation.y=e.rotation*Math.PI/180;scene.add(outline);return {...m,e,outline}})
   const pointers=new Map<string,HTMLButtonElement>(),zonePointers=new Map<string,HTMLDivElement>()
+  let aiPointer:HTMLButtonElement|null=null
   if(overlay.current){overlay.current.replaceChildren();
-   models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);const dot=document.createElement('span');dot.className='dot';const copy=document.createElement('div');const title=document.createElement('b');title.textContent=`${e.name} ${e.code}`;const meta=document.createElement('small');meta.textContent=e.kind;copy.append(title,meta);b.append(dot,copy);b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
+   const blocked=props.checks.filter(c=>c.state==='blocked').length,unknown=props.checks.filter(c=>c.state==='unknown').length,activePlan=props.plans.find(p=>p.id===props.planId),aiState=blocked?`${blocked} 项阻断 · 需处理`:unknown?`${unknown} 项待确认 · AI 可解释`:'等待选择对象';
+   const ai=document.createElement('button');ai.type='button';ai.className='al-scene-ai-core';ai.setAttribute('aria-label','打开 AI 安全孪生预审');ai.title='打开 AI 安全孪生预审';ai.innerHTML=`<span class="al-scene-ai-orb">AI</span><div><b>安全孪生引擎</b><small>${activePlan?`${activePlan.code} · ${aiState}`:aiState}</small></div>`;ai.addEventListener('click',()=>live.current.onOpenAI?.());overlay.current.appendChild(ai);aiPointer=ai
+   models.forEach(({e})=>{const b=document.createElement('button');b.type='button';b.className='al-scene-label';b.setAttribute('aria-label',`选择设备 ${e.code}`);b.innerHTML='<span class="dot"></span><div><b></b><small></small></div>';b.querySelector('b')!.textContent=`${e.name} ${e.code}`;b.addEventListener('click',()=>live.current.onSelect({type:'equipment',id:e.id}));overlay.current!.appendChild(b);pointers.set(e.id,b)});zonesFor(props.lab).forEach(z=>{const node=document.createElement('div');node.className='al-zone-label';node.textContent=z.name;node.dataset.zone=z.id;overlay.current!.appendChild(node);zonePointers.set(z.id,node)})}
   let width=1,height=1
   const resize=()=>{width=el.clientWidth;height=el.clientHeight;if(!width||!height)return;renderer.setSize(width,height);
    const base=Math.max(props.lab.width*.35,props.lab.depth*.49,4.9);
@@ -221,11 +234,17 @@ export default function LabScene(props:Props) {
     p.checks.filter(c=>c.state!=='pass'&&c.equipmentId).forEach(c=>priorityIds.add(c.equipmentId!));
     if(p.selection?.type==='equipment')priorityIds.add(p.selection.id);
     let shownLabels=0
+    // Reserve the AI anchor's label footprint before placing equipment labels.
+    // This prevents a selected instrument card from sitting directly on top of
+    // the semantic center when the camera is zoomed or the viewport is narrow.
+    const aiScreen=new THREE.Vector3(0,1.05,1.0).project(camera)
+    const aiPosition={x:(aiScreen.x+1)*width/2,y:(-aiScreen.y+1)*height/2}
     type Rect={x:number;y:number;w:number;h:number}
     const boxes:Rect[]=[]
     const overlaps=(a:Rect,b:Rect)=>a.x<b.x+b.w+8&&a.x+a.w+8>b.x&&a.y<b.y+b.h+8&&a.y+a.h+8>b.y
     const inside=(a:Rect)=>a.x>=10&&a.y>=10&&a.x+a.w<=width-10&&a.y+a.h<=height-10
     const reserve=(r:Rect)=>{if(inside(r))boxes.push(r)}
+    if(aiPosition.x>=70&&aiPosition.x<=width-70&&aiPosition.y>=34&&aiPosition.y<=height-45)reserve({x:aiPosition.x-92,y:aiPosition.y-20,w:184,h:40})
     // Zone pills are semantic anchors too; reserve their actual footprint so
     // equipment labels never cover the room's operating areas.
     zonesFor(p.lab).forEach(z=>{
@@ -240,24 +259,12 @@ export default function LabScene(props:Props) {
       const bad=p.checks.some(c=>c.equipmentId===e.id&&c.state==='blocked'),unknown=p.checks.some(c=>c.equipmentId===e.id&&c.state==='unknown')
       outline.visible=selected||Boolean(p.planId&&planEq.has(e.id));(outline.material as THREE.LineBasicMaterial).color.setHex(bad?0xe26476:C.blue)
       const world=new THREE.Vector3(e.x,mh+.35,e.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};points.set(e.id,v)
+      const nearAI=Math.abs(v.x-aiPosition.x)<150&&Math.abs(v.y-aiPosition.y)<88
       const b=pointers.get(e.id)!;b.hidden=false
       const lw=b.offsetWidth||188,lh=b.offsetHeight||48
-      // Try a small deterministic set of anchor positions before hiding a
-      // label. The scene can contain dozens of resources, so a single
-      // ``above the object`` slot made valid labels disappear whenever two
-      // benches were aligned. These candidates keep the card attached to the
-      // same projected point while avoiding zones, the AI anchor and earlier
-      // cards in the current frame.
-      const offsets:[number,number][]=[
-       [0,-lh-8],
-       [-lw/2-20,-lh/2],
-       [lw/2+20,-lh/2],
-       [0,18],
-       [-lw/2-20,-lh-8],
-       [lw/2+20,-lh-8],
-      ]
+      const offsets=selected&&nearAI?[v.x<width/2?115:-115,0,v.x<width/2?175:-175]:[0]
       let rect:Rect|undefined
-      for(const [dx,dy] of offsets){const candidate={x:v.x+dx-lw/2,y:v.y+dy,w:lw,h:lh};if(inside(candidate)&&boxes.every(q=>!overlaps(candidate,q))){rect=candidate;break}}
+      for(const dx of offsets){const candidate={x:v.x+dx-lw/2,y:v.y-lh-8,w:lw,h:lh};if(inside(candidate)&&boxes.every(q=>!overlaps(candidate,q))){rect=candidate;break}}
       // The selected object remains discoverable even in a dense view. If all
       // collision-free candidates are occupied, place it at the nearest valid
       // edge and let its selected styling establish the visual priority.
@@ -274,17 +281,18 @@ export default function LabScene(props:Props) {
       b.querySelector('small')!.textContent=bad?'预约约束冲突':unknown?'有待核验事项':`${p.plans.filter(q=>q.reservations.some(r=>r.equipmentId===e.id)).length} 项关联计划`
     })
     zonesFor(p.lab).forEach(z=>{const node=zonePointers.get(z.id);if(!node)return;const world=new THREE.Vector3(z.x,.12,z.z).project(camera),v={x:(world.x+1)*width/2,y:(-world.y+1)*height/2};node.style.transform=`translate(${v.x}px,${v.y}px) translate(-50%,-50%)`;node.hidden=v.x<20||v.x>width-20||v.y<20||v.y>height-20})
-    if(lines.current){const anchorPlan=currentPlan||p.plans.find(q=>q.id===p.selection?.id),anchorItems=anchorPlan?.reservations.map(r=>p.equipment.find(e=>e.id===r.equipmentId)).filter(Boolean) as Equipment[]|undefined,anchor=anchorItems?.length?new THREE.Vector3(anchorItems.reduce((sum,e)=>sum+e.x,0)/anchorItems.length,1.05,anchorItems.reduce((sum,e)=>sum+e.z,0)/anchorItems.length):new THREE.Vector3(0,.8,0),center=anchor.project(camera),cx=(center.x+1)*width/2,cy=(-center.y+1)*height/2
+    if(lines.current){const center=new THREE.Vector3(0,1.05,1.0).project(camera),cx=(center.x+1)*width/2,cy=(-center.y+1)*height/2
+      if(aiPointer){aiPointer.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`;aiPointer.hidden=cx<70||cx>width-70||cy<34||cy>height-45}
       const selectedEq=p.selection?.type==='equipment'?p.selection.id:null
       const relevant=p.planId?currentPlan:p.plans.find(q=>q.reservations.some(r=>r.equipmentId===selectedEq))
       const dest=[...new Set(relevant?.reservations.map(r=>r.equipmentId)||[])].map(id=>({id,pos:points.get(id)})).filter(x=>x.pos)
       const stamp=JSON.stringify([dest,cx,cy,relevant?.id,p.selection?.type,p.selection?.id,p.reduced,p.checks.filter(c=>c.state==='blocked').map(c=>c.equipmentId)])
       if(stamp!==previousStamp){previousStamp=stamp;lines.current.replaceChildren();
        const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');const marker=document.createElementNS('http://www.w3.org/2000/svg','marker');marker.setAttribute('id','al-arrow');marker.setAttribute('viewBox','0 0 10 10');marker.setAttribute('refX','8');marker.setAttribute('refY','5');marker.setAttribute('markerWidth','4');marker.setAttribute('markerHeight','4');marker.setAttribute('orient','auto-start-reverse');const arrow=document.createElementNS('http://www.w3.org/2000/svg','path');arrow.setAttribute('d','M 0 0 L 10 5 L 0 10 z');arrow.setAttribute('fill','#6898e7');marker.appendChild(arrow);defs.appendChild(marker);lines.current.appendChild(defs)
-       if(relevant){const active=(p.selection?.type==='plan'||p.selection?.type==='equipment')&&!p.reduced;dest.forEach(({id,pos})=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');const bad=p.checks.some(c=>c.planId===relevant.id&&c.equipmentId===id&&c.state==='blocked');path.setAttribute('d',`M ${cx} ${cy} Q ${cx} ${pos!.y+20} ${pos!.x} ${pos!.y+12}`);path.setAttribute('class',`al-scene-connection ${bad?'red':''} ${active?'is-active':''}`);path.setAttribute('marker-end','url(#al-arrow)');path.setAttribute('aria-label',`${relevant.code} 使用 ${id}`);path.addEventListener('click',()=>live.current.onSelect({type:'equipment',id}));lines.current!.appendChild(path);const node=document.createElementNS('http://www.w3.org/2000/svg','circle');node.setAttribute('cx',String(pos!.x));node.setAttribute('cy',String(pos!.y+12));node.setAttribute('r',bad?'5':'4');node.setAttribute('class',`al-scene-connection-node ${bad?'red':''}`);lines.current!.appendChild(node)});const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','5');circle.setAttribute('class','al-scene-plan-node');lines.current.appendChild(circle)}}}
+       if(relevant){const active=(p.selection?.type==='plan'||p.selection?.type==='equipment')&&!p.reduced;dest.forEach(({id,pos})=>{const path=document.createElementNS('http://www.w3.org/2000/svg','path');const bad=p.checks.some(c=>c.planId===relevant.id&&c.equipmentId===id&&c.state==='blocked');path.setAttribute('d',`M ${cx} ${cy} Q ${cx} ${pos!.y+20} ${pos!.x} ${pos!.y+12}`);path.setAttribute('class',`al-scene-connection ${bad?'red':''} ${active?'is-active':''}`);path.setAttribute('marker-end','url(#al-arrow)');path.setAttribute('aria-label',`${relevant.code} 使用 ${id}`);path.addEventListener('click',()=>live.current.onSelect({type:'equipment',id}));lines.current!.appendChild(path);const node=document.createElementNS('http://www.w3.org/2000/svg','circle');node.setAttribute('cx',String(pos!.x));node.setAttribute('cy',String(pos!.y+12));node.setAttribute('r',bad?'5':'4');node.setAttribute('class',`al-scene-connection-node ${bad?'red':''}`);lines.current!.appendChild(node)});const halo=document.createElementNS('http://www.w3.org/2000/svg','circle');halo.setAttribute('cx',String(cx));halo.setAttribute('cy',String(cy));halo.setAttribute('r','18');halo.setAttribute('class',`al-scene-ai-halo ${active?'is-active':''}`);lines.current.appendChild(halo);const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');circle.setAttribute('cx',String(cx));circle.setAttribute('cy',String(cy));circle.setAttribute('r','6');circle.setAttribute('class','al-scene-ai-node');lines.current.appendChild(circle)}}}
     renderer.render(scene,camera);raf=requestAnimationFrame(draw)
   };draw()
-  return()=>{cancelAnimationFrame(raf);viewMemory.current.set(props.lab.id,{position:[camera.position.x,camera.position.y,camera.position.z],target:[controls.target.x,controls.target.y,controls.target.z],zoom:camera.zoom});ro.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('webglcontextlost',contextLost);scene.traverse(o=>{const m=o as THREE.Mesh;m.geometry?.dispose();const materials=Array.isArray(m.material)?m.material:[m.material];materials.forEach(mat=>{if(mat){Object.values(mat).forEach(v=>{if(v instanceof THREE.Texture)v.dispose()});mat.dispose()}})});renderer.dispose();renderer.domElement.remove();overlay.current?.replaceChildren();lines.current?.replaceChildren();actions.current=null}
+  return()=>{cancelAnimationFrame(raf);ro.disconnect();controls.dispose();renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('webglcontextlost',contextLost);scene.traverse(o=>{const m=o as THREE.Mesh;m.geometry?.dispose();const materials=Array.isArray(m.material)?m.material:[m.material];materials.forEach(mat=>{if(mat){Object.values(mat).forEach(v=>{if(v instanceof THREE.Texture)v.dispose()});mat.dispose()}})});renderer.dispose();renderer.domElement.remove();overlay.current?.replaceChildren();lines.current?.replaceChildren();actions.current=null}
  },[layout,props.flat,failed])
  if(props.flat||failed)return <div className="al-flat-stage"><svg viewBox={`0 0 ${props.lab.width*55} ${props.lab.depth*55}`} role="img" aria-label="实验室二维平面"><defs><pattern id="floor-grid" width="55" height="55" patternUnits="userSpaceOnUse"><path d="M55 0H0V55" fill="none" stroke="#dfe7f2"/></pattern></defs><rect x="2" y="2" width={props.lab.width*55-4} height={props.lab.depth*55-4} rx="8" fill="url(#floor-grid)" stroke="#c1d0e3" strokeWidth="4"/>{props.equipment.map(e=><g key={e.id} role="button" tabIndex={0} aria-label={`选择设备 ${e.code}`} onClick={()=>props.onSelect({type:'equipment',id:e.id})} onKeyDown={ev=>{if(ev.key==='Enter')props.onSelect({type:'equipment',id:e.id})}} transform={`translate(${(e.x+props.lab.width/2)*55},${(e.z+props.lab.depth/2)*55})`}><rect x="-48" y="-30" width={e.kind==='bench'?135:95} height="60" rx="6" fill={props.selection?.id===e.id?'#dbe8ff':'white'} stroke={props.checks.some(c=>c.equipmentId===e.id&&c.state==='blocked')?'#e57785':'#b9cce5'} strokeWidth="2"/><text textAnchor="middle" y="-3" fontSize="14" fill="#253c5c">{e.name}</text><text textAnchor="middle" y="18" fontSize="12" fill="#577394">{e.code}</text></g>)}</svg>{failed&&<div className="al-webgl-note"><Icon name="info" size={16}/> 三维渲染不可用，已切换二维；业务操作不受影响。</div>}</div>
  return <div className="al-stage"><div ref={host} className="al-three-host"/><svg ref={lines} className="al-scene-lines"/><div ref={overlay} className="al-scene-labels"/><div className="al-stage-tools"><Button title="放大场景" icon="plus" onClick={()=>actions.current?.zoom(.15)}/><Button title="缩小场景" icon="minus" onClick={()=>actions.current?.zoom(-.15)}/><span/><Button title="聚焦选中设备" icon="target" onClick={()=>actions.current?.focus()}/><Button title="重置视角" icon="reset" onClick={()=>actions.current?.reset()}/></div><div className="al-compass"><span>N</span><i/></div><div className="al-stage-caption"><Icon name="cube" size={15}/> 正交空间 <span>拖动旋转 · 滚轮缩放</span></div></div>
