@@ -7,6 +7,14 @@ export const API_BASE=(import.meta.env.VITE_API_BASE_URL||'').replace(/\/$/,'')
 let token=''
 export const setSessionToken=(value:string)=>{token=value}
 export const authHeaders=()=>token?{Authorization:`Bearer ${token}`}:{Authorization:''}
+async function binaryRequest(path:string, options:RequestInit):Promise<Response> {
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000)
+ try {
+  const response=await fetch(`${API_BASE}${path}`,{...options,headers:{...authHeaders(),...(options.headers||{})},signal:controller.signal})
+  if(!response.ok){let detail='请求失败。';try{const data=await response.json();if(typeof data.detail==='string')detail=data.detail}catch{}throw new Error(`${detail}（${response.status}）`)}
+  return response
+ }finally{clearTimeout(timer)}
+}
 export async function request<T>(path:string, body?:unknown):Promise<T> {
  // A full Copilot run may perform SOP extraction and summary generation as two
  // sequential Responses API calls. Keep the browser request alive beyond the
@@ -73,5 +81,17 @@ export function useWorkspace() {
   const result=await request<Snapshot>('/api/spatial/restore',{expectedRevision:s.workspace.revision,requestId:uid('restore'),confirm:'RESTORE',workspace})
   assertWorkspace(result.workspace);const next={...result,mode:'server' as const};setSnapshot(next);current.current=next
  },[])
- return {snapshot,busy,booting,connection,error,setError,mutate,connect,openLocal,refresh,restoreServer,exportRaw:()=>localStorage.getItem(KEY)}
+ const exportServerZip=useCallback(async()=>{
+  if(current.current.mode!=='server')throw new Error('请先连接服务端，再导出包含原始来源文件的 ZIP 存档。')
+  const response=await binaryRequest('/api/spatial/export.zip',{method:'GET'})
+  const blob=await response.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`aegislab-workspace-v${current.current.workspace.revision}.zip`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
+ },[])
+ const restoreServerZip=useCallback(async(file:File)=>{
+  const s=current.current
+  if(s.mode!=='server')throw new Error('请先连接服务端，再恢复 ZIP 存档。')
+  const response=await binaryRequest('/api/spatial/restore.zip',{method:'POST',headers:{'Content-Type':'application/zip'},body:file})
+  const result=await response.json() as Snapshot
+  assertWorkspace(result.workspace);const next={...result,mode:'server' as const};setSnapshot(next);current.current=next
+ },[])
+ return {snapshot,busy,booting,connection,error,setError,mutate,connect,openLocal,refresh,restoreServer,exportServerZip,restoreServerZip,exportRaw:()=>localStorage.getItem(KEY)}
 }

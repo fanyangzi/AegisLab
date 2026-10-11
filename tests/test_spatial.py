@@ -1247,6 +1247,104 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.client.post('/api/spatial/import-text?filename=unsafe.exe&documentId=doc-F-01',content=b'nope').status_code,422)
         self.assertEqual(self.client.post('/api/spatial/import-text?filename=missing.md&documentId=missing-doc',content=b'nope').status_code,404)
         self.assertEqual(self.client.get('/api/spatial/documents/doc-F-01/source').status_code,404)
+    def test_workspace_zip_export_and_restore_keeps_artifact_bytes_in_sync(self):
+        initialize(s.store())
+        raw = 'ZIP 原始来源记录\n联锁状态：待人工核验'.encode()
+        imported = self.client.post('/api/spatial/import-text?filename=zip-source.md&documentId=doc-F-01', content=raw)
+        self.assertEqual(imported.status_code, 200, imported.text)
+        imported_payload = imported.json()
+        workspace = s.store().read()
+        document = next(item for item in workspace['documents'] if item['id'] == 'doc-F-01')
+        document.update(
+            sourceArtifactId=imported_payload['sourceArtifactId'], sourceArtifactVersion=imported_payload['sourceArtifactVersion'],
+            sourceFileName='zip-source.md', sourceFileSize=len(raw), sourceMediaType='text/markdown', sourceType='upload',
+            sourceLocator='extracted-text-lines', capturedAt=s.now(), content=imported_payload['text'],
+            contentLength=len(imported_payload['text']), sourceLocations=imported_payload['sourceLocations'],
+        )
+        saved = self.client.post('/api/spatial/actions', json={
+            'expectedRevision': workspace['revision'], 'requestId': 'zip-artifact-save-01', 'type': 'save_document', 'payload': {'document': document},
+        })
+        self.assertEqual(saved.status_code, 200, saved.text)
+        exported = self.client.get('/api/spatial/export.zip')
+        self.assertEqual(exported.status_code, 200, exported.text)
+        self.assertIn('application/zip', exported.headers.get('content-type', ''))
+        with io.BytesIO(exported.content) as stream:
+            import zipfile
+            with zipfile.ZipFile(stream) as archive:
+                self.assertEqual(set(archive.namelist()), {'workspace.json', 'manifest.json', f"artifacts/{imported_payload['sourceArtifactId']}/zip-source.md"})
+                manifest = json.loads(archive.read('manifest.json'))
+                self.assertEqual(manifest['format'], s.ARCHIVE_FORMAT)
+                self.assertEqual(manifest['artifacts'][0]['size'], len(raw))
+                self.assertEqual(archive.read(f"artifacts/{imported_payload['sourceArtifactId']}/zip-source.md"), raw)
+        # Change the current workspace, then restore the archive.  The ZIP
+        # endpoint must create a durable pre-restore snapshot and restore both
+        # the JSON reference and the private source bytes.
+        current = s.store().read()
+        changed = copy.deepcopy(next(item for item in current['documents'] if item['id'] == 'doc-F-01'))
+        changed['name'] = 'ZIP 恢复前的临时名称'
+        changed_response = self.client.post('/api/spatial/actions', json={
+            'expectedRevision': current['revision'], 'requestId': 'zip-before-restore-change', 'type': 'save_document', 'payload': {'document': changed},
+        })
+        self.assertEqual(changed_response.status_code, 200, changed_response.text)
+        restored = self.client.post('/api/spatial/restore.zip', content=exported.content, headers={'content-type': 'application/zip'})
+        self.assertEqual(restored.status_code, 200, restored.text)
+        self.assertEqual(restored.json()['archive']['artifacts'], 1)
+        current_document = next(item for item in s.store().read()['documents'] if item['id'] == 'doc-F-01')
+        self.assertEqual(current_document['sourceArtifactId'], imported_payload['sourceArtifactId'])
+        content = self.client.get('/api/spatial/documents/doc-F-01/source/content')
+        self.assertEqual(content.status_code, 200, content.text)
+        self.assertEqual(content.content, raw)
+        snapshots = self.client.get('/api/spatial/snapshots').json()['snapshots']
+        self.assertEqual(len(snapshots), 1)
+        self.assertEqual(snapshots[0]['reason'], 'restore_workspace_zip_before_replace')
+        snapshot_detail = self.client.get('/api/spatial/snapshots/' + snapshots[0]['snapshotId'])
+        self.assertEqual(snapshot_detail.status_code, 200, snapshot_detail.text)
+        self.assertEqual(snapshot_detail.json()['artifacts'][0]['artifactId'], imported_payload['sourceArtifactId'])
+        snapshot_content = self.client.get('/api/spatial/snapshots/' + snapshots[0]['snapshotId'] + '/artifacts/' + imported_payload['sourceArtifactId'] + '/content')
+        self.assertEqual(snapshot_content.status_code, 200, snapshot_content.text)
+        self.assertEqual(snapshot_content.content, raw)
+
+    def test_workspace_zip_restore_rejects_path_traversal_and_non_zip_content(self):
+        initialize(s.store())
+        before = s.store().read()
+        import zipfile
+        stream = io.BytesIO()
+        with zipfile.ZipFile(stream, 'w') as archive:
+            archive.writestr('workspace.json', json.dumps(before))
+            archive.writestr('manifest.json', json.dumps({'format': s.ARCHIVE_FORMAT, 'artifacts': []}))
+            archive.writestr('artifacts/a/../../escape.txt', b'nope')
+        response = self.client.post('/api/spatial/restore.zip', content=stream.getvalue(), headers={'content-type': 'application/zip'})
+        self.assertEqual(response.status_code, 422, response.text)
+        self.assertEqual(s.store().read()['revision'], before['revision'])
+        wrong_type = self.client.post('/api/spatial/restore.zip', content=b'not-a-zip', headers={'content-type': 'text/plain'})
+        self.assertEqual(wrong_type.status_code, 415, wrong_type.text)
+        malformed = io.BytesIO()
+        with zipfile.ZipFile(malformed, 'w') as archive:
+            archive.writestr('workspace.json', json.dumps(before))
+            archive.writestr('manifest.json', json.dumps({'format': s.ARCHIVE_FORMAT, 'artifacts': [{
+                'artifactId': 'artifact-bad-size', 'documentId': 'doc-F-01', 'filename': 'source.md',
+                'mediaType': 'text/markdown', 'size': 'bad', 'version': 1, 'status': 'stored',
+                'member': 'artifacts/artifact-bad-size/source.md',
+            }]}))
+            archive.writestr('artifacts/artifact-bad-size/source.md', b'nope')
+        malformed_response = self.client.post('/api/spatial/restore.zip', content=malformed.getvalue(), headers={'content-type': 'application/zip'})
+        self.assertEqual(malformed_response.status_code, 422, malformed_response.text)
+
+    def test_sensitive_document_and_plan_lifecycle_routes_are_role_gated(self):
+        initialize(s.store())
+        workspace = s.store().read()
+        document = copy.deepcopy(workspace['documents'][0])
+        with patch.dict(os.environ, {'AEGIS_WORKSPACE_ROLE': 'researcher'}):
+            verified = self.client.post('/api/spatial/actions', json={
+                'expectedRevision': workspace['revision'], 'requestId': 'role-verify-document-01', 'type': 'verify_document',
+                'payload': {'id': document['id'], 'status': 'verified'},
+            })
+            self.assertEqual(verified.status_code, 403, verified.text)
+            transitioned = self.client.post('/api/spatial/actions', json={
+                'expectedRevision': workspace['revision'], 'requestId': 'role-transition-plan-01', 'type': 'transition_plan',
+                'payload': {'planId': workspace['plans'][0]['id'], 'lifecycle': 'revising'},
+            })
+            self.assertEqual(transitioned.status_code, 403, transitioned.text)
     def test_unsupported_type_denied(self):self.assertEqual(self.client.post('/api/spatial/import-text?filename=evil.exe',content=b'abc').status_code,422)
     def test_scanned_pdf_empty_text_not_fabricated(self):
         from pypdf import PdfWriter

@@ -10,17 +10,21 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import sqlite3
 import secrets
+import shutil
+import zipfile
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from posixpath import normpath as posix_normpath
 from typing import Any, Literal
 from urllib.parse import urlparse
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from .parser import parse_sop
 
@@ -34,6 +38,10 @@ SOURCE_REGISTRY_PATH = ROOT / "data" / "knowledge_sources.json"
 # text without exposing filesystem paths or accepting arbitrary file types.
 ARTIFACT_MAX_BYTES = 8 * 1024 * 1024
 ARTIFACT_SUFFIXES = frozenset({".txt", ".md", ".docx", ".pdf"})
+ARCHIVE_MAX_BYTES = 32 * 1024 * 1024
+ARCHIVE_MAX_FILES = 512
+ARCHIVE_FORMAT = "aegislab-workspace-zip/v1"
+_ARTIFACT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
 
 def artifact_root_for_db(db_path: str) -> Path:
     configured = os.getenv("AEGIS_SPATIAL_ARTIFACT_DIR", "").strip()
@@ -45,6 +53,31 @@ def _artifact_filename(filename: str) -> str:
     """Return a display filename without allowing path components through."""
     clean = Path(str(filename or "source")).name.strip() or "source"
     return clean[:240]
+
+
+def _safe_archive_member(name: str) -> str:
+    """Validate a ZIP member name before it is read or written.
+
+    ZIP member names are POSIX paths even on macOS/Windows.  Never pass a
+    caller supplied name to ``extractall``; the restore path only accepts the
+    two manifest files and ``artifacts/<id>/<basename>`` entries.
+    """
+    value = str(name or "")
+    if not value or "\x00" in value or value.startswith(("/", "\\")) or "\\" in value:
+        raise ValueError("存档包含不安全的文件路径。")
+    normalized = posix_normpath(value)
+    if normalized != value or normalized in {".", ".."} or any(part in {"", ".", ".."} for part in value.split("/")):
+        raise ValueError("存档包含路径穿越条目。")
+    return value
+
+
+def _safe_artifact_storage_path(root: Path, storage_key: str) -> Path:
+    """Resolve an internal storage key while preventing path escape."""
+    candidate = (root / str(storage_key)).resolve()
+    resolved_root = root.resolve()
+    if candidate.parent != resolved_root or candidate == resolved_root:
+        raise HTTPException(500, "来源文件存储记录无效。")
+    return candidate
 
 WORKSPACE_ROLES = frozenset({"instructor", "researcher", "safety_owner", "ehs_manager", "administrator"})
 
@@ -505,6 +538,7 @@ class Document(StrictModel):
     # Optional link to the controlled original-byte volume.  Older workspace
     # exports omit this field; text-only records remain valid and explicit.
     sourceArtifactId: str | None = Field(default=None, max_length=180)
+    sourceArtifactVersion: int | None = Field(default=None, ge=1, strict=True)
 
 class Task(StrictModel):
     id: str
@@ -709,6 +743,7 @@ def migrate_workspace_import(payload: dict) -> tuple[dict, dict[str, Any]]:
         "provenance_note": "provenanceNote", "source_file_name": "sourceFileName",
         "source_file_size": "sourceFileSize", "source_media_type": "sourceMediaType",
         "source_locations": "sourceLocations", "source_artifact_id": "sourceArtifactId",
+        "source_artifact_version": "sourceArtifactVersion",
     }
     for document in raw.get("documents", []):
         if not isinstance(document, dict):
@@ -1831,7 +1866,7 @@ def apply_operation(w: dict, action: str, x: dict, actor: str) -> dict:
         # Metadata records where the text came from; it never asserts source
         # authority. Reviewers still verify source, object, version and time.
         if previous:
-            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote", "sourceFileName", "sourceFileSize", "sourceMediaType", "sourceLocations", "sourceArtifactId"):
+            for field in ("sourceType", "sourceLocator", "capturedAt", "provenanceNote", "sourceFileName", "sourceFileSize", "sourceMediaType", "sourceLocations", "sourceArtifactId", "sourceArtifactVersion"):
                 if d.get(field) is None and previous.get(field) is not None:
                     d[field] = previous[field]
         d.setdefault("sourceType", "manual")
@@ -2335,7 +2370,23 @@ class WorkspaceStore:
             row = conn.execute(query, params).fetchone()
         return self._artifact_row(row)
 
-    def source_artifact_path(self, artifact_id: str, *, document_id: str | None = None) -> tuple[dict, Path] | None:
+    def source_artifacts(self, *, document_ids: set[str] | None = None) -> list[dict]:
+        """List retained source metadata for the current workspace scope."""
+        query = "SELECT artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status FROM spatial_source_artifacts"
+        params: tuple[Any, ...] = ()
+        if document_ids is not None:
+            if not document_ids:
+                return []
+            placeholders = ",".join("?" for _ in document_ids)
+            query += f" WHERE document_id IN ({placeholders})"
+            params = tuple(sorted(document_ids))
+        query += " ORDER BY document_id ASC, version ASC, artifact_id ASC"
+        with self.connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [self._artifact_row(row) or {} for row in rows]
+
+    def _source_artifact_storage(self, artifact_id: str, *, document_id: str | None = None) -> tuple[dict, Path] | None:
+        """Return metadata and a path using the private storage key."""
         with self.connection() as conn:
             query = "SELECT artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status FROM spatial_source_artifacts WHERE artifact_id=?"
             params: tuple[Any, ...] = (artifact_id,)
@@ -2346,10 +2397,197 @@ class WorkspaceStore:
         metadata = self._artifact_row(row)
         if not metadata or not row:
             return None
-        path = artifact_root_for_db(self.path) / str(row[5])
+        root = artifact_root_for_db(self.path)
+        path = _safe_artifact_storage_path(root, str(row[5]))
         if not path.is_file():
             raise HTTPException(410, "来源文件记录存在，但原始文件已不可用。")
+        try:
+            if path.stat().st_size != int(metadata["size"]):
+                raise HTTPException(409, "来源文件大小与记录不一致，无法导出。")
+        except OSError as error:
+            raise HTTPException(410, "来源文件记录存在，但原始文件已不可用。") from error
         return metadata, path
+
+    def source_artifact_path(self, artifact_id: str, *, document_id: str | None = None) -> tuple[dict, Path] | None:
+        return self._source_artifact_storage(artifact_id, document_id=document_id)
+
+    def restore_with_artifacts(
+        self,
+        *,
+        expected_revision: int,
+        request_id: str,
+        candidate: dict,
+        artifacts: list[dict],
+        actor: str,
+        migration_report: dict | None = None,
+    ) -> dict:
+        """Restore a workspace and its retained source bytes atomically.
+
+        Archive files are staged under unique storage keys before the SQLite
+        transaction commits.  Existing files remain untouched until the new
+        workspace and metadata are durable; a failed restore removes only the
+        staged files.  This keeps the JSON workspace and artifact ledger
+        aligned even if extraction or validation fails midway.
+        """
+        candidate, migration = migrate_workspace_import(candidate)
+        if migration_report is not None:
+            migration = migration_report
+        validate_workspace(candidate)
+        # The endpoint performs the detailed archive checks.  Repeat the
+        # cross-object invariant here so direct callers cannot create an
+        # unreferenced or missing source artifact row.
+        documents = {str(item["id"]): item for item in candidate.get("documents", [])}
+        by_id: dict[str, dict] = {}
+        for item in artifacts:
+            metadata = dict(item.get("metadata") or {})
+            artifact_id = str(metadata.get("artifactId") or "")
+            document_id = str(metadata.get("documentId") or "")
+            data = item.get("data")
+            if not _ARTIFACT_ID_RE.fullmatch(artifact_id) or document_id not in documents or not isinstance(data, (bytes, bytearray)):
+                raise ValueError("来源存档的 artifact 元数据无效。")
+            if artifact_id in by_id:
+                raise ValueError("来源存档包含重复的 artifact。")
+            filename = _artifact_filename(str(metadata.get("filename") or ""))
+            suffix = Path(filename).suffix.lower()
+            if suffix not in ARTIFACT_SUFFIXES or filename != str(metadata.get("filename")):
+                raise ValueError("来源存档包含不支持或不安全的文件名。")
+            raw_size = metadata.get("size")
+            if isinstance(raw_size, bool) or not isinstance(raw_size, int) or raw_size < 0 or raw_size > ARTIFACT_MAX_BYTES or raw_size != len(data):
+                raise ValueError("来源存档的文件大小与元数据不一致。")
+            raw_version = metadata.get("version", 1)
+            if isinstance(raw_version, bool) or not isinstance(raw_version, int) or raw_version < 1:
+                raise ValueError("来源存档的版本无效。")
+            media_type = metadata.get("mediaType", "application/octet-stream")
+            if not isinstance(media_type, str) or not media_type.strip() or len(media_type) > 180:
+                raise ValueError("来源存档的媒体类型无效。")
+            status = metadata.get("status", "stored")
+            if status != "stored":
+                raise ValueError("来源存档的状态无效。")
+            if documents[document_id].get("sourceArtifactId") != artifact_id:
+                raise ValueError("资料与来源文件 artifact 关联不一致。")
+            source_version = documents[document_id].get("sourceArtifactVersion")
+            if source_version is not None and source_version != raw_version:
+                raise ValueError("资料与来源文件版本关联不一致。")
+            by_id[artifact_id] = {"metadata": metadata, "data": bytes(data), "filename": filename, "suffix": suffix}
+        referenced = {str(item.get("sourceArtifactId")) for item in documents.values() if item.get("sourceArtifactId")}
+        if referenced != set(by_id):
+            raise ValueError("工作区中的来源文件引用与 ZIP artifact 清单不一致。")
+
+        fingerprint = hashlib.sha256(canonical({
+            "type": "restore_workspace_zip", "workspace": candidate,
+            "artifacts": [{"metadata": item["metadata"], "size": len(item["data"])} for item in by_id.values()],
+        }).encode()).hexdigest()
+        root = artifact_root_for_db(self.path)
+        staged: list[tuple[Path, Path]] = []
+        snapshot_files: list[Path] = []
+        snapshot_dir: Path | None = None
+        old_paths: list[Path] = []
+        committed = False
+        try:
+            with self.connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                row = conn.execute("SELECT revision,payload FROM spatial_workspace WHERE id=1").fetchone()
+                previous = conn.execute("SELECT request_hash FROM spatial_operations WHERE id=?", (request_id,)).fetchone()
+                if previous:
+                    if previous[0] != fingerprint:
+                        raise HTTPException(409, "同一恢复操作标识不能用于不同存档。")
+                    return json.loads(row[1])
+                if row[0] != expected_revision:
+                    raise HTTPException(409, "工作区已被其他请求更新，请刷新后重试；未覆盖已有数据。")
+                before = json.loads(row[1])
+                old_rows = conn.execute("SELECT artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status FROM spatial_source_artifacts").fetchall()
+                old_artifacts: list[dict] = []
+                old_total = 0
+                for old_row in old_rows:
+                    old_metadata = self._artifact_row(old_row) or {}
+                    old_path = _safe_artifact_storage_path(root, str(old_row[5]))
+                    if not old_path.is_file():
+                        raise HTTPException(409, "当前工作区存在缺失的原始来源文件，无法建立恢复前快照。")
+                    old_size = int(old_row[4])
+                    if old_path.stat().st_size != old_size or old_size > ARTIFACT_MAX_BYTES:
+                        raise HTTPException(409, "当前工作区原始来源文件与记录不一致，无法建立恢复前快照。")
+                    old_total += old_size
+                    if old_total > ARCHIVE_MAX_BYTES:
+                        raise HTTPException(413, "恢复前来源快照不能超过 32 MB。")
+                    old_paths.append(old_path)
+                    old_artifacts.append({"metadata": old_metadata, "path": old_path})
+
+                snapshot_id = uid("snapshot")
+                snapshot_dir = root / ".snapshots" / snapshot_id
+                snapshot_dir.mkdir(parents=True, exist_ok=False)
+                snapshot_manifest: list[dict] = []
+                for old_item in old_artifacts:
+                    metadata = dict(old_item["metadata"])
+                    artifact_id = str(metadata["artifactId"])
+                    suffix = Path(str(metadata["filename"])).suffix.lower()
+                    snapshot_storage_key = f"artifact-{artifact_id}{suffix}"
+                    snapshot_path = _safe_artifact_storage_path(snapshot_dir, snapshot_storage_key)
+                    shutil.copyfile(old_item["path"], snapshot_path)
+                    snapshot_files.append(snapshot_path)
+                    metadata["snapshotStorageKey"] = snapshot_storage_key
+                    snapshot_manifest.append(metadata)
+
+                # Stage and publish new files before changing the database. A
+                # generated storage key is intentionally private; it never
+                # trusts archive filenames for filesystem locations.
+                restore_token = uuid4().hex
+                for artifact_id, item in by_id.items():
+                    storage_key = f"restore-{restore_token}-{artifact_id}{item['suffix']}"
+                    temporary = root / f".{storage_key}.upload"
+                    final = _safe_artifact_storage_path(root, storage_key)
+                    temporary.write_bytes(item["data"])
+                    os.replace(temporary, final)
+                    staged.append((final, temporary))
+                    item["storageKey"] = storage_key
+
+                saved_at = now()
+                conn.execute(
+                    "INSERT INTO spatial_workspace_snapshots(snapshot_id,revision,saved_at,actor,reason,payload) VALUES(?,?,?,?,?,?)",
+                    (snapshot_id, int(row[0]), saved_at, actor, "restore_workspace_zip_before_replace", json.dumps({"workspace": before, "artifacts": snapshot_manifest}, ensure_ascii=False)),
+                )
+                restored = copy.deepcopy(candidate)
+                restored["revision"] = int(row[0]) + 1
+                restored.setdefault("events", [])
+                restored["events"] = [*restored["events"], dict(
+                    id=uid("event"), at=saved_at, actor=actor, action="restore_workspace_zip",
+                    objectId="workspace", summary=(
+                        f"从 ZIP 存档恢复工作区与 {len(by_id)} 份原始来源文件；恢复前快照 {snapshot_id}"
+                        + (f"；存档迁移 v{migration['fromVersion']}→v{migration['toVersion']}" if migration["migrated"] else "")
+                    ),
+                )]
+                validate_workspace(restored)
+                conn.execute("DELETE FROM spatial_source_artifacts")
+                for artifact_id, item in by_id.items():
+                    metadata = item["metadata"]
+                    conn.execute(
+                        "INSERT INTO spatial_source_artifacts(artifact_id,document_id,filename,media_type,size,storage_key,uploaded_by,uploaded_at,version,status) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                        (artifact_id, metadata["documentId"], item["filename"], str(metadata.get("mediaType") or "application/octet-stream")[:180], len(item["data"]), item["storageKey"], str(metadata.get("uploadedBy") or actor)[:180], str(metadata.get("uploadedAt") or saved_at), int(metadata.get("version") or 1), str(metadata.get("status") or "stored")[:40]),
+                    )
+                conn.execute("UPDATE spatial_workspace SET revision=?,payload=? WHERE id=1", (restored["revision"], json.dumps(restored, ensure_ascii=False)))
+                conn.execute("INSERT INTO spatial_operations VALUES(?,?,?)", (request_id, fingerprint, restored["revision"]))
+            committed = True
+            # DB commit succeeded. Old files are now unreachable and can be
+            # removed; retaining a failed-restore orphan would leak source
+            # bytes indefinitely.
+            new_paths = {item[0] for item in staged}
+            for path in old_paths:
+                if path not in new_paths:
+                    try:
+                        path.unlink(missing_ok=True)
+                    except OSError:
+                        # The DB now points at the new archive; an inability
+                        # to clean an unreachable old file must not turn a
+                        # successful restore into a misleading 500 response.
+                        pass
+            return restored
+        except Exception:
+            if not committed:
+                for final, temporary in staged:
+                    final.unlink(missing_ok=True)
+                    temporary.unlink(missing_ok=True)
+                if snapshot_dir is not None:
+                    shutil.rmtree(snapshot_dir, ignore_errors=True)
+            raise
 
     @staticmethod
     def _membership_record(row: tuple | sqlite3.Row, *, token: str | None = None) -> dict:
@@ -2777,7 +3015,35 @@ class WorkspaceStore:
             row = conn.execute("SELECT snapshot_id,revision,saved_at,actor,reason,payload FROM spatial_workspace_snapshots WHERE snapshot_id=?", (snapshot_id,)).fetchone()
         if not row:
             return None
-        return dict(snapshotId=row[0], revision=row[1], savedAt=row[2], actor=row[3], reason=row[4], workspace=json.loads(row[5]))
+        payload = json.loads(row[5])
+        if isinstance(payload, dict) and isinstance(payload.get("workspace"), dict):
+            artifacts = []
+            for item in payload.get("artifacts", []):
+                if isinstance(item, dict):
+                    visible = dict(item)
+                    visible.pop("snapshotStorageKey", None)
+                    artifacts.append(visible)
+            return dict(snapshotId=row[0], revision=row[1], savedAt=row[2], actor=row[3], reason=row[4], workspace=payload["workspace"], artifacts=artifacts)
+        return dict(snapshotId=row[0], revision=row[1], savedAt=row[2], actor=row[3], reason=row[4], workspace=payload, artifacts=[])
+
+    def snapshot_artifact_path(self, snapshot_id: str, artifact_id: str) -> tuple[dict, Path] | None:
+        """Resolve a retained pre-restore artifact copy without exposing paths."""
+        with self.connection() as conn:
+            row = conn.execute("SELECT payload FROM spatial_workspace_snapshots WHERE snapshot_id=?", (snapshot_id,)).fetchone()
+        if not row:
+            return None
+        payload = json.loads(row[0])
+        if not isinstance(payload, dict) or not isinstance(payload.get("workspace"), dict):
+            return None
+        item = next((entry for entry in payload.get("artifacts", []) if isinstance(entry, dict) and entry.get("artifactId") == artifact_id), None)
+        storage_key = item.get("snapshotStorageKey") if item else None
+        if not item or not isinstance(storage_key, str):
+            return None
+        snapshot_root = artifact_root_for_db(self.path) / ".snapshots" / snapshot_id
+        path = _safe_artifact_storage_path(snapshot_root, storage_key)
+        if not path.is_file():
+            raise HTTPException(410, "恢复前快照的原始文件已不可用。")
+        return {key: value for key, value in item.items() if key != "snapshotStorageKey"}, path
 
     @staticmethod
     def _notification_row(row: sqlite3.Row | tuple) -> dict:
@@ -3397,6 +3663,10 @@ def mutate_workspace(body: Mutation, request: Request, actor: str = Depends(loca
     role = local_role(request)
     if body.type in {"approve", "approval_decision"} and role not in {"safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有记录正式复核的权限。")
+    if body.type == "verify_document" and role not in {"safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有核验资料的权限。")
+    if body.type == "transition_plan" and role not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有变更计划生命周期的权限。")
     handoff_update = body.type == "update_task" and any(key in body.payload for key in ("newOwner", "expectedOwner", "handoffNote"))
     if (body.type == "assign_task" or handoff_update) and local_role(request) not in {"instructor", "safety_owner", "ehs_manager", "administrator"}:
         raise HTTPException(403, "当前工作区身份没有转交协作任务的权限。")
@@ -3415,6 +3685,214 @@ def mutate_workspace(body: Mutation, request: Request, actor: str = Depends(loca
 def export_workspace(actor: str = Depends(local_owner)):
     w = store().read()
     return {"exportedAt": now(), "scope": "资源与证据审查记录，不是安全证书", "sourceRecord": "workspace snapshot", **envelope(w)}
+
+
+def _workspace_artifact_export(store_instance: WorkspaceStore, workspace: dict) -> list[dict]:
+    """Build a validated, public-safe artifact manifest for a workspace."""
+    documents = {str(item["id"]): item for item in workspace.get("documents", [])}
+    referenced = {str(item.get("sourceArtifactId")) for item in documents.values() if item.get("sourceArtifactId")}
+    rows = store_instance.source_artifacts(document_ids=set(documents))
+    by_id = {str(item.get("artifactId")): item for item in rows}
+    if referenced != set(by_id).intersection(referenced):
+        missing = sorted(referenced - set(by_id))
+        if missing:
+            raise HTTPException(409, f"工作区引用的原始来源文件不可导出：{', '.join(missing)}。")
+    result: list[dict] = []
+    for artifact_id in sorted(referenced):
+        metadata = by_id[artifact_id]
+        resolved = store_instance._source_artifact_storage(artifact_id, document_id=str(metadata["documentId"]))
+        if not resolved:
+            raise HTTPException(409, "来源文件记录与工作区资料不一致，无法导出。")
+        public, path = resolved
+        if public["documentId"] not in documents or documents[public["documentId"]].get("sourceArtifactId") != artifact_id:
+            raise HTTPException(409, "来源文件记录未关联当前资料，无法导出。")
+        filename = _artifact_filename(public["filename"])
+        if filename != public["filename"] or Path(filename).suffix.lower() not in ARTIFACT_SUFFIXES:
+            raise HTTPException(409, "来源文件名不符合存档安全要求，无法导出。")
+        result.append({"metadata": public, "path": path, "member": f"artifacts/{artifact_id}/{filename}"})
+    return result
+
+
+@router.get("/export.zip")
+def export_workspace_zip(actor: str = Depends(local_owner)):
+    """Export workspace JSON plus retained source bytes as an authenticated ZIP."""
+    from io import BytesIO
+
+    workspace = store().read()
+    artifacts = _workspace_artifact_export(store(), workspace)
+    if len(artifacts) + 2 > ARCHIVE_MAX_FILES:
+        raise HTTPException(413, "工作区 ZIP 存档条目过多。")
+    manifest = {
+        "format": ARCHIVE_FORMAT,
+        "exportedAt": now(),
+        "workspaceRevision": workspace.get("revision", 0),
+        "scope": "资源与证据审查记录，不是安全证书",
+        "included": ["workspace.json", "source-artifacts"],
+        "excluded": ["analysis-runs", "evaluation-runs", "jobs", "outbox", "membership-ledger"],
+        "artifacts": [{**item["metadata"], "member": item["member"]} for item in artifacts],
+    }
+    workspace_bytes = json.dumps(workspace, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    manifest_bytes = json.dumps(manifest, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    uncompressed_size = len(workspace_bytes) + len(manifest_bytes) + sum(int(item["metadata"]["size"]) for item in artifacts)
+    if uncompressed_size > ARCHIVE_MAX_BYTES:
+        raise HTTPException(413, "工作区 ZIP 展开后不能超过 32 MB。")
+    output = BytesIO()
+    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("workspace.json", workspace_bytes)
+        archive.writestr("manifest.json", manifest_bytes)
+        for item in artifacts:
+            archive.write(item["path"], arcname=item["member"])
+    payload = output.getvalue()
+    if len(payload) > ARCHIVE_MAX_BYTES:
+        raise HTTPException(413, "工作区 ZIP 存档不能超过 32 MB。")
+    return Response(
+        content=payload,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="aegislab-workspace.zip"', "X-Workspace-Revision": str(workspace.get("revision", 0))},
+    )
+
+
+async def _bounded_archive_body(request: Request) -> bytes:
+    """Read an application/zip body without trusting Content-Length."""
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type and content_type not in {"application/zip", "application/x-zip-compressed"}:
+        raise HTTPException(415, "ZIP 恢复接口只接受 application/zip 原始请求体。")
+    declared = request.headers.get("content-length")
+    try:
+        if declared is not None and int(declared) > ARCHIVE_MAX_BYTES:
+            raise HTTPException(413, "ZIP 存档不能超过 32 MB。")
+    except ValueError:
+        raise HTTPException(400, "Content-Length 无效。")
+    body = bytearray()
+    async for chunk in request.stream():
+        body.extend(chunk)
+        if len(body) > ARCHIVE_MAX_BYTES:
+            raise HTTPException(413, "ZIP 存档不能超过 32 MB。")
+    return bytes(body)
+
+
+def _read_workspace_zip(raw: bytes) -> tuple[dict, list[dict]]:
+    """Parse and validate a ZIP archive without extracting untrusted paths."""
+    from io import BytesIO
+
+    if len(raw) > ARCHIVE_MAX_BYTES:
+        raise HTTPException(413, "ZIP 存档不能超过 32 MB。")
+    try:
+        archive = zipfile.ZipFile(BytesIO(raw), "r")
+    except (zipfile.BadZipFile, OSError) as error:
+        raise HTTPException(422, "ZIP 存档无法读取。") from error
+    with archive:
+        infos = archive.infolist()
+        if len(infos) > ARCHIVE_MAX_FILES:
+            raise HTTPException(413, "ZIP 存档条目过多。")
+        names: list[str] = []
+        total_uncompressed = 0
+        for info in infos:
+            try:
+                name = _safe_archive_member(info.filename)
+            except ValueError as error:
+                raise HTTPException(422, str(error)) from error
+            if info.is_dir() or name.endswith("/"):
+                raise HTTPException(422, "ZIP 存档不能包含目录条目。")
+            if info.flag_bits & 0x1:
+                raise HTTPException(422, "不接受加密 ZIP 存档。")
+            if name in names:
+                raise HTTPException(422, "ZIP 存档包含重复条目。")
+            names.append(name)
+            total_uncompressed += int(info.file_size)
+            if total_uncompressed > ARCHIVE_MAX_BYTES:
+                raise HTTPException(413, "ZIP 展开后不能超过 32 MB。")
+        if set(names) - {"workspace.json", "manifest.json"} and not any(name.startswith("artifacts/") for name in names):
+            raise HTTPException(422, "ZIP 存档包含未知文件。")
+        if "workspace.json" not in names or "manifest.json" not in names:
+            raise HTTPException(422, "ZIP 存档必须包含 workspace.json 和 manifest.json。")
+        try:
+            workspace = json.loads(archive.read("workspace.json").decode("utf-8"))
+            manifest = json.loads(archive.read("manifest.json").decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError, KeyError) as error:
+            raise HTTPException(422, "ZIP 存档中的 JSON 清单无效。") from error
+        if not isinstance(manifest, dict) or manifest.get("format") != ARCHIVE_FORMAT or not isinstance(manifest.get("artifacts"), list):
+            raise HTTPException(422, "ZIP 存档格式或 artifact 清单无效。")
+        if len(manifest["artifacts"]) > ARCHIVE_MAX_FILES:
+            raise HTTPException(413, "ZIP 存档来源文件过多。")
+
+        try:
+            workspace, _ = migrate_workspace_import(workspace)
+            validate_workspace(workspace)
+        except (ValidationError, ValueError, KeyError, TypeError) as error:
+            raise HTTPException(422, f"ZIP 工作区结构无效：{str(error)[:180]}") from error
+        documents = {str(item["id"]): item for item in workspace.get("documents", [])}
+        artifacts: list[dict] = []
+        expected_names = {"workspace.json", "manifest.json"}
+        for item in manifest["artifacts"]:
+            if not isinstance(item, dict):
+                raise HTTPException(422, "ZIP artifact 清单条目无效。")
+            artifact_id = str(item.get("artifactId") or "")
+            document_id = str(item.get("documentId") or "")
+            filename = str(item.get("filename") or "")
+            if not _ARTIFACT_ID_RE.fullmatch(artifact_id) or document_id not in documents:
+                raise HTTPException(422, "ZIP artifact 标识或资料关联无效。")
+            safe_name = _artifact_filename(filename)
+            if safe_name != filename or Path(filename).suffix.lower() not in ARTIFACT_SUFFIXES:
+                raise HTTPException(422, "ZIP artifact 文件名不安全或类型不受支持。")
+            raw_size = item.get("size")
+            if isinstance(raw_size, bool) or not isinstance(raw_size, int) or raw_size < 0 or raw_size > ARTIFACT_MAX_BYTES:
+                raise HTTPException(422, "ZIP artifact size 必须是 0 到 8 MB 的整数。")
+            raw_version = item.get("version", 1)
+            if isinstance(raw_version, bool) or not isinstance(raw_version, int) or raw_version < 1:
+                raise HTTPException(422, "ZIP artifact version 无效。")
+            media_type = item.get("mediaType", "application/octet-stream")
+            if not isinstance(media_type, str) or not media_type.strip() or len(media_type) > 180:
+                raise HTTPException(422, "ZIP artifact mediaType 无效。")
+            status = item.get("status", "stored")
+            if not isinstance(status, str) or status not in {"stored"}:
+                raise HTTPException(422, "ZIP artifact status 无效。")
+            if documents[document_id].get("sourceArtifactId") != artifact_id:
+                raise HTTPException(422, "ZIP artifact 与资料 sourceArtifactId 不一致。")
+            source_version = documents[document_id].get("sourceArtifactVersion")
+            if source_version is not None and source_version != raw_version:
+                raise HTTPException(422, "资料 sourceArtifactVersion 与 ZIP artifact 不一致。")
+            member = str(item.get("member") or f"artifacts/{artifact_id}/{filename}")
+            try:
+                _safe_archive_member(member)
+            except ValueError as error:
+                raise HTTPException(422, str(error)) from error
+            if member != f"artifacts/{artifact_id}/{filename}" or member in expected_names or member not in names:
+                raise HTTPException(422, "ZIP artifact 成员路径不符合清单。")
+            if member in expected_names:
+                raise HTTPException(422, "ZIP artifact 成员重复。")
+            expected_names.add(member)
+            info = archive.getinfo(member)
+            if info.file_size > ARTIFACT_MAX_BYTES:
+                raise HTTPException(413, "单份来源文件不能超过 8 MB。")
+            data = archive.read(member)
+            if len(data) != raw_size:
+                raise HTTPException(422, "ZIP artifact 文件大小与清单不一致。")
+            artifacts.append({"metadata": item, "data": data})
+        if set(names) != expected_names:
+            raise HTTPException(422, "ZIP 存档包含未列入 manifest 的文件。")
+        referenced = {str(item.get("sourceArtifactId")) for item in documents.values() if item.get("sourceArtifactId")}
+        if referenced != {str(item["metadata"]["artifactId"]) for item in artifacts}:
+            raise HTTPException(422, "ZIP 工作区引用与 artifact 清单不一致。")
+        return workspace, artifacts
+
+
+@router.post("/restore.zip")
+async def restore_workspace_zip(request: Request, actor: str = Depends(local_owner)):
+    """Restore workspace and source bytes from an authenticated raw ZIP body."""
+    if local_role(request) not in {"safety_owner", "ehs_manager", "administrator"}:
+        raise HTTPException(403, "当前工作区身份没有恢复服务端存档的权限。")
+    raw = await _bounded_archive_body(request)
+    workspace, artifacts = _read_workspace_zip(raw)
+    current = store().read()
+    restored = store().restore_with_artifacts(
+        expected_revision=int(current.get("revision", 0)),
+        request_id=f"zip-{hashlib.sha256(raw).hexdigest()[:32]}",
+        candidate=workspace,
+        artifacts=artifacts,
+        actor=actor,
+    )
+    return {**envelope(restored), "archive": {"format": ARCHIVE_FORMAT, "artifacts": len(artifacts)}}
 
 @router.post("/restore")
 def restore_workspace(body: RestoreRequest, request: Request, actor: str = Depends(local_owner)):
@@ -3444,6 +3922,15 @@ def get_workspace_snapshot(snapshot_id: str, actor: str = Depends(local_owner)):
     if not snapshot:
         raise HTTPException(404, "恢复前快照不存在。")
     return snapshot
+
+
+@router.get("/snapshots/{snapshot_id}/artifacts/{artifact_id}/content")
+def get_snapshot_artifact_content(snapshot_id: str, artifact_id: str, actor: str = Depends(local_owner)):
+    resolved = store().snapshot_artifact_path(snapshot_id, artifact_id)
+    if not resolved:
+        raise HTTPException(404, "恢复前快照中的来源文件不存在。")
+    metadata, path = resolved
+    return FileResponse(path, media_type=metadata.get("mediaType") or "application/octet-stream", filename=metadata.get("filename") or "source")
 
 
 def _notification_audience(request: Request, requested: str | None) -> str | None:
