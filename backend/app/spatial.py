@@ -2476,7 +2476,7 @@ class WorkspaceStore:
             ).fetchall()
         return [self._notification_row(row) for row in rows]
 
-    def acknowledge_notification(self, event_id: str, actor: str) -> dict:
+    def acknowledge_notification(self, event_id: str, actor: str, *, allowed_audience: str | None = None) -> dict:
         """Acknowledge one local inbox item; repeated acknowledgement is safe."""
         with self.connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -2486,6 +2486,8 @@ class WorkspaceStore:
             ).fetchone()
             if not row:
                 raise HTTPException(404, "通知不存在。")
+            if allowed_audience and not (row[6] == allowed_audience or row[6].startswith(f"{allowed_audience}:")):
+                raise HTTPException(403, "当前成员不能确认其他责任人的通知。")
             if row[12] == "pending":
                 acknowledged_at = now()
                 conn.execute(
@@ -3018,8 +3020,21 @@ def get_workspace_snapshot(snapshot_id: str, actor: str = Depends(local_owner)):
     return snapshot
 
 
+def _notification_audience(request: Request, requested: str | None) -> str | None:
+    """Constrain inbox reads to the authenticated member's responsibility."""
+    role = local_role(request)
+    if role in {"safety_owner", "ehs_manager", "administrator"}:
+        return requested
+    principal = local_principal(request)
+    own_audience = f"任务负责人:{principal}"
+    if requested and requested not in {principal, own_audience}:
+        raise HTTPException(403, "当前成员不能读取其他责任人的通知。")
+    return own_audience
+
+
 @router.get("/notifications")
 def list_notifications(
+    request: Request,
     status: Literal["pending", "acknowledged", "all"] = "pending",
     audience: str | None = None,
     planId: str | None = None,
@@ -3032,13 +3047,14 @@ def list_notifications(
     hand-off records for the UI and does not claim email, chat, or push
     delivery.  Acknowledgement is an auditable local state transition.
     """
+    effective_audience = _notification_audience(request, audience)
     try:
-        notifications = store().notifications(status=status, audience=audience, plan_id=planId, limit=limit)
+        notifications = store().notifications(status=status, audience=effective_audience, plan_id=planId, limit=limit)
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
     return {
         "status": status,
-        "audience": audience,
+        "audience": effective_audience,
         "planId": planId,
         "notifications": notifications,
         "scope": "本地 outbox 收件箱；未发送外部通知，需要负责人打开对象后复核。",
@@ -3046,10 +3062,11 @@ def list_notifications(
 
 
 @router.post("/notifications/{event_id}/ack")
-def acknowledge_notification(event_id: str, actor: str = Depends(local_owner)):
+def acknowledge_notification(event_id: str, request: Request, actor: str = Depends(local_owner)):
     """Acknowledge a notification without changing the underlying business object."""
+    allowed_audience = _notification_audience(request, None)
     return {
-        "notification": store().acknowledge_notification(event_id, actor),
+        "notification": store().acknowledge_notification(event_id, actor, allowed_audience=allowed_audience),
         "scope": "仅确认本机收件箱已读，不代表审批、证据核验或实验放行。",
     }
 

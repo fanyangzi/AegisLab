@@ -939,6 +939,19 @@ class ApiTests(unittest.TestCase):
         self.assertEqual({role for _, role in results[0::2]}, {'researcher'})
         self.assertEqual({role for _, role in results[1::2]}, {'safety_owner'})
 
+    def test_membership_notification_scope_uses_principal_not_query_actor(self):
+        initialize(s.store())
+        created=self.client.post('/api/spatial/members',json={'principal':'任务成员','role':'researcher','requestId':'api-member-notify-01'})
+        token=created.json()['member']['token']; workspace=s.store().read(); task=copy.deepcopy(workspace['tasks'][0]); task['owner']='任务成员'; task['title']='成员责任通知'
+        saved=self.client.post('/api/spatial/actions',json={'expectedRevision':1,'requestId':'member-notify-save-01','type':'save_task','payload':{'task':task}})
+        self.assertEqual(saved.status_code,200,saved.text)
+        headers={'Authorization':f'Bearer {token}'}
+        own=self.client.get('/api/spatial/notifications?status=pending',headers=headers)
+        self.assertEqual(own.status_code,200,own.text);self.assertEqual(len(own.json()['notifications']),1)
+        self.assertEqual(own.json()['audience'],'任务负责人:任务成员')
+        event_id=own.json()['notifications'][0]['eventId']
+        self.assertEqual(self.client.post(f'/api/spatial/notifications/{event_id}/ack',headers=headers).status_code,200)
+
     def test_membership_role_cannot_be_spoofed_by_approval_body(self):
         created=self.client.post('/api/spatial/members',json={'principal':'研究成员','role':'researcher','requestId':'api-member-create-02'})
         token=created.json()['member']['token'];initialize(s.store())
