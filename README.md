@@ -1,30 +1,100 @@
-# AegisLab
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/hero-dark.svg">
+    <img src="docs/assets/readme/hero-light.svg" alt="AegisLab 实验哨兵 — AI × 空间建模 × 场景创新" width="100%">
+  </picture>
+</p>
 
-**实验安全协同工作台 · 浏览器网页系统**
+<h3 align="center">高校实验场景感知与智能预审平台</h3>
+<p align="center">让 AI 读懂实验计划，让空间连接设备、依据与决策。</p>
 
-把实验计划、设备、使用时段和检查依据连接到同一个工作区。空间、关系与时间共用同一份数据，条件变化后重新计算检查结果，并保留人工记录。
+<p align="center">
+  <a href="#overview"><img alt="AI + Scenario Innovation" src="https://img.shields.io/badge/AI-Scenario_Innovation-2563EB?style=flat-square&labelColor=334155"></a>
+  <a href="#spatial"><img alt="3D Spatial Modeling" src="https://img.shields.io/badge/3D-Spatial_Modeling-0284C7?style=flat-square&labelColor=334155&logo=threedotjs&logoColor=white"></a>
+  <a href="#architecture"><img alt="React" src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB"></a>
+  <a href="#architecture"><img alt="Three.js" src="https://img.shields.io/badge/Three.js-20232A?style=flat-square&logo=threedotjs&logoColor=white"></a>
+  <a href="#architecture"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white"></a>
+  <a href="https://github.com/fanyangzi/AegisLab/actions/workflows/desktop-web.yml"><img alt="Web workspace verification" src="https://github.com/fanyangzi/AegisLab/actions/workflows/desktop-web.yml/badge.svg?branch=main"></a>
+</p>
 
-本项目是通过网址访问的 **Web 网站**，不是桌面安装程序。没有 Electron、Tauri、移动端、PWA 安装包，也不需要使用者安装客户端。
+<p align="center"><strong>简体中文</strong> · <a href="README.en.md">English</a></p>
+<p align="center">
+  <a href="#overview">项目介绍</a> ·
+  <a href="#highlights">核心优势</a> ·
+  <a href="#spatial">AI + 空间建模</a> ·
+  <a href="#workflow">工作流</a> ·
+  <a href="#quick-start">快速开始</a> ·
+  <a href="#architecture">技术架构</a>
+</p>
 
-## 本次代码中的主要能力
+<p align="center">
+  <a href="docs/assets/readme/workspace.png"><img src="docs/assets/readme/workspace.png" alt="AegisLab 完整空间工作区：实验室、设备、导航、对象详情与计划时间栏" width="100%"></a>
+  <br><sub>空间工作区 · 完整产品界面 · 示例工作区</sub>
+</p>
 
-| 工作面 | 实际操作 |
-| --- | --- |
-| 空间 | 可配置实验室和设备；Three.js 场景、对象选取、缩放与聚焦；WebGL 不可用时二维回退 |
-| 关系 | 计划—资源—资料的可点击关联；同一实体与右侧详情联动 |
-| 时间 | 并发预约、维护窗口、按日期查看；交叠的时间条分行展示 |
-| 计划 | TXT / Markdown、DOCX、文本层 PDF 导入；原文行号、确认、资源安排、版本与辅助预审 |
-| 方案 | 独立候选、约束重检、保存、提交为新修订；基线改变后拒绝应用旧方案 |
-| 协同与资料 | 任务进度、原文证据、明确核验；上传或任务完成不会自动使证据通过 |
-| 复核与记录 | 服务端重新检查条件，记录当前版本资源复核；事实变化使旧记录不再适用；JSON 导出 |
+<a id="overview"></a>
+## 项目介绍
 
-检查范围是已登记的资源前置条件，不是完整化学安全认证。模型只辅助解释，不执行文档中的命令、不自动批准实验。完整终版规划中尚未实现的部分见 [实现状态](docs/IMPLEMENTATION_STATUS.md)。
+**实验哨兵（AegisLab）** 面向高校实验准备与安全预审，将大模型辅助理解、三维空间建模、对象关系图谱与协同工作流整合到同一个浏览器工作区。
 
-## 本地开发：打开网页
+一份实验计划不仅是一段文字：它关联具体设备、使用时段、控制要求与检查资料。AegisLab 把这些信息组织成可查看、可追溯、可继续办理的场景，让师生和实验室管理人员从**读懂计划**走向**理解条件、比较变更、完成复核**。
 
-使用 Node.js 22.12 或更新的 22.x，以及 Python 3.12。以下依赖是开发/部署环境依赖，不是给最终使用者安装的客户端。
+> **AI + 场景创新：从文档里的实验，走向可交互、可核验的实验场景。**
+
+当前案例以高校化学实验、样品前处理和分析测试为主要切入点。产品通过网址访问，适用于实验发起人、教师、设备管理员与授权复核人员。
+
+<a id="highlights"></a>
+## 核心优势
+
+| 核心能力 | AegisLab 的实现 | 带来的价值 |
+| :--- | :--- | :--- |
+| **AI 计划理解** | 从 SOP 中整理步骤、设备和控制线索，保留原文位置，并呈现可确认的结构化候选。 | 将非结构化计划接入实际审查流程。 |
+| **可交互空间建模** | 房间尺寸、设备类别、位置与朝向驱动 Three.js 场景；设备可选取、聚焦并查看详情。 | 在实验室空间中找到计划涉及的真实业务对象。 |
+| **关系与来源联动** | 连接计划、步骤、资源、条件、资料和决策；支持邻域、类型与路径查询。 | 从一个问题追到相应对象、依赖与依据。 |
+| **变更方案比较** | 在独立候选中调整资源、时段及受支持字段，查看检查差异，确认后提交新修订。 | 修改安排前先理解影响，保留正式计划与候选的清晰区分。 |
+| **证据适用性检查** | 联合核对设备、规格、有效区间、核验状态及冲突记录。 | 判断材料是否支持这次实验的具体使用条件。 |
+| **协同预审与复核** | 将问题连接到补证、指派、退回、转交和审批记录；服务端检查权限与当前条件。 | 把分析结果转化为有人负责、能够追踪的后续工作。 |
+
+<a id="spatial"></a>
+## AI + 空间建模
+
+**AI 提供计划的语义理解，空间建模提供对象上下文，规则与人员共同完成预审。**
+
+AegisLab 以房间和资源配置构建三维实验室，再将计划中的设备引用、检查结果和业务动作连接到对应对象。空间由配置驱动，AI 理解与场景对象通过同一套业务身份关联。
+
+| 同一工作区的三种视图 | 重点回答的问题 |
+| :--- | :--- |
+| **空间 · Space** | 实验在哪里进行？涉及哪些设备？当前选中对象关联什么计划？ |
+| **关系 · Graph** | 这项计划依赖什么？问题连接哪些条件与资料？依据从哪里来？ |
+| **时间 · Timeline** | 何时使用资源？是否与维护或其他计划重叠？证据是否覆盖使用时段？ |
+
+三种视图共享计划、设备与工作区数据。用户可以从设备进入计划，从关系查看依据，再切到时间视图理解资源安排；AI 分析中的对象与来源动作也能回到相应工作位置。
+
+**空间是操作入口，图谱是解释路径，时间是条件上下文。** 三者一起支持具体实验的理解、预审与变更处理。
+
+<a id="workflow"></a>
+## 从实验计划到协同决策
+
+<p align="center"><img src="docs/assets/readme/workflow-zh.svg" alt="理解实验计划 → 关联空间对象 → 核对条件与依据 → 比较变更方案 → 协同复核归档" width="100%"></p>
+
+1. **导入与理解**：上传 TXT、Markdown、DOCX 或带文本层的 PDF，保存计划原文并核对步骤和对象匹配。
+2. **场景关联与预审**：结合设备台账、资源使用时段和相关资料进行检查；调用 AI 辅助解释问题、整理后续建议。
+3. **比较与办理**：建立候选方案，查看变更影响，创建或指派补充资料、协调和复核任务。
+4. **确认与留痕**：授权人员完成决策，系统保留依据和操作记录；条件改变后重新检查关联结果。
+
+例如，某项计划需要共享通风柜。用户能从实验室中选中设备，查看关联计划与检查记录，再比较调整时段或更换资源后的结果。**计划、空间、依据和动作始终围绕同一个实验上下文展开。**
+
+<a id="quick-start"></a>
+## 快速开始
+
+### 1. 安装环境
+
+使用 **Node.js 22.12+（22.x）** 和 **Python 3.12**。以下为 macOS / Linux 命令：
 
 ```bash
+git clone https://github.com/fanyangzi/AegisLab.git
+cd AegisLab
+
 npm ci
 python3 -m venv .venv
 source .venv/bin/activate
@@ -32,41 +102,67 @@ python -m pip install -r backend/requirements-dev.txt
 test -f .env || cp .env.example .env
 ```
 
-已有 `.env` 时不要覆盖。新网页建议令 `VITE_API_BASE_URL` 留空，由 Vite 的 `/api` 代理连接本机 API；不要把模型密钥放进任何 `VITE_*` 变量。
+Windows 可使用 `.venv\Scripts\Activate.ps1` 激活虚拟环境。已有 `.env` 请保留，按 [配置示例](.env.example) 补充需要的字段。
 
-第一个终端：
+### 2. 启动网页
+
+**终端一：启动 API**
 
 ```bash
 source .venv/bin/activate
 uvicorn backend.main:app --env-file .env --host 127.0.0.1 --port 8000 --reload
 ```
 
-第二个终端：
+**终端二：启动前端**
 
 ```bash
 npm run dev
 ```
 
-在浏览器打开 `http://127.0.0.1:5173/`。这是网页地址，不是安装入口。初次打开是空工作区，可建立自己的实验室，也可主动导入明确标记的示例。没有 API 时可编辑独立的浏览器草稿，但不能记录服务端正式复核。
+在浏览器打开 **http://127.0.0.1:5173/**。开发环境建议将 `VITE_API_BASE_URL` 留空，由 Vite 代理 `/api` 请求。
 
-Windows 可用 `.venv\Scripts\Activate.ps1` 激活虚拟环境；其余 Python 与 npm 命令相同。
+首次进入后，可建立自己的实验室与设备，也可主动导入示例工作区，再从一份计划开始体验空间、关系、时间与辅助预审。
 
-## 构建后：同源网站服务
+### 3. 连接模型
+
+在服务端 `.env` 中填写模型服务配置，保存后重启 API：
+
+```dotenv
+LABSAFETY_LLM_ENABLED=1
+LABSAFETY_LLM_BASE_URL=
+LABSAFETY_LLM_MODEL=
+LABSAFETY_LLM_API_KEY=
+```
+
+`BASE_URL` 填写兼容模型 API 的基础地址，`MODEL` 填写该服务提供的模型标识，`API_KEY` 填写自己的服务凭据。适配器优先使用 Responses 接口，并对不支持该接口的服务尝试 Chat Completions。
+
+在计划中打开 AI 辅助预审即可触发分析。**模型负责候选理解与解释，规则负责条件核验，授权人员负责最终复核。** 密钥仅放在服务端，不写入 `VITE_*` 变量或 Git。
+
+<details>
+<summary><strong>部署为同源网站</strong></summary>
 
 ```bash
 npm run build
 AEGIS_SERVE_WEB=1 uvicorn backend.main:app --env-file .env --host 127.0.0.1 --port 8000
 ```
 
-打开 `http://127.0.0.1:8000/`。FastAPI 同时提供构建后的网页和 API。另一个正在占用 8000 端口的开发 API 应先停止。
+浏览器打开 **http://127.0.0.1:8000/**，由 FastAPI 同时提供网页和 API。先停止占用同一端口的开发服务。公网部署配置 HTTPS 与访问控制；可通过 `AEGIS_WORKSPACE_TOKEN` 配置工作区访问令牌，并在网页设置中连接。
 
-公网部署必须通过 HTTPS 和访问控制；设置 `AEGIS_WORKSPACE_TOKEN` 后，打开网页，在“设置”输入该令牌连接服务端。令牌只保留在页面内存。当前访问控制是单一工作区负责人模式，不是机构 SSO、多角色授权或多租户隔离。未配置令牌时只允许本机请求，不建议直接暴露端口。
+</details>
 
-## 模型连接
+<a id="architecture"></a>
+## 技术架构
 
-在服务端 `.env` 中填写自己控制的 `LABSAFETY_LLM_BASE_URL`、`LABSAFETY_LLM_MODEL` 和 `LABSAFETY_LLM_API_KEY`。三个值都配置后才启用模型请求；没有预置第三方网关或猜测的模型名。选择一项计划的“SOP 辅助预审”后按需触发。模型不可用时明确显示确定性回退，不伪装成在线 AI 结果。
+| 层次 | 技术与职责 | 代码入口 |
+| :--- | :--- | :--- |
+| **网页工作区** | React、TypeScript、Vite；页面、对象选择、表单与跨视图上下文。 | [`src/web/`](src/web/) |
+| **空间与交互** | Three.js；参数化设备、场景建模、相机、选取与标签。 | [`Scene.tsx`](src/web/Scene.tsx) |
+| **语义理解** | 模型适配、SOP 结构化候选、来源锚定与问题解释。 | [`llm.py`](backend/app/llm.py) · [`parser.py`](backend/app/parser.py) |
+| **业务与核验** | FastAPI；资源条件、关系查询、分支、资料、协作及决策。 | [`spatial.py`](backend/app/spatial.py) |
+| **数据与后台任务** | SQLite、修订与幂等、持久化任务和独立 Worker。 | [`worker.py`](backend/worker.py) |
 
-## 测试
+<details>
+<summary><strong>开发检查</strong></summary>
 
 ```bash
 npm run test:parity
@@ -75,12 +171,12 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 python tests/smoke.py
 ```
 
-前端的规则计算与后端校验有对照测试。后端覆盖持久化、并发修订、幂等、资料提取、访问控制和网站同源路由。测试范围与尚未完成的浏览器验收见 [测试说明](docs/TEST_REPORT.md)。
+覆盖前后端领域规则对照、接口、资料处理、协作状态、权限、并发与持久化等工程路径。
 
-## 数据与迁移
+</details>
 
-网页新存档使用 `AEGIS_SPATIAL_DB_PATH`；旧审查库使用 `LABSAFETY_DB_PATH`，两者不会互相覆盖。停止服务后备份 SQLite 文件，恢复时保持配置路径一致。JSON 导出用于记录查看和人工迁移，**当前没有完成自动导入恢复与旧库全量迁移**。
+## 参与项目
 
-旧界面和接口保留用于迁移检查，入口为 `legacy.html`，不在新产品导航中展示。历史 `eval/` 仍是独立的合成基线，不能当作本次网页的真实应用效果指标。示例工作区不是现场实验数据或安全结论。
+欢迎通过 [Issues](https://github.com/fanyangzi/AegisLab/issues) 提交使用反馈、场景需求或问题复现，通过 [Pull Requests](https://github.com/fanyangzi/AegisLab/pulls) 参与开发。设备类别与知识来源可查阅 [设备调研](docs/equipment-taxonomy-research.md) 和 [来源登记](data/knowledge_sources.json)。
 
-[本地 Codex 接手说明](docs/CODEX_HANDOFF.md) · [实现状态](docs/IMPLEMENTATION_STATUS.md) · [测试记录与限制](docs/TEST_REPORT.md)
+<p align="center"><strong>实验哨兵 · AegisLab</strong><br><sub>知微守安队 · AI + 场景创新</sub></p>

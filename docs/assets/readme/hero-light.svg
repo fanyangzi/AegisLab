@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="330" viewBox="0 0 1440 330" role="img" aria-labelledby="title desc">
+<title id="title">AegisLab · 实验哨兵</title>
+<desc id="desc">AI, spatial modeling and laboratory workflows. Original brand artwork combining a shield, a spatial cell and a connected laboratory illustration.</desc>
+<defs>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22b5ff"/><stop offset=".53" stop-color="#1677ff"/><stop offset="1" stop-color="#2450ed"/></linearGradient>
+  <linearGradient id="soft" x1="0" x2="1"><stop stop-color="#379dff" stop-opacity=".3"/><stop offset="1" stop-color="#379dff" stop-opacity="0"/></linearGradient>
+</defs>
+<g transform="translate(55 79)">
+  <path d="M75 0 137 25v57c0 37-25 61-62 80C38 143 13 119 13 82V25Z" fill="url(#blue)"/>
+  <path d="m75 38 33 19v40l-33 20-33-20V57Z" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
+  <path d="m42 57 33 20 33-20M75 77v40" fill="none" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="108" cy="57" r="7" fill="#c8f1ff"/>
+</g>
+<g font-family="Inter,Segoe UI,Arial,sans-serif">
+  <text x="242" y="151" font-size="100" font-weight="750" letter-spacing="-5" fill="#12233f">Aegis<tspan fill="#1877f8">Lab</tspan></text>
+  <text x="247" y="207" font-family="Noto Sans CJK SC,Microsoft YaHei,PingFang SC,sans-serif" font-size="32" font-weight="650" letter-spacing="7" fill="#12233f">实验哨兵</text>
+  <path d="M247 236h46" stroke="#2584ff" stroke-width="3"/>
+  <text x="309" y="242" font-size="16" font-weight="600" letter-spacing="2.15" fill="#536984">AI × SPACE × ACTION</text>
+</g>
+<g transform="translate(0 20)" stroke-linejoin="round" stroke-linecap="round">
+  <path d="m965 126 207-65 197 105-207 72Z" fill="#f0f6ff" stroke="#d9e5f4" stroke-width="1.5"/>
+  <path d="m965 126 197 112v22L965 148Z" fill="#e4eefc" stroke="#d9e5f4"/>
+  <path d="m1162 238 207-72v22l-207 72Z" fill="#c7dbf7" stroke="#d9e5f4"/>
+  <g fill="none" stroke="#d9e5f4" stroke-width="1">
+    <path d="m1004 148 209-69m-169 91 207-69m-167 92 206-69m-166 92 206-71"/>
+    <path d="m1005 114 197 110m-157-123 197 110m-156-124 197 109m-156-122 197 107"/>
+  </g>
+  <path d="m983 132 0-86 185-58v86" fill="#f0f6ff" stroke="#d9e5f4" stroke-width="2"/>
+  <path d="m1168-12 181 96v92" fill="none" stroke="#d9e5f4" stroke-width="2" transform="translate(0 32)"/>
+  <g transform="translate(1047 65)">
+    <path d="m0 0 69-22 43 25-69 23Z" fill="#ffffff" stroke="#d9e5f4"/>
+    <path d="m0 0 43 26v89L0 91Z" fill="#e4eefc" stroke="#d9e5f4"/>
+    <path d="m43 26 69-23v88l-69 24Z" fill="#c7dbf7" stroke="#d9e5f4"/>
+    <path d="m53 34 49-17v48l-49 16Z" fill="#82c4fc" fill-opacity=".6" stroke="#6fabed"/>
+    <path d="m49 86 57-18v7L49 94Z" fill="#267cf4"/>
+    <path d="m77 80 0 18" stroke="#d9e5f4"/>
+  </g>
+  <g transform="translate(1139 164)">
+    <path d="m0 0 94-31 56 31-94 33Z" fill="#ffffff" stroke="#d9e5f4"/>
+    <path d="m0 0 56 33v35L0 36Z" fill="#e4eefc" stroke="#d9e5f4"/>
+    <path d="m56 33 94-33v36l-94 32Z" fill="#c7dbf7" stroke="#d9e5f4"/>
+    <path d="m6 3 49 28m8-1 80-28" stroke="#2584ff" stroke-width="4"/>
+    <path d="M66-11v-13m-3 0h6m-6 0-6 17q8 8 16-1l-4-16" fill="#a4dcfa" stroke="#569ce4" stroke-width="1.5"/>
+  </g>
+  <g transform="translate(1240 90)">
+    <path d="m0 0 40-13 41 23-41 14Z" fill="#ffffff" stroke="#d9e5f4"/>
+    <path d="m0 0 40 24v48L0 49Z" fill="#e4eefc" stroke="#d9e5f4"/>
+    <path d="m40 24 41-14v49L40 72Z" fill="#c7dbf7" stroke="#d9e5f4"/>
+    <path d="m49 30 23-8v16l-23 8Z" fill="#3789f5"/>
+  </g>
+  <path d="M960 242q-64-74 115-103m53 12q59-73 139-14" fill="none" stroke="#2482fa" stroke-width="2" stroke-dasharray="5 7"/>
+  <g fill="#fff" stroke="#2584ff" stroke-width="2.5"><circle cx="1075" cy="139" r="5"/><circle cx="1128" cy="151" r="5"/><circle cx="1267" cy="137" r="5"/></g>
+</g>
+<path d="M54 297h1332" stroke="#d9e5f4" stroke-width="1"/>
+<path d="M54 297h490" stroke="url(#soft)" stroke-width="2"/>
+</svg>
